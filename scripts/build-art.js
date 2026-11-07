@@ -46,7 +46,7 @@ function ctx() {
 function petalGrad(c, cw, tint) { // tint 0 = outer (lighter), 1 = inner (deeper)
   return c.once(`pg-${cw}-${tint}`, (id) => {
     const p = COLORWAYS[cw];
-    const base = mix(p.deep, p.edge, 0.2 + tint * 0.4), midc = mix(p.mid, p.deep, tint * 0.6), tip = mix(p.mid, p.light, 0.65 - tint * 0.35);
+    const base = mix(p.deep, p.edge, 0.2 + tint * 0.4), midc = mix(p.mid, p.deep, tint * 0.6), tip = mix(p.mid, p.light, 0.95 - tint * 0.4);
     return `<linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${base}"/><stop offset="0.45" stop-color="${midc}"/><stop offset="1" stop-color="${tip}"/></linearGradient>`;
   });
 }
@@ -111,11 +111,13 @@ function lushPetalD(L, W, r) {
 }
 function lushPetal(c, cw, tint, L, W, r) {
   const p = COLORWAYS[cw], d = lushPetalD(L, W, r), g = petalGrad(c, cw, tint), sd = shadeGrad(c);
-  const hw = W / 2, rimW = Math.max(2, L * 0.045);
+  const hw = W / 2;
   const tip = `M${f(-hw * 1.0)} ${f(-L * 0.78)} C${f(-hw * 0.95)} ${f(-L * 0.97)} ${f(-hw * 0.5)} ${f(-L * 1.02)} 0 ${f(-L * 1.02)} C${f(hw * 0.5)} ${f(-L * 1.02)} ${f(hw * 0.95)} ${f(-L * 0.97)} ${f(hw * 1.0)} ${f(-L * 0.78)}`;
-  let s = `<path d="${d}" fill="url(#${g})" stroke="${p.edge}" stroke-opacity="0.55" stroke-width="${f(Math.max(1.6, L * 0.012))}" stroke-linejoin="round"/>`;
+  const hg = c.once(`hl-${cw}`, (id) => `<linearGradient id="${id}" x1="0" y1="1" x2="0" y2="0"><stop offset="0.5" stop-color="${p.rim}" stop-opacity="0"/><stop offset="1" stop-color="${p.rim}" stop-opacity="0.75"/></linearGradient>`);
+  let s = `<path d="${d}" fill="url(#${g})" stroke="${p.edge}" stroke-opacity="0.5" stroke-width="${f(Math.max(1.6, L * 0.012))}" stroke-linejoin="round"/>`;
   s += `<path d="${d}" fill="url(#${sd})"/>`;
-  s += `<path d="${tip}" fill="none" stroke="${p.rim}" stroke-opacity="${f(0.55 + (1 - tint) * 0.35)}" stroke-width="${f(rimW)}" stroke-linecap="round" transform="translate(0 ${f(L * 0.035)}) scale(0.94 0.97)"/>`;
+  s += `<path d="${d}" fill="url(#${hg})"/>`;
+  s += `<path d="${tip}" fill="none" stroke="${p.rim}" stroke-opacity="0.22" stroke-width="${f(Math.max(1.2, L * 0.016))}" stroke-linecap="round" transform="translate(0 ${f(L * 0.03)}) scale(0.95 0.97)"/>`;
   s += `<path d="M${f(-hw * 0.7)} ${f(-L * 0.72)} Q0 ${f(-L * 0.84)} ${f(hw * 0.7)} ${f(-L * 0.72)}" fill="none" stroke="${p.edge}" stroke-opacity="0.2" stroke-width="${f(Math.max(1.5, L * 0.012))}" stroke-linecap="round"/>`;
   s += `<path d="M0 ${f(-L * 0.14)} Q${f(jx(r) * hw)} ${f(-L * 0.45)} 0 ${f(-L * 0.68)}" fill="none" stroke="${p.edge}" stroke-opacity="0.16" stroke-width="${f(Math.max(1.2, L * 0.01))}" stroke-linecap="round"/>`;
   return s;
@@ -143,15 +145,15 @@ function blossomBody(c, cw, form, seed, opts) {
     let layer = '';
     for (let i = 0; i < n; i++) {
       const ang = off + i * step + (r() - 0.5) * step * 0.3;
-      const L = L0 * (0.93 + r() * 0.14), W = Math.min(L * 0.75, Math.max(L * 0.2, F.wide * L / n)) * (0.92 + r() * 0.16);
+      const L = L0 * (0.9 + r() * 0.2), W = Math.min(L * 0.8, Math.max(L * 0.2, F.wide * L / n)) * (0.85 + r() * 0.3);
       const tilt = 1 - t * 0.18; // inner petals foreshortened = curling toward the centre
-      layer += `<g transform="rotate(${f(ang)}) scale(1 ${f(tilt * (0.97 + r() * 0.05))})">${lushPetal(c, cw, Math.min(1, t * 0.9 + r() * 0.1), L, W, r)}</g>`;
+      layer += `<g transform="rotate(${f(ang)}) scale(1 ${f(tilt * (0.97 + r() * 0.05))})">${lushPetal(c, cw, t * 0.85 + (li % 2 ? 0.08 : -0.04) + (r() - 0.5) * 0.3, L, W, r)}</g>`;
     }
     s += `<g filter="url(#${pf})">${layer}</g>`;
   }
   // dome shading: darker toward the rim, lighter at the crown
-  const dm = c.once(`dome-${cw}`, (id) => `<radialGradient id="${id}"><stop offset="0.55" stop-color="${p.edge}" stop-opacity="0"/><stop offset="1" stop-color="${p.edge}" stop-opacity="0.28"/></radialGradient>`);
-  s += `<circle r="${f(F.len0 * 1.02)}" fill="url(#${dm})"/>`;
+  const dm = c.once(`dome-${cw}`, (id) => `<radialGradient id="${id}"><stop offset="0.5" stop-color="${p.edge}" stop-opacity="0"/><stop offset="1" stop-color="${p.edge}" stop-opacity="0.22"/></radialGradient>`);
+  s += `<circle r="${f(F.len0 * 1.2)}" fill="url(#${dm})"/>`;
   const hl = c.once(`crown-${cw}`, (id) => `<radialGradient id="${id}" cx="0.42" cy="0.38"><stop offset="0" stop-color="${p.rim}" stop-opacity="0.35"/><stop offset="0.7" stop-color="${p.rim}" stop-opacity="0"/></radialGradient>`);
   s += `<circle r="${f(F.len0 * 0.8)}" fill="url(#${hl})"/>`;
   return s;
@@ -211,8 +213,8 @@ for (const [cw, form, seed] of HEROES) {
   const c = ctx();
   const body = blossomBody(c, cw, form, seed);
   const svg = doc(c, 768, 768, '-500 -500 1000 1000', body);
-  save(`blossom-${cw}.png`, render(svg, 768), 256);
-  save(`blossom-${cw}@1x.png`, render(svg, 384), 256);
+  save(`blossom-${cw}.png`, render(svg, 768), 224);
+  save(`blossom-${cw}@1x.png`, render(svg, 384), 224);
 }
 
 // petal sprites: base at bottom centre of a 128 canvas, pointing up
@@ -247,8 +249,8 @@ Object.keys(SPRAYS).forEach((name, si) => {
     front += `<g transform="translate(${x} ${y}) rotate(${a}) scale(${sc})">${budBody(c, S.bud, 900 + i + si)}</g>`;
   });
   const svg = doc(c, 900, 900, '0 0 900 900', back + mid + front);
-  save(`spray-${name}.png`, render(svg, 800), 256);
-  save(`spray-${name}@1x.png`, render(svg, 400), 256);
+  save(`spray-${name}.png`, render(svg, 800), 224);
+  save(`spray-${name}@1x.png`, render(svg, 400), 224);
 });
 
 // ---------- paper texture tile (seamless) ----------

@@ -1155,5 +1155,17 @@ body.page-play .player-bar[hidden] { display: none; }
   body.kit-page::after { content: ""; position: fixed; inset: calc(var(--pc-margin) + 0.45rem); z-index: -1; pointer-events: none; border: 2px solid var(--gilt); border-radius: 1.1rem; outline: 1px solid var(--gilt-soft); outline-offset: 4px;
     background: var(--orn-tl) left top / 2.4rem no-repeat, var(--orn-tr) right top / 2.4rem no-repeat, var(--orn-bl) left bottom / 2.4rem no-repeat, var(--orn-br) right bottom / 2.4rem no-repeat; }
   body.kit-page main.kit { position: fixed; top: calc(var(--pc-margin) + 1.3rem); left: calc(var(--pc-margin) + 1.3rem); right: calc(var(--pc-margin) + 1.3rem); bottom: calc(var(--pc-margin) + 1.3rem); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 0.2rem 1rem; max-width: none; margin: 0; }
+  body.kit-page .flourish { --fl: clamp(4rem, 20vw, 6.5rem); opacity: 0.8; }
+  body.kit-page main.kit { padding-top: 1.2rem; }
   body.kit-page .kit-header { background: transparent; border: 0; box-shadow: none; padding: 0; }
 }
+body.page-play .player-bar { padding-left: 3.2rem; padding-right: 3.2rem; }
+body.page-play #app .play-center { margin-left: auto; margin-right: auto; }
+.sg-postcard { --pc-inset: 0.6rem; --pc-orn: 3rem; border-radius: 1.4rem; padding: var(--space-6); }
+.sg-postcard__inner { padding: var(--space-5) var(--space-4); }
+.sg-stamp { font-size: clamp(2.5rem, 8vw, 4.5rem); }
+.stamp { border-width: 0.6rem; outline-offset: -1.1rem; }
+
+/* one number only: hide a separate numeric countdown whenever the petal timer rendered its own */
+.timer-wrap:has(.timer__svg) .countdown { display: none; }
+body.page-play .player-bar { padding-left: 3.8rem; padding-right: 3.8rem; }

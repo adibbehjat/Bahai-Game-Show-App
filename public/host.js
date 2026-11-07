@@ -77,7 +77,7 @@
     setBody();
     var screen = h('div', { class: 'screen ' + (opts && opts.stage ? 'stage-screen' : 'host-screen' + (opts && opts.center ? ' host-screen--center' : '')) }, children);
     app.replaceChildren(screen);
-    if (window.Flower && Flower.decorate) { try { Flower.decorate(screen); } catch (e) { /* ignore */ } }
+    if (window.Flower && Flower.decorate) { try { Flower.decorate(opts && opts.stage ? screen.querySelector('.stage') : screen); } catch (e) { /* ignore */ } }
     return screen;
   }
 
@@ -102,7 +102,6 @@
   // opts: {pill, soft, controls:[nodes], lb:true, main: node(s) for the left column or full width}
   function stage(r, opts) {
     var brand = h('div', { class: 'band__brand' },
-      blossomImg(120, 1),
       h('div', { class: 'band__titles' },
         h('div', { class: 'band__title', text: r.packTitle || 'Holy Day Game Show' }),
         h('div', { class: 'band__sub', text: THEME_LABELS[r.theme] || THEME_LABELS['default'] })));
@@ -334,7 +333,8 @@
       onclick: function () { emitAck('host:start', {}); } });
     var hero = h('div', { class: 'lobby-hero' },
       h('div', { class: 'lobby-hero__label', text: 'Join with code' }),
-      h('div', { class: 'room-code', text: r.code }));
+      h('div', { class: 'room-code', text: r.code }),
+      h('div', { class: 'postmark', 'aria-hidden': 'true' }));
     var qr = h('div', { class: 'qr-card' },
       h('div', { class: 'qr-frame' }, S.qr ? h('img', { src: S.qr, alt: 'QR code to join the game', width: '256', height: '256' }) : null),
       h('div', { class: 'qr-card__label', text: 'Scan to join' }));

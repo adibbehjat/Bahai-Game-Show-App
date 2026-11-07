@@ -48,26 +48,40 @@ body { margin: 0; min-height: 100vh; }
   height: min(100vh, calc(100vw * 9 / 16));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  gap: 1.6cqh;
-  padding: 3cqh 3cqw;
+  gap: 1.4cqh;
+  padding: 3.4cqh 4.2cqw;
   font-size: 1.7cqw;
   line-height: 1.3;
+  isolation: isolate;
+  border-radius: 2.2cqw;
+  background: var(--aged-edge), var(--halftone), var(--paper-texture), var(--card-stock);
+  background-size: auto, 4px 4px, 256px 256px, auto;
+  box-shadow: var(--shadow-soft), var(--emboss);
 }
-.stage-screen .flourish { --fl: clamp(5rem, 9vw, 12rem); }
-.stage-screen .flourish--bl, .stage-screen .flourish--br { --fl: clamp(4.5rem, 8vw, 10rem); }
+/* gilt double rule + Art Nouveau corner ornaments (landscape postcard) */
+.stage::before { content: ""; position: absolute; inset: 1.3cqw; z-index: 3; pointer-events: none; border: 0.2cqw solid var(--gilt); border-radius: 1.5cqw; outline: 0.1cqw solid var(--gilt-soft); outline-offset: 0.45cqw; }
+.stage::after { content: ""; position: absolute; inset: 1.3cqw; z-index: 3; pointer-events: none;
+  background: var(--orn-tl) left top / 5cqw no-repeat, var(--orn-tr) right top / 5cqw no-repeat, var(--orn-bl) left bottom / 5cqw no-repeat, var(--orn-br) right bottom / 5cqw no-repeat; }
+.stage .decor-layer { border-radius: 2.2cqw; }
+.stage .flourish { --fl: clamp(5rem, 7.5vw, 9.5rem); opacity: 0.9; }
+.stage .flourish--tr, .stage .flourish--bl, .stage .drift { display: none; }
+
 
 .band {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 2cqw;
-  padding: 0.9cqh 1.6cqw;
-  background: color-mix(in srgb, var(--color-surface) 94%, transparent);
-  border: 0.25cqw solid var(--color-border-strong);
-  border-radius: 1.2cqw;
-  box-shadow: var(--shadow-soft);
-  min-height: 8.4cqh;
+  padding: 0.7cqh 1.2cqw 1cqh;
+  background: none;
+  border: 0;
+  border-bottom: 0.2cqw solid var(--gilt);
+  border-radius: 0;
+  box-shadow: none;
+  min-height: 8cqh;
 }
+.band--top { padding-left: 5.2cqw; }
+.band--bottom { border-bottom: 0; border-top: 0.2cqw solid var(--gilt); padding: 1cqh 1.2cqw 0.6cqh; }
 .band__brand { display: flex; align-items: center; gap: 1.2cqw; min-width: 0; }
 .band__brand .blossom { width: 5.2cqh; height: 5.2cqh; flex: none; }
 .band__title { font-family: var(--font-display); font-variation-settings: var(--display-variation); font-weight: 700; font-size: 2.3cqw; line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -91,7 +105,7 @@ body { margin: 0; min-height: 100vh; }
 /* Lobby */
 .lobby-grid { display: grid; grid-template-columns: minmax(0, 1fr) 29cqw; gap: 2.4cqw; min-height: 0; }
 .lobby-side { align-items: stretch; gap: 1.4cqh; }
-.howto { padding: 1.4cqh 1.4cqw; background: color-mix(in srgb, var(--color-surface) 94%, transparent); border: 0.25cqw solid var(--color-border-strong); border-radius: 1.4cqw; box-shadow: var(--shadow-soft); }
+.howto { padding: 1.2cqh 0 0 1.6cqw; border-left: 0.2cqw solid var(--gilt); }
 .howto__title { font-size: 1.9cqw; margin-bottom: 0.8cqh; }
 .howto__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7cqh; }
 .howto__list li { display: grid; grid-template-columns: 7.2cqw minmax(0, 1fr); gap: 0.8cqw; font-size: 1.25cqw; line-height: 1.25; }
@@ -99,9 +113,12 @@ body { margin: 0; min-height: 100vh; }
 
 .lobby-hero { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1cqh; }
 .lobby-hero__label { font-size: 1.8cqw; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--color-ink-soft); }
-.stage .room-code { font-size: 9.5cqw; border-width: 0.4cqw; border-radius: 2cqw; letter-spacing: 0.12em; }
+.stage .room-code { font-size: 9.5cqw; border: 0.9cqw dotted var(--gilt); outline: 0.25cqw solid var(--gilt); outline-offset: -1.7cqw; border-radius: 0.5cqw; background: var(--card-stock); box-shadow: none; letter-spacing: 0.12em; padding: 0.2em 0.3em 0.2em 0.42em; }
+.lobby-hero { position: relative; }
+.lobby-hero .postmark { position: absolute; right: -4cqw; top: 3cqh; font-size: 1.5cqw; }
+.stage .qr-frame { border: 0.3cqw solid var(--gilt); }
 .qr-card { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 0.8cqh; }
-.stage .qr-frame { padding: 1.1cqw; border-width: 0.3cqw; border-radius: 1.6cqw; }
+.stage .qr-frame { padding: 1.1cqw; border-radius: 0.6cqw; }
 .stage .qr-frame img, .stage .qr-frame svg { width: 22cqh; height: 22cqh; }
 .qr-card__label { font-size: 1.4cqw; font-weight: 800; color: var(--color-ink-soft); }
 .lobby-quote { font-size: 1.7cqw; max-width: 56cqw; margin: 0 auto; padding: 0.8cqh 2cqw; }
@@ -148,7 +165,7 @@ body { margin: 0; min-height: 100vh; }
 .spell-letters { display: flex; justify-content: center; gap: 1cqw; margin-top: 1.5cqh; }
 .spell-answer { font-family: var(--font-display); font-variation-settings: var(--display-variation); font-weight: 800; font-size: 7cqw; text-align: center; line-height: 1.1; }
 
-.reveal-banner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1.8cqw; align-items: center; padding: 1.4cqh 2cqw; background: color-mix(in srgb, var(--color-surface) 94%, transparent); border: 0.3cqw solid var(--color-accent); border-radius: 1.6cqw; box-shadow: var(--shadow-soft); animation: rise var(--dur-slow) var(--ease) both; }
+.reveal-banner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1.8cqw; align-items: center; padding: 1.4cqh 2cqw; background: color-mix(in srgb, var(--color-surface) 60%, transparent); border: 0.2cqw solid var(--gilt); outline: 0.1cqw solid var(--gilt-soft); outline-offset: 0.35cqw; border-radius: 1cqw; animation: rise var(--dur-slow) var(--ease) both; }
 .reveal-banner .blossom { width: 8cqh; height: 8cqh; }
 .reveal-banner__label { font-size: 1.3cqw; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--color-ink-soft); }
 .reveal-banner__answer { font-family: var(--font-display); font-variation-settings: var(--display-variation); font-weight: 800; font-size: 2.6cqw; line-height: 1.12; color: var(--color-ink); overflow-wrap: anywhere; }
@@ -157,19 +174,19 @@ body { margin: 0; min-height: 100vh; }
 .stat-stack { display: flex; flex-direction: column; align-items: flex-end; gap: 0.6cqh; }
 
 /* Leaderboard sidebar */
-.lb { display: flex; flex-direction: column; gap: 1.2cqh; min-height: 0; padding: 1.6cqh 1.3cqw; background: color-mix(in srgb, var(--color-surface) 94%, transparent); border: 0.3cqw solid var(--color-accent); border-radius: 1.6cqw; box-shadow: var(--shadow-soft); }
-.lb__head { display: flex; align-items: center; gap: 0.8cqw; font-family: var(--font-display); font-variation-settings: var(--display-variation); font-weight: 800; font-size: 2.3cqw; line-height: 1; }
+.lb { display: flex; flex-direction: column; gap: 1.2cqh; min-height: 0; padding: 0.6cqh 0 0.6cqh 1.8cqw; background: none; border: 0; border-left: 0.2cqw solid var(--gilt); border-radius: 0; box-shadow: none; }
+.lb__head { align-self: flex-end; display: flex; align-items: center; gap: 0.8cqw; padding: 0.7cqh 1.4cqw; border: 0.45cqw dotted var(--gilt); outline: 0.15cqw solid var(--gilt); outline-offset: -0.9cqw; background: var(--card-stock); font-family: var(--font-display); font-variation-settings: var(--display-variation); font-weight: 800; font-size: 2.3cqw; line-height: 1; }
 .lb__head .blossom { width: 3.4cqw; height: 3.4cqw; }
 .lb__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.9cqh; flex: 1; min-height: 0; }
-.lb__row { display: grid; grid-template-columns: 3.2cqw 2.4cqw minmax(0, 1fr) auto; align-items: center; gap: 0.7cqw; min-height: 7.6cqh; padding: 0.6cqh 0.8cqw; background: var(--color-bg); border: 0.2cqw solid var(--color-border); border-radius: 1cqw; font-weight: 800; font-size: 1.6cqw; }
-.lb__row--1 { background: var(--color-accent); color: var(--color-on-accent); border-color: var(--color-ink); }
+.lb__row { display: grid; grid-template-columns: 3.2cqw 2.4cqw minmax(0, 1fr) auto; align-items: center; gap: 0.7cqw; min-height: 7.6cqh; padding: 0.6cqh 0.8cqw; background: transparent; border: 0; border-bottom: 0.15cqw solid var(--gilt-soft); border-radius: 0; font-weight: 800; font-size: 1.6cqw; }
+.lb__row--1 { background: color-mix(in srgb, var(--color-accent) 55%, transparent); color: var(--color-ink); border-bottom-color: var(--gilt); border-radius: 0.8cqw; }
 .lb__rank { display: grid; place-items: center; width: 3.2cqw; height: 3.2cqw; border-radius: 50%; background: var(--color-primary); color: var(--color-on-primary); font-family: var(--font-display); font-weight: 900; font-size: 1.7cqw; }
 .lb__row--1 .lb__rank { background: var(--color-ink); color: var(--color-surface); }
 .lb__badge { font-size: 1.9cqw; text-align: center; line-height: 1; }
 .lb__name { min-width: 0; line-height: 1.1; font-size: 1.45cqw; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; overflow-wrap: anywhere; }
 .lb__score { font-variant-numeric: tabular-nums; font-size: 1.7cqw; }
 .lb__empty { color: var(--color-ink-soft); font-size: 1.5cqw; font-weight: 700; text-align: center; padding: 3cqh 0.5cqw; }
-.lb__foot { text-align: center; font-size: 1.4cqw; font-weight: 800; color: var(--color-ink-soft); letter-spacing: 0.08em; text-transform: uppercase; }
+.lb__foot { text-align: center; padding-top: 0.6cqh; font-size: 1.4cqw; font-weight: 800; color: var(--color-ink-soft); letter-spacing: 0.08em; text-transform: uppercase; }
 
 /* Over / podium */
 .over { display: flex; flex-direction: column; align-items: center; justify-content: space-between; gap: 1.4cqh; min-height: 0; }
@@ -205,3 +222,10 @@ body { margin: 0; min-height: 100vh; }
 @media (max-width: 800px) {
   .pack-list { grid-template-columns: 1fr; }
 }
+.stage .podium { border-bottom: 0.3cqw solid var(--gilt); }
+
+/* host question/reveal: keep the question and its choices together, centred in the message side */
+.stage__main--lb .stage__col { justify-content: center; }
+.stage .q-body { flex: 0 1 auto; justify-content: flex-start; }
+.stage .choice-grid, .stage .tf-grid { flex: none; height: 34cqh; max-height: none; }
+.stage .reveal-banner { margin-top: 0.4cqh; }

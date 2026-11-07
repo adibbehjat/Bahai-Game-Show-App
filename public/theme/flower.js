@@ -198,7 +198,13 @@
       if (remaining > 0) raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
-    return { stop: function () { stopped = true; if (raf) cancelAnimationFrame(raf); } };
+    // keep the number right even if rAF is throttled (background tab): same endsAt clock
+    var iv = setInterval(function () {
+      if (stopped) { clearInterval(iv); return; }
+      var s = Math.ceil(Math.max(0, endsAt - Date.now()) / 1000);
+      if (s !== lastSecs) { lastSecs = s; secs.textContent = String(s); container.setAttribute('aria-label', s + (s === 1 ? ' second left' : ' seconds left')); }
+    }, 250);
+    return { stop: function () { stopped = true; clearInterval(iv); if (raf) cancelAnimationFrame(raf); } };
   }
 
   // ---------- burst ----------
@@ -280,6 +286,16 @@
     }
     rootEl.insertBefore(layer, rootEl.firstChild);
     return rootEl;
+  }
+
+  // Pages that use the phone postcard frame get their corner art automatically.
+  if (typeof document !== 'undefined') {
+    var autoDecorate = function () {
+      var b = document.body;
+      if (b && b.classList.contains('page-play')) decorate(b);
+    };
+    if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoDecorate);
+    else autoDecorate();
   }
 
   return { blossom: blossom, petalTimer: petalTimer, burst: burst, decorate: decorate, isQuiet: isQuiet, themeArt: themeArt };
