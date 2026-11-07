@@ -34,12 +34,18 @@ This is the stable interface between the artwork and the code. **Keep filenames,
 ## Status: owner art vs placeholder
 | Asset | Status |
 |---|---|
-| `blossom-gold`, `blossom-ivory`, `blossom-rose` (+ `@1x`) | **owner art** (batch 1) |
-| `spray-warm` (+ `@1x`) | **owner art** (batch 1), trimmed and anchored to the top-left of the canvas so the stems bleed off the corner (mirrors correctly for other corners); palette-reduced to 224 colours |
-| `petal-gold`, `petal-ivory` (+ `@2x`) | **owner art** (batch 1) |
-| `leaf-a`, `leaf-b`, `leaf-c` | **owner art** (batch 1); not yet placed in any screen (reserved for sprigs along edges), shown in `/styleguide` |
-| `paper.png` | **processed**: the supplied tile was a perfectly flat 8%-alpha fill with no grain, so it is replaced by a seamless per-pixel grain (walnut `#6B4A32`, alpha 0 to 3.5%) that layers over the eggshell background colour. Original kept in `art-inbox/batch1/` |
-| `blossom-coral/plum/sage/spring`, `petal-coral/plum/sage/rose/spring`, `spray-plum`, `spray-green`, `branch-*`, `bud-*`, `ornament-*`, `wash-*` | placeholder (procedural, `npm run build-art`) |
+| `blossom-gold`, `blossom-ivory`, `blossom-rose` (+ `@1x`) | **owner art** (batch 1; feathery style) |
+| `blossom-coral`, `blossom-spring` (+ `@1x`) | **owner art** (batch 2; denser incurved style, more saturated; spring reads olive-yellow-green) |
+| `spray-warm` (+ `@1x`) | **owner art** (batch 1), trimmed and anchored top-left so stems bleed off the corner; 224 colours |
+| `spray-green` (+ `@1x`) | **owner art** (batch 2); already flush with the top-left edges (trim offset 0,0), only palette-reduced to 224 colours |
+| `branch-warm` | **owner art** (batch 2), trimmed (413x143), scaled to the full 640 width and anchored on the left edge so the stem bleeds off; mirrored use checked |
+| `bud-gold` | **owner art** (batch 2) |
+| `bud-rose` | **owner art** (batch 2), recoloured: `-modulate 100,60,100 -fill '#D69C94' -colorize 28%` (was magenta-pink; now dusty rose to match `blossom-rose`) |
+| `petal-gold`, `petal-ivory`, `petal-rose`, `petal-coral`, `petal-spring` (+ `@2x`) | **owner art** (batches 1 and 2) |
+| `leaf-a`, `leaf-b`, `leaf-c` | **owner art** (batch 1); not yet placed on a screen (shown in `/styleguide`) |
+| `paper.png` | **owner art, converted** (batch 2): the supplied RGB tile is opaque and near-flat, so its luminance is converted to a walnut `#6B4A32` alpha overlay (alpha at most about 4%). It layers over the eggshell background colour (token unchanged), is a soft cloudy fibre, and tiles without visible seams in a 3x3 test. It beat the procedural per-pixel grain (more visible, no repeat pattern). Original: `art-inbox/batch2/paper.png` |
+| `blossom-plum`, `blossom-sage`, `petal-plum`, `petal-sage`, `bud-coral`, `bud-plum`, `spray-plum`, `branch-plum`, `branch-green`, `ornament-*`, `wash-*` | placeholder (procedural, `npm run build-art`) |
+Where the art is used: `bud-*` is a single edge accent (top-right) on pages outside the host stage and phone; `branch-*` is the opposite-edge branch (welcome, lobby, podium); `leaf-*` are reserved.
 Safeguard: owner-supplied files are listed in `OWNER-ART.json` (same folder). `npm run build-art` loads it, prints `skipped (owner art): <file>` and never writes those files, even with `--only=<name,...>`; only `--force-owner` overrides it. Add a filename to the manifest whenever owner art replaces a placeholder. `--only=blossom-coral,bud-gold` regenerates just those placeholders. (Backup of the original placeholders: `/tmp/art-placeholders-backup/`.)
 
 Limits: each file under 400 KB, whole folder under 4 MB (quantise with `convert in.png -colors 224 PNG8:out.png`; keep the alpha channel).

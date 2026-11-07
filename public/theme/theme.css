@@ -772,7 +772,7 @@ img, svg { max-width: 100%; }
 .flourish--br { --fl: clamp(9rem, 20vw, 18rem); width: var(--fl); height: auto; aspect-ratio: 640 / 300; right: 0; bottom: 14%; }   /* smaller branch from the opposite edge */
 .flourish--br img { transform: scaleX(-1); transform-origin: center; }
 .flourish--bl { --fl: clamp(3.5rem, 8vw, 7rem); left: -1.8rem; bottom: 22%; }                                            /* the odd single blossom */
-.flourish--tr { display: none; }
+.flourish--tr { --fl: clamp(2.6rem, 5vw, 4.6rem); top: 16%; right: 1.4rem; rotate: 14deg; }                /* a single bud accent */
 .flourish--tl img, .flourish--br img { animation: sway 22s ease-in-out infinite alternate; }
 @keyframes sway { from { rotate: -1.2deg; } to { rotate: 1.2deg; } }
 

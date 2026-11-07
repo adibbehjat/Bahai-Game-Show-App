@@ -73,8 +73,10 @@
   function sprayUrls(n) { return { x1: ART + 'spray-' + n + '@1x.png', x2: ART + 'spray-' + n + '.png' }; }
   function petalUrls(cw) { return { x1: ART + 'petal-' + cw + '.png', x2: ART + 'petal-' + cw + '@2x.png' }; }
   function branchUrls(n) { var u = ART + 'branch-' + n + '.png'; return { x1: u, x2: u }; }
+  var BUD_FOR = { gold: 'gold', rose: 'rose', coral: 'coral', plum: 'plum', sage: 'gold', ivory: 'gold', spring: 'gold' };
+  function budUrls(cw) { var u = ART + 'bud-' + (BUD_FOR[cw] || 'gold') + '.png'; return { x1: u, x2: u }; }
   function urlsFor(kind, name) {
-    return kind === 'hero' ? heroUrls(name) : kind === 'spray' ? sprayUrls(name) : kind === 'branch' ? branchUrls(name) : petalUrls(name);
+    return kind === 'hero' ? heroUrls(name) : kind === 'spray' ? sprayUrls(name) : kind === 'branch' ? branchUrls(name) : kind === 'bud' ? budUrls(name) : petalUrls(name);
   }
   function themeName(kind) { var a = themeArt(); return kind === 'spray' || kind === 'branch' ? a.spray : a.hero; }
 
@@ -270,7 +272,7 @@
     layer.className = 'decor-layer' + (isPage ? ' decor-layer--fixed' : '');
     layer.setAttribute('aria-hidden', 'true');
     // asymmetric edge botanicals: one large cluster, a smaller branch from the opposite edge, one accent blossom
-    [['tl', 'spray'], ['br', 'branch'], ['bl', 'hero']].forEach(function (spec) {
+    [['tl', 'spray'], ['br', 'branch'], ['bl', 'hero'], ['tr', 'bud']].forEach(function (spec) {
       var d = document.createElement('div');
       d.className = 'flourish flourish--' + spec[0];
       d.setAttribute('aria-hidden', 'true');

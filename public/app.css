@@ -62,7 +62,7 @@ body { margin: 0; min-height: 100vh; }
 .stage .flourish { --fl: clamp(6rem, 11vw, 14rem); opacity: 0.92; }
 .stage .flourish--br { display: none; }
 .stage--lobby .flourish--br, .stage--over .flourish--br { display: block; --fl: clamp(7rem, 14vw, 17rem); right: 2%; bottom: 13cqh; }
-.stage .flourish--bl, .stage .drift { display: none; }
+.stage .flourish--bl, .stage .flourish--tr, .stage .drift { display: none; }
 .stage--over .flourish--bl { display: block; --fl: clamp(5rem, 9vw, 11rem); bottom: 28%; }
 
 
