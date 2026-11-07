@@ -31,6 +31,17 @@ This is the stable interface between the artwork and the code. **Keep filenames,
 | `paper.png` | Seamless, very faint paper grain tile; barely visible on eggshell | 256x256 | semi-transparent (alpha at most about 10%) | warm brown specks | `--paper-texture` in `theme.css` |
 | `wash-default.png`, `wash-naw-ruz.png`, `wash-ridvan.png`, `wash-declaration-bab.png`, `wash-birth-bab.png`, `wash-birth-bahaullah.png`, `wash-covenant.png`, `wash-martyrdom-bab.png`, `wash-ascension-bahaullah.png`, `wash-ascension-abdulbaha.png` | Barely-there soft colour bloom in the corners, stretched to cover the page (alpha at most about 12%; text contrast is verified against it). One per theme id | 480x270 | semi-transparent | theme accent tints (default gold/rose, naw-ruz sage, ridvan rose, births champagne/gold, covenant sage/mauve, solemn greys) | `--wash` in `theme.css` |
 
+## Status: owner art vs placeholder
+| Asset | Status |
+|---|---|
+| `blossom-gold`, `blossom-ivory`, `blossom-rose` (+ `@1x`) | **owner art** (batch 1) |
+| `spray-warm` (+ `@1x`) | **owner art** (batch 1), trimmed and anchored to the top-left of the canvas so the stems bleed off the corner (mirrors correctly for other corners); palette-reduced to 224 colours |
+| `petal-gold`, `petal-ivory` (+ `@2x`) | **owner art** (batch 1) |
+| `leaf-a`, `leaf-b`, `leaf-c` | **owner art** (batch 1); not yet placed in any screen (reserved for sprigs along edges), shown in `/styleguide` |
+| `paper.png` | **processed**: the supplied tile was a perfectly flat 8%-alpha fill with no grain, so it is replaced by a seamless per-pixel grain (walnut `#6B4A32`, alpha 0 to 3.5%) that layers over the eggshell background colour. Original kept in `art-inbox/batch1/` |
+| `blossom-coral/plum/sage/spring`, `petal-coral/plum/sage/rose/spring`, `spray-plum`, `spray-green`, `branch-*`, `bud-*`, `ornament-*`, `wash-*` | placeholder (procedural, `npm run build-art`) |
+Note: running `npm run build-art` overwrites same-named files; do not run it without first protecting the owner art (backup of the original placeholders: `/tmp/art-placeholders-backup/`).
+
 Limits: each file under 400 KB, whole folder under 4 MB (quantise with `convert in.png -colors 224 PNG8:out.png`; keep the alpha channel).
 
 ## Replacing a file
