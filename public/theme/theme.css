@@ -1184,3 +1184,8 @@ body.page-play .player-bar[hidden] { display: none; }
 .sg-card { --pc-inset: 0.6rem; --pc-orn: 2.4rem; padding: var(--space-6); min-height: 12rem; }
 .sg-c-walnut { background: var(--walnut); } .sg-c-soft-sepia { background: var(--soft-sepia); } .sg-c-olive { background: var(--olive); } .sg-c-terracotta { background: var(--terracotta); } .sg-c-ivory { background: var(--ivory); }
 .sg-code { font-size: clamp(2.5rem, 8vw, 4.5rem); }
+/* phone footer: long generated names wrap instead of truncating; score and rank may drop to a second row */
+body.page-play .player-bar { flex-wrap: wrap; row-gap: 0.1rem; column-gap: 0.8rem; padding-top: 0.35rem; padding-bottom: 0.35rem; font-size: clamp(0.9rem, 3.7vw, 1.05rem); line-height: 1.2; justify-content: center; }
+body.page-play .player-bar__name { flex: 1 1 9rem; min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; text-align: left; }
+body.page-play .player-bar__score, body.page-play .player-bar__rank, body.page-play .player-bar__badge { flex: none; }
+body.page-play #app { bottom: calc(var(--pc-margin) + 4.4rem); }
