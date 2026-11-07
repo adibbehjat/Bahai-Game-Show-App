@@ -1,0 +1,13 @@
+{
+  "comment": "Owner-supplied artwork. scripts/build-art.js never overwrites these files (even with --only) unless --force-owner is passed. Add a filename here whenever owner art replaces a placeholder.",
+  "files": [
+    "blossom-gold.png", "blossom-gold@1x.png",
+    "blossom-ivory.png", "blossom-ivory@1x.png",
+    "blossom-rose.png", "blossom-rose@1x.png",
+    "spray-warm.png", "spray-warm@1x.png",
+    "petal-gold.png", "petal-gold@2x.png",
+    "petal-ivory.png", "petal-ivory@2x.png",
+    "leaf-a.png", "leaf-b.png", "leaf-c.png",
+    "paper.png"
+  ]
+}

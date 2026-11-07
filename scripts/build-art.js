@@ -203,7 +203,15 @@ function shrink(png, colors) {
     return execFileSync('convert', ['png:-', '-strip', '-colors', String(colors || 256), '-define', 'png:compression-level=9', 'PNG8:-'], { input: png, maxBuffer: 1 << 28 });
   } catch (e) { return png; }
 }
+// Owner-supplied art is listed in public/theme/art/OWNER-ART.json and is never overwritten
+// (even with --only) unless --force-owner is passed. --only=a.png,b.png limits what is written.
+const OWNER = (() => { try { return new Set(JSON.parse(fs.readFileSync(path.join(OUT, 'OWNER-ART.json'), 'utf8')).files || []); } catch (e) { return new Set(); } })();
+const ARGS = process.argv.slice(2);
+const FORCE_OWNER = ARGS.includes('--force-owner');
+const ONLY = (() => { const a = ARGS.find((x) => x.startsWith('--only=')); return a ? new Set(a.slice(7).split(',').map((x) => (x.endsWith('.png') ? x : x + '.png')).filter(Boolean)) : null; })();
 function save(name, png, quant) {
+  if (ONLY && !ONLY.has(name)) return;
+  if (OWNER.has(name) && !FORCE_OWNER) { console.log('skipped (owner art): ' + name); return; }
   if (quant) png = shrink(png, quant);
   { fs.writeFileSync(path.join(OUT, name), png); written.push([name, png.length]); } }
 

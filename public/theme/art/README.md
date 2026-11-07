@@ -40,7 +40,7 @@ This is the stable interface between the artwork and the code. **Keep filenames,
 | `leaf-a`, `leaf-b`, `leaf-c` | **owner art** (batch 1); not yet placed in any screen (reserved for sprigs along edges), shown in `/styleguide` |
 | `paper.png` | **processed**: the supplied tile was a perfectly flat 8%-alpha fill with no grain, so it is replaced by a seamless per-pixel grain (walnut `#6B4A32`, alpha 0 to 3.5%) that layers over the eggshell background colour. Original kept in `art-inbox/batch1/` |
 | `blossom-coral/plum/sage/spring`, `petal-coral/plum/sage/rose/spring`, `spray-plum`, `spray-green`, `branch-*`, `bud-*`, `ornament-*`, `wash-*` | placeholder (procedural, `npm run build-art`) |
-Note: running `npm run build-art` overwrites same-named files; do not run it without first protecting the owner art (backup of the original placeholders: `/tmp/art-placeholders-backup/`).
+Safeguard: owner-supplied files are listed in `OWNER-ART.json` (same folder). `npm run build-art` loads it, prints `skipped (owner art): <file>` and never writes those files, even with `--only=<name,...>`; only `--force-owner` overrides it. Add a filename to the manifest whenever owner art replaces a placeholder. `--only=blossom-coral,bud-gold` regenerates just those placeholders. (Backup of the original placeholders: `/tmp/art-placeholders-backup/`.)
 
 Limits: each file under 400 KB, whole folder under 4 MB (quantise with `convert in.png -colors 224 PNG8:out.png`; keep the alpha channel).
 
