@@ -14,3 +14,6 @@ npm-debug.log*
 .pm2/
 coverage/
 .DS_Store
+
+# Owner-generated art drop folder (processed into public/theme/art/)
+art-inbox/

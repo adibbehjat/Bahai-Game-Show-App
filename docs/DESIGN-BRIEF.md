@@ -334,3 +334,27 @@ It should feel like a thoughtfully designed interactive experience that naturall
 *Imagine an Edwardian botanical postcard brought to life: delicate chrysanthemums framing warm parchment, elegant typography carrying the content, and generous negative space allowing the experience to breathe.*
 
 *The interface should feel timeless, welcoming, and playful without losing its dignity.*
+
+---
+
+## Addendum (2026-11-07): Visual Identity, Eggshell Edition
+
+*This supersedes the parchment and sepia direction in §4 where they conflict.*
+
+### Visual Identity: Edwardian Botanical Postcard
+
+Create a timeless visual identity inspired by early-20th-century illustrated greeting postcards, emphasizing eggshell-white stationery, hand-painted botanical illustrations, and elegant historical typography.
+
+The dominant background should be a soft eggshell white, with subtle paper texture and gentle tonal variations reminiscent of high-quality antique correspondence paper.
+
+Preserve chrysanthemums as the application's signature botanical motif, illustrated in muted champagne, golden yellow, dusty rose, and delicate sage-green foliage.
+
+Use dark walnut-brown ink for typography, with restrained antique-gold accents for ornamental borders, fine rules, and decorative details.
+
+The floral illustrations should emerge naturally from selected corners and edges, leaving generous negative space throughout the interface.
+
+Avoid sepia overlays, heavily yellowed parchment, distressed paper, or excessive vintage effects. The historical character should come primarily from the illustrations, typography, paper quality, and composition rather than artificial aging.
+
+The visual identity must remain universal across Bahá’í Holy Days and adaptable to both celebratory and solemn occasions.
+
+**Design principle:** An elegant Edwardian postcard printed on eggshell-white stationery, with delicate botanical artwork framing a clean, functional digital experience.
