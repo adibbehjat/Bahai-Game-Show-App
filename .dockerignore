@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+node_modules
+deploy/local
+.git
+.github
+.githooks
+test
+coverage
+*.log
+*.pem
+*.key
+Dockerfile
+docker-compose.yml

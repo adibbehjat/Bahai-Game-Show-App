@@ -1,0 +1,19 @@
+// FORMAT: one JSON object per line. Blank lines and lines starting with // are ignored. Types: single, multi, truefalse, order, spell.
+// Easiest way to write lines: open /kit on the running server (nothing is sent anywhere), copy the line it produces, paste it here.
+// Then run: npm run validate-questions   and restart the server (sudo systemctl restart game_show).
+{"type":"single","q":"Template question: which of these is a color?","choices":["Red","Table","Run","Seven"],"answer":0,"explanation":"Template explanation: red is a color.","source":"TEMPLATE — replace","difficulty":"easy"}
+{"type":"single","q":"Template question: which of these is a number?","choices":["Blue","Seven","Chair","Quickly","Soft"],"answer":1,"explanation":"Template explanation: seven is a number.","source":"TEMPLATE — replace","time":15}
+{"type":"single","q":"Template question: which of these is a season?","choices":["Autumn","Monday","Pencil"],"answer":0,"explanation":"Template explanation: autumn is a season.","source":"TEMPLATE — replace"}
+{"type":"multi","q":"Template question: which of these are fruits? (select all)","choices":["Apple","Carrot","Pear","Rock"],"answer":[0,2],"explanation":"Template explanation: apple and pear are fruits.","source":"TEMPLATE — replace","difficulty":"medium"}
+{"type":"multi","q":"Template question: which of these are even numbers? (select all)","choices":["2","3","4","6","9"],"answer":[0,2,3],"explanation":"Template explanation: 2, 4 and 6 are even.","source":"TEMPLATE — replace"}
+{"type":"multi","q":"Template question: which of these can fly? (select all)","choices":["Sparrow","Stone","Kite"],"answer":[0,2],"explanation":"Template explanation: sparrows and kites fly.","source":"TEMPLATE — replace","time":25}
+{"type":"truefalse","q":"Template question: true or false, water is wet.","answer":true,"explanation":"Template explanation: water is wet.","source":"TEMPLATE — replace","difficulty":"easy"}
+{"type":"truefalse","q":"Template question: true or false, a week has ten days.","answer":false,"explanation":"Template explanation: a week has seven days.","source":"TEMPLATE — replace"}
+{"type":"truefalse","q":"Template question: true or false, the sun is a star.","answer":true,"explanation":"Template explanation: the sun is a star.","source":"TEMPLATE — replace","time":15}
+{"type":"order","q":"Template question: put these numbers in ascending order.","items":["Three","One","Four","Two"],"answer":[1,3,0,2],"explanation":"Template explanation: one, two, three, four.","source":"TEMPLATE — replace","difficulty":"easy"}
+{"type":"order","q":"Template question: put these in order from smallest to largest.","items":["Whale","Ant","Dog","Mouse","Elephant"],"answer":[1,3,2,0,4],"explanation":"Template explanation: ant, mouse, dog, whale, elephant (generic ordering).","source":"TEMPLATE — replace","time":30}
+{"type":"order","q":"Template question: put these days of the week in order.","items":["Wednesday","Monday","Tuesday"],"answer":[1,2,0],"explanation":"Template explanation: Monday, Tuesday, Wednesday.","source":"TEMPLATE — replace"}
+{"type":"spell","clue":"Template clue: a flower with many petals, often grown in autumn.","word":"chrysanthemum","accept":["chrysanthemums"],"explanation":"Template explanation: chrysanthemum.","source":"TEMPLATE — replace","difficulty":"hard"}
+{"type":"spell","clue":"Template clue: a flowering shrub with large clusters of blossoms.","word":"rhododendron","explanation":"Template explanation: rhododendron.","source":"TEMPLATE — replace"}
+{"type":"spell","clue":"Template clue: a word that sounds like what it names, such as buzz.","word":"onomatopoeia","explanation":"Template explanation: onomatopoeia.","source":"TEMPLATE — replace","time":40}
+{"type":"spell","clue":"Template clue: an informal eatery serving coffee (tests accent folding).","word":"café","explanation":"Template explanation: café, with an accent.","source":"TEMPLATE — replace"}

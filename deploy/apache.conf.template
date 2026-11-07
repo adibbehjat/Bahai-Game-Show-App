@@ -1,0 +1,23 @@
+# Rendered by scripts/render-deploy.js into deploy/local/${DOMAIN}.conf
+# Then: sudo cp deploy/local/${DOMAIN}.conf /etc/apache2/sites-available/ && sudo a2ensite ${DOMAIN}
+#       sudo systemctl reload apache2 && sudo certbot --apache -d ${DOMAIN}
+# Security headers are set by the app (helmet); do not duplicate them here.
+<VirtualHost *:80>
+    ServerName ${DOMAIN}
+
+    ProxyPreserveHost On
+    RequestHeader set X-Forwarded-Proto expr=%{REQUEST_SCHEME}
+
+    RewriteEngine On
+    RewriteCond %{HTTP:Upgrade} =websocket [NC]
+    RewriteRule ^/socket.io/(.*) ws://127.0.0.1:${PORT}/socket.io/$1 [P,L]
+
+    ProxyPass /socket.io/ http://127.0.0.1:${PORT}/socket.io/
+    ProxyPassReverse /socket.io/ http://127.0.0.1:${PORT}/socket.io/
+    ProxyPass / http://127.0.0.1:${PORT}/
+    ProxyPassReverse / http://127.0.0.1:${PORT}/
+    ProxyTimeout 86400
+
+    ErrorLog /var/log/apache2/${DOMAIN}.error.log
+    CustomLog /var/log/apache2/${DOMAIN}.access.log combined
+</VirtualHost>

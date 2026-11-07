@@ -1,0 +1,9 @@
+{
+  "id": "_reverent-test",
+  "title": "Reverent Test Pack — placeholder",
+  "theme": "martyrdom-bab",
+  "reverent": true,
+  "description": "Placeholder pack for testing the muted theme.",
+  "opening": { "text": "TEMPLATE opening — replace.", "source": "TEMPLATE — replace" },
+  "closing": { "text": "TEMPLATE closing — replace.", "source": "TEMPLATE — replace" }
+}

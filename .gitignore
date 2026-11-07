@@ -1,0 +1,16 @@
+# --- Secrets: NEVER commit ---
+.env
+.env.*
+!.env.example
+config.local.*
+*.pem
+*.key
+deploy/local/
+
+# --- Runtime / deps ---
+node_modules/
+*.log
+npm-debug.log*
+.pm2/
+coverage/
+.DS_Store

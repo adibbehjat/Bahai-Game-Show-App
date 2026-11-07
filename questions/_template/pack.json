@@ -1,0 +1,9 @@
+{
+  "id": "_template",
+  "title": "Template Pack — replace me",
+  "theme": "default",
+  "reverent": false,
+  "description": "Placeholder pack that exercises every question type.",
+  "opening": { "text": "TEMPLATE opening text — replace with a short welcome or quotation.", "source": "TEMPLATE — replace" },
+  "closing": { "text": "TEMPLATE closing text — replace with a short closing thought.", "source": "TEMPLATE — replace" }
+}

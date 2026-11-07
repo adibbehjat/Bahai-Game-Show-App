@@ -1,0 +1,3 @@
+{ "id": "fixture", "title": "Fixture Pack", "theme": "default", "reverent": false,
+  "opening": { "text": "Fixture opening", "source": "TEST" },
+  "closing": { "text": "Fixture closing", "source": "TEST" } }

@@ -1,0 +1,22 @@
+# Rendered by scripts/render-deploy.js into deploy/local/game_show.service
+# Install: sudo cp deploy/local/game_show.service /etc/systemd/system/ && sudo systemctl daemon-reload
+#          sudo systemctl enable --now game_show
+[Unit]
+Description=Holy Day Game Show (${DOMAIN})
+After=network.target
+
+[Service]
+Type=simple
+User=${USER}
+WorkingDirectory=${APP_DIR}
+ExecStart=${NODE_BIN} ${APP_DIR}/server.js
+Environment=NODE_ENV=production
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=read-only
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,7 @@
+// FORMAT: one JSON object per line. Blank lines and lines starting with // are ignored. Types: single, multi, truefalse, order, spell.
+// Easiest way to write lines: open /kit on the running server (nothing is sent anywhere), copy the line it produces, paste it here.
+// Then run: npm run validate-questions   and restart the server (sudo systemctl restart game_show).
+{"type":"single","q":"Template question: which of these is a color?","choices":["Grey","Table","Run"],"answer":0,"explanation":"Template explanation.","source":"TEMPLATE — replace"}
+{"type":"truefalse","q":"Template question: true or false, a circle has corners.","answer":false,"explanation":"Template explanation.","source":"TEMPLATE — replace"}
+{"type":"order","q":"Template question: put these in order.","items":["Second","First","Third"],"answer":[1,0,2],"explanation":"Template explanation.","source":"TEMPLATE — replace"}
+{"type":"spell","clue":"Template clue: a quiet place of reflection.","word":"naïve","explanation":"Template explanation.","source":"TEMPLATE — replace"}

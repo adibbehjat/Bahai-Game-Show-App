@@ -1,0 +1,12 @@
+# Rendered by scripts/render-deploy.js into deploy/local/Caddyfile
+# Install (Debian/Ubuntu, after installing Caddy):
+#   sudo cp deploy/local/Caddyfile /etc/caddy/Caddyfile
+#   sudo systemctl reload caddy
+# Caddy obtains and renews the HTTPS certificate automatically (ports 80 and 443
+# must be reachable and DNS for ${DOMAIN} must point at this server).
+# Caddy handles WebSockets and X-Forwarded-* headers by itself.
+# Security headers are set by the app (helmet); do not duplicate them here.
+${DOMAIN} {
+	encode gzip
+	reverse_proxy 127.0.0.1:${PORT}
+}

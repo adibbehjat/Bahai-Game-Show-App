@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Holy Day Game Show</title>
+  <link rel="stylesheet" href="/theme/theme.css">
+  <link rel="stylesheet" href="/app.css">
+</head>
+<body data-theme="default" class="page-index">
+  <main class="screen landing" id="landing">
+    <div class="stack landing__inner">
+      <div class="hero-art" id="hero-art"></div>
+      <h1 class="landing__title">Holy Day Game Show</h1>
+      <p class="muted">A party game for celebrating together.</p>
+      <form id="join-form" class="form-open" action="/play" method="get" autocomplete="off">
+        <label class="label" for="room">Join a game</label>
+        <input class="input code-input" id="room" name="room" type="text" maxlength="6" placeholder="ROOM CODE"
+               autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" required>
+        <button class="btn btn--primary btn--lg" type="submit">Join</button>
+      </form>
+      <div class="divider" aria-hidden="true">or</div>
+      <a class="btn btn--lg" href="/host">Host a game</a>
+      <p class="muted"><a href="/kit">Question kit</a></p>
+    </div>
+  </main>
+  <script src="/theme/flower.js"></script>
+  <script src="/index.js"></script>
+</body>
+</html>

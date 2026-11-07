@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Style guide - Whimsical Chrysanthemum Sepia</title>
+  <link rel="stylesheet" href="/theme/theme.css">
+</head>
+<body data-theme="default">
+  <div class="sg-bar" role="toolbar" aria-label="Preview controls">
+    <label class="label" for="sg-theme">Theme</label>
+    <select id="sg-theme" class="input"></select>
+    <label class="sg-toggle"><input type="checkbox" id="sg-reverent"> Reverent mode</label>
+    <button type="button" class="btn" id="sg-burst-top">Petal burst</button>
+  </div>
+
+  <main class="sg stack" id="sg-root">
+    <header class="stack center">
+      <div id="sg-hero-blossom" class="bob"></div>
+      <h1>Whimsical Chrysanthemum Sepia</h1>
+      <p class="muted">A replicable design system. Edit tokens, never components. Aa: &aacute; &iacute; &uacute; &#7717; &lsquo; &#699; Bah&aacute;&#700;&iacute;</p>
+    </header>
+
+    <section class="stack" id="sg-colors">
+      <h2>Colour tokens</h2>
+      <div class="sg-grid" id="sg-color-grid"></div>
+      <h3>Palette (raw)</h3>
+      <div class="sg-grid" id="sg-palette-grid"></div>
+    </section>
+
+    <section class="stack" id="sg-type">
+      <h2>Typography</h2>
+      <p class="display sg-font-sample">Display: Fraunces (soft, wonky) - Naw-R&uacute;z, Ri&#7717;v&aacute;n, &lsquo;Abdu&rsquo;l-Bah&aacute;</p>
+      <p class="sg-font-sample">Body: Nunito - The quick brown fox jumps over the lazy dog. 0123456789</p>
+      <h1>Heading one</h1><h2>Heading two</h2><h3>Heading three</h3>
+      <p class="muted">Muted text uses --color-ink-soft.</p>
+      <p><a href="#sg-type">A link</a></p>
+    </section>
+
+    <section class="stack" id="sg-tokens">
+      <h2>Spacing, radius, shadow, duration</h2>
+      <div id="sg-space-list">
+        <div class="sg-space sg-space--1"><span class="sg-space__bar"></span><code>--space-1</code></div>
+        <div class="sg-space sg-space--2"><span class="sg-space__bar"></span><code>--space-2</code></div>
+        <div class="sg-space sg-space--3"><span class="sg-space__bar"></span><code>--space-3</code></div>
+        <div class="sg-space sg-space--4"><span class="sg-space__bar"></span><code>--space-4</code></div>
+        <div class="sg-space sg-space--5"><span class="sg-space__bar"></span><code>--space-5</code></div>
+        <div class="sg-space sg-space--6"><span class="sg-space__bar"></span><code>--space-6</code></div>
+        <div class="sg-space sg-space--7"><span class="sg-space__bar"></span><code>--space-7</code></div>
+        <div class="sg-space sg-space--8"><span class="sg-space__bar"></span><code>--space-8</code></div>
+      </div>
+      <div class="cluster">
+        <div class="sg-box sg-box--sm"></div><code>--radius-sm</code>
+        <div class="sg-box sg-box--md"></div><code>--radius-md</code>
+        <div class="sg-box sg-box--lg"></div><code>--radius-lg</code>
+      </div>
+      <p class="muted">Boxes also show <code>--shadow-soft</code>. Hover a row to compare durations.</p>
+      <div class="sg-dur-row cluster"><span class="sg-dur sg-dur--fast"></span><code>--dur-fast</code></div>
+      <div class="sg-dur-row cluster"><span class="sg-dur sg-dur--med"></span><code>--dur-med</code></div>
+      <div class="sg-dur-row cluster"><span class="sg-dur sg-dur--slow"></span><code>--dur-slow</code></div>
+    </section>
+
+    <section class="stack" id="sg-layout">
+      <h2>Layout: .screen, .stack, .cluster, .card, .card--deckle, .card--filled</h2>
+      <div class="cluster">
+        <div class="card sg-col stack"><h3>.card</h3><p>Soft shadow, rounded border.</p></div>
+        <div class="card card--deckle sg-col stack"><h3>.card--deckle</h3><p>Transparent: sits straight on the page backdrop (login, PIN, join). No fill, so it can never mismatch the paper.</p><label class="label" for="sg-dk">Host PIN</label><input class="input" id="sg-dk" type="password"><button type="button" class="btn btn--primary">Continue</button></div>
+        <div class="card card--filled sg-col stack"><h3>.card--filled</h3><p>Explicit filled panel for content that must read as a separate sheet (pack cards, QR card).</p></div>
+      </div>
+      <div class="screen card" id="sg-screen-demo">
+        <p><code>.screen</code> is a full-viewport layer. Decorated by <code>Flower.decorate()</code>: corner flourishes and drifting petals.</p>
+      </div>
+    </section>
+
+    <section class="stack" id="sg-buttons">
+      <h2>Buttons and inputs</h2>
+      <div class="cluster">
+        <button type="button" class="btn">Default</button>
+        <button type="button" class="btn btn--primary">Primary</button>
+        <button type="button" class="btn btn--ghost">Ghost</button>
+        <button type="button" class="btn btn--primary btn--lg">Large primary</button>
+        <button type="button" class="btn btn--primary" disabled>Disabled</button>
+      </div>
+      <div class="sg-col stack">
+        <div><label class="label" for="sg-name">Your name</label><input class="input" id="sg-name" placeholder="Nur&#7717;"></div>
+        <div><label class="label" for="sg-spell">Spell it</label><input class="spell-input" id="sg-spell" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Ri&#7717;v&aacute;n"></div>
+      </div>
+    </section>
+
+    <section class="stack" id="sg-big">
+      <h2>Big screen: .room-code, .qr-frame, .big-question</h2>
+      <div class="sg-big-demo stack center">
+        <div class="cluster center">
+          <div class="room-code">K7M2QX</div>
+          <div class="qr-frame"><svg viewBox="0 0 21 21" id="sg-qr" role="img" aria-label="Placeholder QR"></svg></div>
+        </div>
+        <p class="big-question">Which Holy Day marks the start of the new year?</p>
+      </div>
+    </section>
+
+    <section class="stack" id="sg-players">
+      <h2>Players</h2>
+      <div class="cluster">
+        <span class="player-chip">Nur&#7717;</span>
+        <span class="player-chip">Sh&iacute;rin</span>
+        <span class="player-chip player-chip--disconnected">Disconnected</span>
+      </div>
+    </section>
+
+    <section class="stack" id="sg-choices">
+      <h2>Choice tiles: .choice[data-i] (colour + glyph)</h2>
+      <div class="choice-grid" id="sg-choice-grid">
+        <button type="button" class="choice" data-i="0"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">Blossom plum</span></button>
+        <button type="button" class="choice" data-i="1"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">Diamond leaf</span></button>
+        <button type="button" class="choice" data-i="2"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">Circle clay</span></button>
+        <button type="button" class="choice" data-i="3"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">Triangle gold</span></button>
+        <button type="button" class="choice" data-i="4"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">Square sepia</span></button>
+        <button type="button" class="choice" data-i="5"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">Star dusk</span></button>
+      </div>
+      <h3>States</h3>
+      <div class="choice-grid">
+        <button type="button" class="choice is-selected" data-i="0"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">.is-selected</span></button>
+        <button type="button" class="choice is-correct" data-i="1"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">.is-correct</span></button>
+        <button type="button" class="choice is-wrong" data-i="2"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">.is-wrong</span></button>
+        <button type="button" class="choice is-locked" data-i="3"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">.is-locked</span></button>
+      </div>
+      <h3>True / false: .tf-grid</h3>
+      <div class="tf-grid">
+        <button type="button" class="choice" data-i="0"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">True</span></button>
+        <button type="button" class="choice" data-i="1"><span class="choice__glyph" aria-hidden="true"></span><span class="choice__text">False</span></button>
+      </div>
+      <h3>Ordering: .order-list / .order-item[data-pos]</h3>
+      <ol class="order-list sg-col">
+        <li class="order-item" data-pos="1"><span class="order-item__text">First thing</span><span class="order-item__controls"><button type="button" class="btn btn--ghost" aria-label="Move up">&uarr;</button><button type="button" class="btn btn--ghost" aria-label="Move down">&darr;</button></span></li>
+        <li class="order-item is-selected" data-pos="2"><span class="order-item__text">Second (.is-selected)</span></li>
+        <li class="order-item is-correct" data-pos="3"><span class="order-item__text">Third (.is-correct)</span></li>
+        <li class="order-item is-wrong" data-pos="4"><span class="order-item__text">Fourth (.is-wrong)</span></li>
+        <li class="order-item is-locked" data-pos="5"><span class="order-item__text">Fifth (.is-locked)</span></li>
+      </ol>
+    </section>
+
+    <section class="stack" id="sg-timer">
+      <h2>Petal timer and burst</h2>
+      <div class="cluster">
+        <div class="timer" id="sg-timer-demo"></div>
+        <div class="stack">
+          <button type="button" class="btn btn--primary" id="sg-timer-start">Restart 15s timer</button>
+          <button type="button" class="btn" id="sg-burst">Petal burst (correct answer)</button>
+          <p class="muted">Burst is a no-op in reverent mode and under reduced motion.</p>
+        </div>
+      </div>
+      <div class="sg-stage" id="sg-burst-stage"><p class="muted">Burst originates here.</p></div>
+      <h3>Lobby blossom (.blossom--spin)</h3>
+      <div id="sg-lobby-blossom" class="center cluster"></div>
+    </section>
+
+    <section class="stack" id="sg-art">
+      <h2>Art set (PNG, /theme/art/)</h2>
+      <p class="muted">Seven hero blossoms, three corner sprays, seven petal sprites, a paper tile and a wash per theme. Replace any file to re-skin.</p>
+      <div class="cluster" id="sg-art-heroes"></div>
+      <div class="cluster" id="sg-art-petals"></div>
+      <div class="cluster" id="sg-art-sprays"></div>
+    </section>
+
+    <section class="stack sg-col" id="sg-names">
+      <h2>Name picker (phones)</h2>
+      <div class="name-card">
+        <div class="name-card__badge">&#127803;</div>
+        <div class="name-card__name">Hopeful Lily</div>
+        <button type="button" class="shuffle-btn">Shuffle</button>
+        <div class="segmented" role="group" aria-label="Badge type">
+          <button type="button" class="segmented__opt" aria-pressed="true">Emoji</button>
+          <button type="button" class="segmented__opt" aria-pressed="false">Number</button>
+        </div>
+        <div class="badge-grid">
+          <button type="button" class="badge" aria-pressed="true">&#127802;</button>
+          <button type="button" class="badge" aria-pressed="false">&#127803;</button>
+          <button type="button" class="badge" aria-pressed="false">&#127804;</button>
+          <button type="button" class="badge badge--number" aria-pressed="false">42</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="stack" id="sg-scores">
+      <h2>Scoreboard and podium</h2>
+      <ol class="scoreboard sg-col">
+        <li class="scoreboard__row"><span class="scoreboard__name">Nur&#7717;</span><span class="scoreboard__score">2,840</span></li>
+        <li class="scoreboard__row is-you"><span class="scoreboard__name">You</span><span class="scoreboard__score">2,310</span></li>
+        <li class="scoreboard__row"><span class="scoreboard__name">Sh&iacute;rin</span><span class="scoreboard__score">1,975</span></li>
+      </ol>
+      <div class="podium">
+        <div class="podium__step podium__step--2"><span class="podium__name">Sh&iacute;rin</span><span class="podium__score">1,975</span></div>
+        <div class="podium__step podium__step--1"><span class="podium__name">Nur&#7717;</span><span class="podium__score">2,840</span></div>
+        <div class="podium__step podium__step--3"><span class="podium__name">Dar&iacute;us</span><span class="podium__score">1,200</span></div>
+      </div>
+    </section>
+
+    <section class="stack" id="sg-feedback">
+      <h2>Feedback and quotes</h2>
+      <div class="cluster"><span class="locked-in">Locked in</span></div>
+      <div class="cluster"><button type="button" class="btn" id="sg-toast-btn">Show toast</button></div>
+      <blockquote class="quote">O Son of Spirit! My first counsel is this: Possess a pure, kindly and radiant heart.<span class="quote__source">Placeholder - replace with a real source</span></blockquote>
+      <div class="visually-hidden">Visually hidden helper text is present here.</div>
+    </section>
+  </main>
+
+  <script src="/theme/flower.js"></script>
+  <script src="/styleguide.js"></script>
+</body>
+</html>

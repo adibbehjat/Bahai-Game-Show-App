@@ -1,0 +1,36 @@
+/* Play page layout only (phones). Colours, type and component looks come from /theme/theme.css tokens. */
+.page-play #app { min-height: 100vh; }
+.play-screen { display: flex; align-items: flex-start; justify-content: center; padding: var(--space-5); padding-bottom: 5rem; }
+.play-center { width: 100%; max-width: 32rem; text-align: center; }
+.play-center > * + * { margin-top: var(--space-4); }
+
+/* Join screen: sits directly on the page background, no mismatched card. */
+.join-form { text-align: center; }
+.name-card { padding: 0; background: none; box-shadow: none; }
+.name-card__name { font-family: var(--font-display); font-size: clamp(1.75rem, 8vw, 2.5rem); line-height: 1.2; overflow-wrap: anywhere; }
+.shuffle-btn { align-self: center; }
+.segmented { display: inline-flex; gap: var(--space-1); justify-content: center; }
+.segmented__btn { min-width: 6rem; cursor: pointer; font: inherit; }
+.badge-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: var(--space-2); }
+.badge-grid[hidden] { display: none; }
+.badge-grid--numbers { grid-template-columns: repeat(7, 1fr); max-height: 14rem; overflow-y: auto; }
+.badge { min-height: 2.75rem; padding: 0; cursor: pointer; font: inherit; font-size: 1.4rem; }
+.badge--number { font-size: 1rem; }
+
+/* Answer screens */
+.choice-grid { display: grid; grid-template-columns: 1fr; gap: var(--space-3); }
+.tf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.tf-grid .choice { min-height: 10rem; }
+.choice { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 4rem; text-align: left; cursor: pointer; font: inherit; }
+.order-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-3); }
+.order-item { width: 100%; min-height: 3.5rem; text-align: left; cursor: pointer; }
+.prompt { font-size: 1.25rem; }
+.result-line { font-size: 1.5rem; }
+
+/* Persistent footer: badge, name, score, rank */
+.player-bar { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: var(--space-3); align-items: center; justify-content: space-between; padding: var(--space-3) var(--space-5); background: var(--color-surface); color: var(--color-ink); box-shadow: var(--shadow-soft); z-index: 10; }
+.player-bar[hidden] { display: none; }
+.player-bar__name { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.howto-list { text-align: left; padding-left: var(--space-5); }
+.howto-list li + li { margin-top: var(--space-3); }

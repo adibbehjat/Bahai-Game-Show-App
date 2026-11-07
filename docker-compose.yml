@@ -1,0 +1,23 @@
+# Usage: create .env (see DEPLOY.md), then:  docker compose up -d --build
+# NOTE: in .env, wrap the PIN hash in single quotes for Compose: ADMIN_PIN_HASH='scrypt$...'
+# The port is published on 127.0.0.1 only; put a TLS reverse proxy in front.
+services:
+  game_show:
+    build: .
+    image: game_show:latest
+    env_file: .env
+    environment:
+      # Inside the container the app must listen on all interfaces; the
+      # 127.0.0.1 in "ports" below is what keeps it private on the host.
+      HOST: 0.0.0.0
+      PORT: "3719"
+    ports:
+      - "127.0.0.1:3719:3719"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true

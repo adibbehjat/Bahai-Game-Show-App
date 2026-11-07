@@ -1,0 +1,6 @@
+// test fixture: one question per type
+{"type":"single","q":"Fixture single?","choices":["Wrong","Right","Wrong too"],"answer":1,"explanation":"Because.","source":"TEST","time":10}
+{"type":"multi","q":"Fixture multi?","choices":["Yes","No","Yes also","Nope"],"answer":[0,2],"time":10}
+{"type":"truefalse","q":"Fixture truefalse?","answer":true,"time":10}
+{"type":"order","q":"Fixture order?","items":["B","C","A"],"answer":[2,0,1],"time":10}
+{"type":"spell","clue":"Fixture spell clue","word":"Ridván","time":10}
