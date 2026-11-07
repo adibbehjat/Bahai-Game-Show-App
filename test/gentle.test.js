@@ -9,6 +9,8 @@ const PlayState = require('../public/shared/playstate.js');
 
 const anyValue = (q) => (q.type === 'spell' ? 'x' : q.type === 'single' ? 1 : q.type === 'truefalse' ? true : q.type === 'multi' ? [0, 2] : [2, 0, 1]);
 
+const correctValue = (q) => (q.type === 'spell' ? q.word : q.answer);
+
 test('gentle scoring ignores speed', () => {
   const q = { type: 'single', choices: ['a', 'b'], answer: 1 };
   assert.equal(S.scoreAnswer(q, 1, { remainingMs: 10000, totalMs: 10000, gentle: true }).points, 1000);
@@ -27,15 +29,17 @@ test('gentle room: same points regardless of answer time; defaults follow pack.r
     const pts = [];
     for (const wait of [100, 9000]) {
       const { room } = m.createRoom('hg' + wait, { packId: 'fixture', count: 1, includeSpell: false, gentle: true });
+      room.questions = [packs.get('fixture').questions.find((x) => x.type === 'single')]; // same question both runs
       const p = m.joinPlayer(room.code, GameNames.compose(selFor(1))).player;
       m.setConnected(room, p.id, +1);
       m.start(room);
       t += wait;
-      assert.equal(m.answer(room, p.id, anyValue(room.questions[0])), true);
-      pts.push(p.score + room.answers.get(p.id).points);
+      assert.equal(m.answer(room, p.id, correctValue(room.questions[0])), true);
+      pts.push(p.score); // last answer auto-reveals, which applies the score
       assert.equal(m.publicState(room).gentle, true);
     }
     assert.equal(pts[0], pts[1]);
+    assert.equal(pts[0], 1000);
     assert.ok(pts[0] > 0);
   } finally { m.shutdown(); }
 });
