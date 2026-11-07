@@ -32,19 +32,29 @@ This is the stable interface between the artwork and the code. **Keep filenames,
 | `wash-default.png`, `wash-naw-ruz.png`, `wash-ridvan.png`, `wash-declaration-bab.png`, `wash-birth-bab.png`, `wash-birth-bahaullah.png`, `wash-covenant.png`, `wash-martyrdom-bab.png`, `wash-ascension-bahaullah.png`, `wash-ascension-abdulbaha.png` | Barely-there soft colour bloom in the corners, stretched to cover the page (alpha at most about 12%; text contrast is verified against it). One per theme id | 480x270 | semi-transparent | theme accent tints (default gold/rose, naw-ruz sage, ridvan rose, births champagne/gold, covenant sage/mauve, solemn greys) | `--wash` in `theme.css` |
 
 ## Status: owner art vs placeholder
+Two styles are now in the folder: **batch 1** (feathery, light: `blossom-gold`, `blossom-ivory`, `blossom-rose`, `spray-warm`) and **batch 2/3** (dense incurved lithographic petals: `blossom-coral`, `blossom-spring`, `blossom-plum`, `spray-green`, `spray-plum`, branches and buds). Re-doing gold, ivory and rose in the dense style would unify the set.
 | Asset | Status |
 |---|---|
-| `blossom-gold`, `blossom-ivory`, `blossom-rose` (+ `@1x`) | **owner art** (batch 1; feathery style) |
-| `blossom-coral`, `blossom-spring` (+ `@1x`) | **owner art** (batch 2; denser incurved style, more saturated; spring reads olive-yellow-green) |
-| `spray-warm` (+ `@1x`) | **owner art** (batch 1), trimmed and anchored top-left so stems bleed off the corner; 224 colours |
-| `spray-green` (+ `@1x`) | **owner art** (batch 2); already flush with the top-left edges (trim offset 0,0), only palette-reduced to 224 colours |
-| `branch-warm` | **owner art** (batch 2), trimmed (413x143), scaled to the full 640 width and anchored on the left edge so the stem bleeds off; mirrored use checked |
-| `bud-gold` | **owner art** (batch 2) |
-| `bud-rose` | **owner art** (batch 2), recoloured: `-modulate 100,60,100 -fill '#D69C94' -colorize 28%` (was magenta-pink; now dusty rose to match `blossom-rose`) |
-| `petal-gold`, `petal-ivory`, `petal-rose`, `petal-coral`, `petal-spring` (+ `@2x`) | **owner art** (batches 1 and 2) |
-| `leaf-a`, `leaf-b`, `leaf-c` | **owner art** (batch 1); not yet placed on a screen (shown in `/styleguide`) |
-| `paper.png` | **owner art, converted** (batch 2): the supplied RGB tile is opaque and near-flat, so its luminance is converted to a walnut `#6B4A32` alpha overlay (alpha at most about 4%). It layers over the eggshell background colour (token unchanged), is a soft cloudy fibre, and tiles without visible seams in a 3x3 test. It beat the procedural per-pixel grain (more visible, no repeat pattern). Original: `art-inbox/batch2/paper.png` |
-| `blossom-plum`, `blossom-sage`, `petal-plum`, `petal-sage`, `bud-coral`, `bud-plum`, `spray-plum`, `branch-plum`, `branch-green`, `ornament-*`, `wash-*` | placeholder (procedural, `npm run build-art`) |
+| `blossom-gold`, `blossom-ivory`, `blossom-rose` (+ `@1x`) | **owner art**, batch 1, feathery style (awaiting dense re-do) |
+| `blossom-coral` (+ `@1x`) | **owner art**, batch 2, dense style |
+| `blossom-spring` (+ `@1x`) | **owner art**, batch 3 (softer sage-green and cream; replaces the batch 2 olive version, backup in `/tmp/art-placeholders-backup/b2/`) |
+| `blossom-plum` (+ `@1x`) | **owner art**, batch 3 (dusty mauve-pink with a deep magenta heart) |
+| `blossom-sage` (+ `@1x`) | **placeholder** (still missing owner art) |
+| `spray-warm` (+ `@1x`) | **owner art**, batch 1 (feathery), trimmed and anchored top-left |
+| `spray-green` (+ `@1x`) | **owner art**, batch 2 |
+| `spray-plum` (+ `@1x`) | **owner art**, batch 3, trimmed to its alpha bbox and anchored top-left (stems bleed off the corner) |
+| `branch-warm` | **owner art**, batch 2 |
+| `branch-plum` | **owner art**, batch 3 (rose and gold blooms with a bud; closest of the two received to "plum") |
+| `branch-green` | **owner art**, batch 3 (sage and champagne) |
+| `bud-gold`, `bud-rose` | **owner art**, batch 2 (`bud-rose` recoloured to dusty rose) |
+| `bud-coral` | **owner art**, batch 3 (orange-gold bud; assigned to coral by colour) |
+| `bud-plum` | **owner art**, batch 3 (gold bud flushed mauve-pink; assigned to plum by colour, could also be rose) |
+| `bud-sage` | not in the contract yet and not supplied |
+| `petal-gold`, `petal-ivory`, `petal-rose`, `petal-coral`, `petal-spring` (+ `@2x`) | **owner art**, batches 1 and 2 |
+| `petal-plum`, `petal-sage` (+ `@2x`) | **owner art**, batch 3, base at bottom centre, saved as full-alpha PNG32 for clean edges |
+| `leaf-a`, `leaf-b`, `leaf-c` | **owner art**, batch 1; not yet placed on a screen |
+| `paper.png` | **owner art, converted** (batch 2): luminance turned into a walnut alpha overlay (alpha at most about 4%) layered over the eggshell colour; tiles seamlessly |
+| `ornament-*`, `wash-*` | placeholder (procedural, `npm run build-art`) |
 Where the art is used: `bud-*` is a single edge accent (top-right) on pages outside the host stage and phone; `branch-*` is the opposite-edge branch (welcome, lobby, podium); `leaf-*` are reserved.
 Safeguard: owner-supplied files are listed in `OWNER-ART.json` (same folder). `npm run build-art` loads it, prints `skipped (owner art): <file>` and never writes those files, even with `--only=<name,...>`; only `--force-owner` overrides it. Add a filename to the manifest whenever owner art replaces a placeholder. `--only=blossom-coral,bud-gold` regenerates just those placeholders. (Backup of the original placeholders: `/tmp/art-placeholders-backup/`.)
 
@@ -57,3 +67,6 @@ Limits: each file under 400 KB, whole folder under 4 MB (quantise with `convert 
 4. To add a colourway: supply `blossom-<name>.png`, `blossom-<name>@1x.png`, `petal-<name>.png`, `petal-<name>@2x.png`, add the name to `COLORWAYS` in `flower.js`, and map it in `THEME_ART`.
 5. To start using a *planned* asset (buds, leaves, PNG ornaments), reference it from `flower.js` or the `--orn-*` tokens in `theme.css`.
 6. `npm run build-art` regenerates the placeholders and overwrites same-named files, so keep your own art out of its reach (delete the matching entry in `scripts/build-art.js` or do not run it).
+
+## Derived files outside this folder
+`public/favicon.ico` (16/32/48), `favicon-32.png`, `apple-touch-icon.png` (180, eggshell background), `icon-192.png`, `icon-512.png` are derived from owner art `blossom-coral.png` (trimmed, contrast and saturation boosted, Lanczos-resized). They are not touched by `build-art`. `npm run art-version` re-hashes this folder into `ART_VERSION` (flower.js) and the `?v=` suffix on every art URL in `theme.css`; run it after replacing any art.

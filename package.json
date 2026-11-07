@@ -15,7 +15,8 @@
     "hash-pin": "node scripts/hash-pin.js",
     "validate-questions": "node scripts/validate-questions.js",
     "render-deploy": "node scripts/render-deploy.js",
-    "build-art": "node scripts/build-art.js"
+    "build-art": "node scripts/build-art.js",
+    "art-version": "node scripts/art-version.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

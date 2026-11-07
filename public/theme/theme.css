@@ -146,8 +146,8 @@
   --motion-drift: 1;     /* 0 hides drifting petals */
 
   /* paper texture + vignette */
-  --paper-texture: url("/theme/art/paper.png");
-  --wash: url("/theme/art/wash-default.png");
+  --paper-texture: url("/theme/art/paper.png?v=cd094d22");
+  --wash: url("/theme/art/wash-default.png?v=cd094d22");
   --vignette: rgba(59, 42, 30, 0.07);
   --flourish-opacity: 0.9;
 }
@@ -809,15 +809,15 @@ img, svg { max-width: 100%; }
    Only tokens change. Every text pairing stays >= 4.5:1.
    ================================================================ */
 [data-theme="default"] { /* uses :root */ }
-[data-theme="naw-ruz"] { --wash: url("/theme/art/wash-naw-ruz.png"); }
-[data-theme="ridvan"] { --wash: url("/theme/art/wash-ridvan.png"); }
-[data-theme="birth-bab"] { --wash: url("/theme/art/wash-birth-bab.png"); }
-[data-theme="birth-bahaullah"] { --wash: url("/theme/art/wash-birth-bahaullah.png"); }
-[data-theme="declaration-bab"] { --wash: url("/theme/art/wash-declaration-bab.png"); }
-[data-theme="covenant"] { --wash: url("/theme/art/wash-covenant.png"); }
-[data-theme="martyrdom-bab"] { --wash: url("/theme/art/wash-martyrdom-bab.png"); }
-[data-theme="ascension-bahaullah"] { --wash: url("/theme/art/wash-ascension-bahaullah.png"); }
-[data-theme="ascension-abdulbaha"] { --wash: url("/theme/art/wash-ascension-abdulbaha.png"); }
+[data-theme="naw-ruz"] { --wash: url("/theme/art/wash-naw-ruz.png?v=cd094d22"); }
+[data-theme="ridvan"] { --wash: url("/theme/art/wash-ridvan.png?v=cd094d22"); }
+[data-theme="birth-bab"] { --wash: url("/theme/art/wash-birth-bab.png?v=cd094d22"); }
+[data-theme="birth-bahaullah"] { --wash: url("/theme/art/wash-birth-bahaullah.png?v=cd094d22"); }
+[data-theme="declaration-bab"] { --wash: url("/theme/art/wash-declaration-bab.png?v=cd094d22"); }
+[data-theme="covenant"] { --wash: url("/theme/art/wash-covenant.png?v=cd094d22"); }
+[data-theme="martyrdom-bab"] { --wash: url("/theme/art/wash-martyrdom-bab.png?v=cd094d22"); }
+[data-theme="ascension-bahaullah"] { --wash: url("/theme/art/wash-ascension-bahaullah.png?v=cd094d22"); }
+[data-theme="ascension-abdulbaha"] { --wash: url("/theme/art/wash-ascension-abdulbaha.png?v=cd094d22"); }
 
 /* Naw-Ruz: spring green */
 [data-theme="naw-ruz"] {

@@ -19,13 +19,15 @@
 
   var NS = 'http://www.w3.org/2000/svg';
   var ART = '/theme/art/';
+  var ART_VERSION = 'cd094d22';            // written by `npm run art-version`; busts the browser cache when art changes
+  var V = '?v=' + ART_VERSION;
   var COLORWAYS = ['gold', 'rose', 'coral', 'plum', 'sage', 'ivory', 'spring'];
   var THEME_ART = {
-    'default': { hero: 'gold', spray: 'warm' },
+    'default': { hero: 'gold', spray: 'green' },
     'naw-ruz': { hero: 'spring', spray: 'green' },
-    'ridvan': { hero: 'rose', spray: 'warm' },
-    'birth-bab': { hero: 'coral', spray: 'warm' },
-    'birth-bahaullah': { hero: 'gold', spray: 'warm' },
+    'ridvan': { hero: 'rose', spray: 'green' },
+    'birth-bab': { hero: 'coral', spray: 'green' },
+    'birth-bahaullah': { hero: 'gold', spray: 'green' },
     'declaration-bab': { hero: 'plum', spray: 'plum' },
     'covenant': { hero: 'sage', spray: 'green' },
     'martyrdom-bab': { hero: 'ivory', spray: 'plum' },
@@ -69,12 +71,12 @@
     var t = document.body && document.body.getAttribute('data-theme');
     return THEME_ART[t] || THEME_ART['default'];
   }
-  function heroUrls(cw) { return { x1: ART + 'blossom-' + cw + '@1x.png', x2: ART + 'blossom-' + cw + '.png' }; }
-  function sprayUrls(n) { return { x1: ART + 'spray-' + n + '@1x.png', x2: ART + 'spray-' + n + '.png' }; }
-  function petalUrls(cw) { return { x1: ART + 'petal-' + cw + '.png', x2: ART + 'petal-' + cw + '@2x.png' }; }
-  function branchUrls(n) { var u = ART + 'branch-' + n + '.png'; return { x1: u, x2: u }; }
+  function heroUrls(cw) { return { x1: ART + 'blossom-' + cw + '@1x.png' + V, x2: ART + 'blossom-' + cw + '.png' + V }; }
+  function sprayUrls(n) { return { x1: ART + 'spray-' + n + '@1x.png' + V, x2: ART + 'spray-' + n + '.png' + V }; }
+  function petalUrls(cw) { return { x1: ART + 'petal-' + cw + '.png' + V, x2: ART + 'petal-' + cw + '@2x.png' + V }; }
+  function branchUrls(n) { var u = ART + 'branch-' + n + '.png' + V; return { x1: u, x2: u }; }
   var BUD_FOR = { gold: 'gold', rose: 'rose', coral: 'coral', plum: 'plum', sage: 'gold', ivory: 'gold', spring: 'gold' };
-  function budUrls(cw) { var u = ART + 'bud-' + (BUD_FOR[cw] || 'gold') + '.png'; return { x1: u, x2: u }; }
+  function budUrls(cw) { var u = ART + 'bud-' + (BUD_FOR[cw] || 'gold') + '.png' + V; return { x1: u, x2: u }; }
   function urlsFor(kind, name) {
     return kind === 'hero' ? heroUrls(name) : kind === 'spray' ? sprayUrls(name) : kind === 'branch' ? branchUrls(name) : kind === 'bud' ? budUrls(name) : petalUrls(name);
   }
