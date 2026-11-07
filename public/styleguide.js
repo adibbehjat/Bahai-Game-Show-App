@@ -6,7 +6,7 @@
   var COLORS = ['color-bg', 'color-surface', 'color-ink', 'color-ink-soft', 'color-accent', 'color-accent-2',
     'color-success', 'color-danger', 'color-primary', 'color-on-primary', 'color-border', 'color-border-strong',
     'choice-1', 'choice-2', 'choice-3', 'choice-4', 'choice-5', 'choice-6', 'petal-1', 'petal-2', 'petal-3', 'petal-core'];
-  var PALETTE = ['parchment', 'parchment-light', 'sepia', 'umber', 'sand', 'gold', 'rose', 'sage', 'plum'];
+  var PALETTE = ['parchment', 'ivory', 'walnut', 'soft-sepia', 'gold', 'olive', 'plum', 'terracotta', 'rose', 'sage'];
   var body = document.body;
 
   function el(tag, cls, text) {
@@ -72,6 +72,10 @@
     document.getElementById('sg-art-petals').appendChild(artImg('/theme/art/petal-' + c + '.png', 72, c + ' petal'));
   });
   ['warm', 'plum', 'green'].forEach(function (n) { document.getElementById('sg-art-sprays').appendChild(artImg('/theme/art/spray-' + n + '@1x.png', 220, n + ' spray')); });
+
+  ['branch-warm', 'branch-plum', 'branch-green'].forEach(function (n) { var i = artImg('/theme/art/' + n + '.png', 220, n); i.height = 103; document.getElementById('sg-art-bits').appendChild(i); });
+  ['bud-gold', 'bud-rose', 'bud-coral', 'bud-plum', 'leaf-a', 'leaf-b', 'leaf-c'].forEach(function (n) { document.getElementById('sg-art-bits').appendChild(artImg('/theme/art/' + n + '.png', 90, n)); });
+  ['ornament-rule', 'ornament-flourish', 'ornament-corner'].forEach(function (n) { var i = artImg('/theme/art/' + n + '.png', n === 'ornament-corner' ? 60 : 200, n); i.height = n === 'ornament-rule' ? 20 : n === 'ornament-flourish' ? 66 : 60; document.getElementById('sg-art-bits').appendChild(i); });
 
   // placeholder QR pattern (visual only, not scannable)
   var qr = document.getElementById('sg-qr');

@@ -1,35 +1,42 @@
-# Art set
+# Art set: filename contract
 
-All PNGs are committed. Production never needs resvg or ImageMagick. They are rendered by
-`npm run build-art` (`scripts/build-art.js`, dev only: `@resvg/resvg-js` renders layered SVG
-illustrations with gradients, inner shading, wobbly turbulence-displaced edges and a watercolour
-bloom; ImageMagick `convert` palette-quantises the big files). Everything is seeded, so rebuilds are
-identical. Total folder size is about 3.1 MB; the largest file is the paper tile (about 200 KB).
+This is the stable interface between the artwork and the code. **Keep filenames, pixel sizes and transparency exactly as listed** and the app picks new art up with no code change. The PNGs currently in this folder are **procedural placeholders** (rendered by `npm run build-art`, `scripts/build-art.js`, dev only) and are meant to be replaced by hand-painted or generated art. Production never needs resvg or ImageMagick.
 
-Colourways: `gold rose coral plum sage ivory spring` (spring = Naw-Ruz green).
+## Art direction (summary of `docs/DESIGN-BRIEF.md` plus the Eggshell addendum)
+- Early-1900s illustrated greeting postcard, hand-painted chromolithograph feel: **fine ink outlines, softly layered pigment, natural petal irregularity, slight lithographic imperfection**. No glossy digital gradients, no photorealism, no clip-art repeats, no heavy distressing.
+- Signature subject: **chrysanthemums**, dense and full-bodied (many cupped, overlapping petals curling toward a hidden centre), seen from above for the hero blooms.
+- Palette: muted champagne, golden yellow, dusty rose (plus peach-rose and mauve), **sage-green foliage** (olive stems). Keep saturation restrained; the page behind is eggshell white `#F9F6EE`, so art must read on a very light ground.
+- Composition is asymmetric along the screen edge. Backgrounds are always transparent PNG (no paper, no vignette, no text baked in) except `wash-*` and `paper.png`.
 
-| File | Size (px) | Use |
-|---|---|---|
-| `blossom-<colourway>.png` | 768x768, transparent | hero blossom @2x (lobby, timer centre, podium, band logo) |
-| `blossom-<colourway>@1x.png` | 384x384, transparent | same, @1x (used through `srcset`) |
-| `spray-warm.png`, `spray-plum.png`, `spray-green.png` | 800x800, transparent | corner flourish, art origin = top-left corner (CSS mirrors it to the other three corners) |
-| `spray-<name>@1x.png` | 400x400 | @1x |
-| `petal-<colourway>.png` | 128x128, transparent | single petal sprite for the timer ring, bursts and drifting petals; the petal base sits at bottom centre (x=64, y=122), pointing up |
-| `petal-<colourway>@2x.png` | 256x256 | @2x |
-| `paper.png` | 256x256, semi-transparent | seamless paper grain tile (`--paper-texture`) |
-| `wash-<theme>.png` | 480x270 | soft background wash, stretched to cover (`--wash`), one per theme id: `default naw-ruz ridvan declaration-bab ascension-bahaullah martyrdom-bab birth-bab birth-bahaullah covenant ascension-abdulbaha` |
+## Colourways
+`gold` golden yellow, `rose` dusty rose, `coral` soft peach-rose, `plum` muted mauve, `sage` sage green, `ivory` champagne, `spring` fresh sage-green (Naw-Ruz). Theme mapping lives in `THEME_ART` at the top of `public/theme/flower.js` (hero colourway plus which spray/branch set).
 
-Which art which theme uses is the `THEME_ART` table at the top of `public/theme/flower.js`
-(hero colourway and spray) and the `--wash` token per theme in `theme.css`:
-default gold/warm, naw-ruz spring/green, ridvan rose/warm, birth-bab coral/warm, birth-bahaullah gold/warm,
-declaration-bab plum/plum, covenant sage/green, martyrdom and both ascensions ivory/plum (also desaturated in reverent mode).
+## File table
+"Used by" says what loads the file today. Rows marked *planned* are asset types the design calls for but no screen references yet (safe to supply now).
 
-## Replacing a file with hand-painted or AI-generated art
-1. Keep the **same filename, pixel size and transparent background** (PNG-32 or PNG-8 with alpha).
-2. Hero blossoms: centred, about 88% of the canvas, no hard canvas-edge crop. Sprays: flowers growing out of the
-   top-left corner, nothing cut by the right or bottom edge. Petals: one petal, base at bottom centre, pointing up,
-   so the timer can rotate it around a ring.
-3. Keep each file under 400 KB (quantise with `convert in.png -colors 256 PNG8:out.png`) and the folder under 4 MB.
-4. Drop the file in, hard-refresh. No code change is needed. To add a colourway, add `blossom-<name>[@1x].png` and
-   `petal-<name>[@2x].png`, then add the name to `COLORWAYS` in `flower.js` and map it in `THEME_ART`.
-5. If you re-run `npm run build-art` it overwrites the generated files, so copy your replacements elsewhere first or remove the matching asset from `scripts/build-art.js`.
+| Filename | Purpose | Pixels | Transparent | Colourway | Used by |
+|---|---|---|---|---|---|
+| `blossom-<cw>.png` (7: gold, rose, coral, plum, sage, ivory, spring) | Hero chrysanthemum, top view, centred, about 88% of canvas, no hard crop. Lobby, timer centre, podium, accent blossom | 768x768 (@2x) | yes | one per colourway | `flower.js` `blossom()` (`srcset` 2x), `petalTimer()` |
+| `blossom-<cw>@1x.png` (7) | Same art, @1x | 384x384 | yes | same | `srcset` 1x |
+| `spray-warm.png`, `spray-plum.png`, `spray-green.png` | **Large corner cluster**: blooms, buds, leaves growing out of the TOP-LEFT corner of the canvas (stems leave through the left and top edges); nothing cut on the right/bottom. CSS mirrors it for other corners | 800x800 | yes | warm = golden yellow, dusty rose, peach; plum = mauve, rose, champagne; green = sage-green, champagne, gold | `flower.js` `decorate()` (kind `spray`) |
+| `spray-<set>@1x.png` (3) | Same, @1x | 400x400 | yes | same | `srcset` 1x |
+| `branch-warm.png`, `branch-plum.png`, `branch-green.png` | **Smaller edge branch**: a slender stem entering from the LEFT edge with two small blooms, 4 to 5 leaves and a bud; CSS mirrors it for the right edge | 640x300 | yes | same three sets | `decorate()` (kind `branch`, used on welcome, lobby, podium, phone) |
+| `petal-<cw>.png` (7) | Single detached petal sprite, cupped, pointing UP, base at bottom centre (about x=64, y=122 of 128). Timer ring, burst, drifting petals | 128x128 | yes | one per colourway | `petalTimer()`, `burst()`, `decorate()` drift |
+| `petal-<cw>@2x.png` (7) | Same, @2x | 256x256 | yes | same | `srcset` 2x |
+| `bud-gold.png`, `bud-rose.png`, `bud-coral.png`, `bud-plum.png` | Single round closed bud with serrated sepals, centred | 256x256 | yes | gold, rose, coral, plum | *planned* (styleguide only) |
+| `leaf-a.png`, `leaf-b.png`, `leaf-c.png` | Single serrated, veined sage leaf, three different shapes (broad, medium, narrow), pointing UP, base at bottom centre | 256x256 | yes | sage foliage | *planned* (styleguide only) |
+| `ornament-rule.png` | Delicate antique-gold divider: hairline with a small centre lozenge/flourish, symmetrical | 640x40 | yes | antique gold `#B4832A` | *planned* (CSS currently draws the same shape with an inline SVG token `--orn-divider`) |
+| `ornament-flourish.png` | Small symmetrical gilt scroll flourish for under titles | 240x80 | yes | antique gold | *planned* |
+| `ornament-corner.png` | Gilt Art Nouveau corner ornament for the TOP-LEFT corner (CSS flips it) | 128x128 | yes | antique gold | *planned* (CSS uses inline SVG tokens `--orn-tl`, `--orn-br`) |
+| `paper.png` | Seamless, very faint paper grain tile; barely visible on eggshell | 256x256 | semi-transparent (alpha at most about 10%) | warm brown specks | `--paper-texture` in `theme.css` |
+| `wash-default.png`, `wash-naw-ruz.png`, `wash-ridvan.png`, `wash-declaration-bab.png`, `wash-birth-bab.png`, `wash-birth-bahaullah.png`, `wash-covenant.png`, `wash-martyrdom-bab.png`, `wash-ascension-bahaullah.png`, `wash-ascension-abdulbaha.png` | Barely-there soft colour bloom in the corners, stretched to cover the page (alpha at most about 12%; text contrast is verified against it). One per theme id | 480x270 | semi-transparent | theme accent tints (default gold/rose, naw-ruz sage, ridvan rose, births champagne/gold, covenant sage/mauve, solemn greys) | `--wash` in `theme.css` |
+
+Limits: each file under 400 KB, whole folder under 4 MB (quantise with `convert in.png -colors 224 PNG8:out.png`; keep the alpha channel).
+
+## Replacing a file
+1. Same filename, same pixel size, transparent background (PNG-32, or PNG-8 with alpha). Orientation rules in the table are part of the contract (petals up, sprays from top-left, branches from the left edge).
+2. Hero blooms must stay legible at 100 px (the host band and the timer use them small) and at 768 px (podium).
+3. Hard-refresh the browser. No code change is needed.
+4. To add a colourway: supply `blossom-<name>.png`, `blossom-<name>@1x.png`, `petal-<name>.png`, `petal-<name>@2x.png`, add the name to `COLORWAYS` in `flower.js`, and map it in `THEME_ART`.
+5. To start using a *planned* asset (buds, leaves, PNG ornaments), reference it from `flower.js` or the `--orn-*` tokens in `theme.css`.
+6. `npm run build-art` regenerates the placeholders and overwrites same-named files, so keep your own art out of its reach (delete the matching entry in `scripts/build-art.js` or do not run it).

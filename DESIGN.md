@@ -3,6 +3,51 @@
 Files: `public/theme/theme.css`, `public/theme/flower.js`, `public/theme/fonts/`, live gallery at `/styleguide`
 (try `/styleguide?theme=ridvan&reverent=1`).
 
+
+> **Authoritative art direction: [docs/DESIGN-BRIEF.md](docs/DESIGN-BRIEF.md)** (owner brief plus the Eggshell Edition addendum). Where this file's older sections (parchment and sepia palette table, contrast numbers for `#F4E9D8`) disagree with the section below, the section below wins.
+
+## Current identity: Edwardian botanical postcard on eggshell stationery
+An illustrated greeting card brought to life: soft eggshell-white paper with a faint grain, walnut-brown ink, antique-gold hairline rules and small ornaments, and delicate chrysanthemums that grow in from the outer edges. Negative space is a design material; no sepia overlay, no yellowing, no distressing. The historical feel comes from illustration, typography, paper quality and composition.
+
+### Palette (default theme) and contrast (WCAG, computed)
+| Role | Token | Hex | Contrast |
+|---|---|---|---|
+| Page (eggshell) | `--color-bg` / `--parchment` | `#F9F6EE` | base |
+| Light surface (ivory) | `--color-surface` / `--ivory` | `#FFFDF8` | base |
+| Primary ink (walnut) | `--color-ink` / `--walnut` | `#3B2A1E` | 12.66:1 on eggshell, 13.45:1 on ivory (AAA) |
+| Secondary ink (soft walnut) | `--color-ink-soft` / `--soft-sepia` | `#5E4A3A` | 7.73:1 on eggshell (AAA) |
+| Primary button | `--color-primary` | `#5A3A22` | ivory text 10.0:1 |
+| Antique gold | `--color-accent`, `--gilt` `#B4832A` | `#D9A441` | walnut on gold 6.08:1; gilt is for rules/ornaments only, never text |
+| Olive (choice 2, foliage) | `--olive` | `#566B3A` | ivory text 5.80:1 |
+| Terracotta (choice 3) | `--terracotta` | `#8A4A3F` | ivory text 6.60:1 |
+| Muted plum (choice 1) | `--plum` | `#6E4E6B` | ivory text 6.97:1 |
+| UI borders | `--color-border-strong` | `#8C6A47` | 4.84:1 on ivory |
+| Success / danger text | `--color-success` / `--color-danger` | `#4F6B2F` / `#A23B2E` | 5.59 / 6.07 on eggshell |
+Per-theme washes are barely-there tints. Worst case (darkest pixel of wash plus paper, all ten themes): walnut 9.81:1, soft walnut 5.98:1 (reverent themes); default 11.08 / 6.76. Rule: any new text pairing must stay at or above 4.5:1 against the darkest pixel of its wash.
+Reverent (martyrdom, both ascensions, or `data-reverent="true"`): neutral greige `#ECE8E0`, muted gilt, desaturated florals, decoration reduced to a whisper (flourishes 40%, branch hidden, no drift, no bursts, fade-only reveal).
+
+### Typography
+Fraunces (display) and Nunito (body), both OFL and self-hosted. Titles (`h1`, `.landing__title`, `.over__title`, room code, leaderboard numerals) use `--display-title-variation` (`SOFT 100, WONK 1, opsz 144`). Section headings use `--display-variation`. Questions use Fraunces with `--text-variation` (`SOFT 0, WONK 0`: a calm classical serif); answers, controls, instructions and player info are Nunito. Small caps (`.small-caps`, `font-variant-caps`) with letter-spacing for labels. Diacritics (á í ú ḥ ʻ ‘) render in both fonts.
+
+### Components (refined)
+- **Frames:** none by default. `.hairline-frame` (1px gilt rule with two corner ornaments) is used lightly: the host stage and the phone screen carry one; `.card--deckle` is transparent; `.card--filled` is the explicit panel. `.ornament-rule` is the divider with a centre flourish; `.rule-hair` is a plain hairline.
+- **Answer tiles:** ivory printed tabs with a coloured glyph band (`.choice`, glyph + colour; true/false keep full-colour tiles). States: `.is-selected` (ink outline and check), `.is-correct` (green outline and check), `.is-wrong` (hatched, dashed), `.is-locked`.
+- **Lobby:** room code large between two rules; QR on clean white with a delicate gilt border; player names as understated printed tags (hairline underline); "How to play" as a ruled column.
+- **Question:** a typeset page: question left, petal timer, tiles; top 5 as a printed results column (numerals in Fraunces, hairlines, first place in bold) with the player count.
+- **Reveal:** the plate unveils left to right (`unveil`), correct tile outlined, answer and explanation between two hairlines; reverent: slow fade only.
+- **Podium:** a printed award programme: thin gilt double rule steps, first place tinted gold, hero chrysanthemum above each step, ornament rule under the title, an extra single blossom accent.
+- **Phone:** the same language with less decoration: hairline border, one small spray top-left, a bottom band footer, 56px+ targets. Orientation media queries give portrait and landscape layouts.
+
+### Art (see `public/theme/art/README.md`)
+Original code-generated chromolithograph-style illustrations (`scripts/build-art.js`): fine ink outlines, softly layered pigment slightly misregistered from the line, natural per-petal and per-ring variation (size, tone, tip shape), dense cupped chrysanthemums, serrated veined sage leaves, buds, detached petals, edge branches and gilt ornaments. Composition is asymmetric: one large cluster from one corner (`.flourish--tl`), a smaller branch from the opposite edge (`.flourish--br`), one accent blossom (`.flourish--bl`), never behind reading areas. Motion: very slow branch sway, six drifting petals, gentle fades, the petal timer; all disabled by `prefers-reduced-motion` and minimised in reverent mode.
+
+### Extending to a new occasion
+1. Add the theme id to `GameSchema.THEMES` and the pack's `theme`.
+2. In `theme.css` section 12 add `[data-theme="my-id"] { --color-bg; --color-surface; --color-accent; --color-accent-2; --color-primary; --color-border; --petal-* }` (tint accents, keep eggshell: stay within `#F8F4EA` to `#FAF7F0` plus a 1 to 2 percent hue shift). Add a `--wash` line pointing at `art/wash-my-id.png` (add it to `WASHES` in `build-art.js`, keep opacity at or below 0.12).
+3. Map hero colourway and spray in `THEME_ART` in `flower.js`; add a colourway to `COLORWAYS` in `build-art.js` if needed, then `npm run build-art`.
+4. Re-run the contrast check (walnut and soft walnut against the darkest wash pixel) and open `/styleguide?theme=my-id`, with and without Reverent.
+5. Solemn occasion: add the id to the reverent selector block (section 13) and the `.flourish` reverent rule; nothing else changes.
+
 ## Principles
 1. **Warm paper, quiet joy.** Parchment ground, sepia ink, soft vignette and paper grain. Whimsical, never loud.
 2. **Dignified.** Gentle bobbing and drifting petals only. No flashing, no neon, no strobing. Nothing moves faster than a slow breath.
@@ -134,7 +179,3 @@ Contrast was measured against the darkest pixel of every theme's wash plus the p
 ### Host stage (screen sharing)
 `/host` renders a 16:9 stage (`.stage`, a CSS container; sizes in `cqw/cqh`, letterboxed on other ratios). Persistent top band (pack title, occasion, question x of y), bottom band (`Join at <host> · code ABC123`, host controls), 3% safe margin on all edges, minimum text about 1.25% of stage width (16px at 1280x720), no thin weights. Lobby: hero room code + white QR frame, a compact "How to play" card (gentle mode changes the scoring line), player chips with badge. Question: type label, question, petal timer, 2x2 / 3x2 colour+glyph tiles, live top-5 sidebar (24% width, FLIP rank moves and score count-up via the Web Animations API; instant under reduced motion; slower and fade-only on reverent packs). Reveal: correct tile outlined with a check, banner with the answer and explanation, tasteful petal burst (never on reverent). Over: podium with hero blossoms. Controls: Extend +15s (max 3), Skip, Next, End.
 Name picker classes (phones): `.name-card`, `.name-card__name`, `.name-card__badge`, `.shuffle-btn`, `.segmented` > `.segmented__opt` (alias `.segmented__btn`) with `aria-pressed`, `.badge-grid` > `.badge[aria-pressed]`, `.badge--number`; all targets >= 56px.
-
-### Postcard language (Revision 3b)
-Look: late-1800s chromolithograph postcard with Art Nouveau accents. Aged cream card stock (`--card-stock`, halftone grain, aged edge, embossed highlight), gilt ink (`--gilt`, `--gilt-soft`: decoration only, never text), gilt double rule, whiplash corner ornaments (`--orn-tl/tr/bl/br`), an Art Nouveau divider (`.ornament-rule`), a postage-stamp frame (`.stamp`, used for the host room code) and a faint postmark (`.postmark`). The QR frame stays white. Reverent mode swaps to a muted gilt and darker stock.
-Devices are the card, chosen by orientation: phones/tablets in portrait get a portrait card (`body.page-play`, `/kit` under 820px: fixed card stock + frame pseudo-elements, `#app` scrolls inside the card, `.player-bar` is the card's bottom band), landscape gets the same card with tighter margins; the host `.stage` is a landscape card with a divided back (message left, `.lb` top-5 as the ruled address side, stamp at top right). Flowers are lush, dense chromolithograph chrysanthemums (`scripts/build-art.js`: staggered rings of cupped petals, tonal gradient, pale tip rim, thin contour, dome shading), with serrated veined leaves and buds in the sprays. Everything is original artwork generated by code.

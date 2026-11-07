@@ -113,7 +113,7 @@
     } else {
       main = h('div', { class: 'stage__main' }, h('div', { class: 'stage__col' }, opts.main));
     }
-    return h('div', { class: 'stage' }, top, main, bottom, toast());
+    return h('div', { class: 'stage' + (opts.cls ? ' ' + opts.cls : '') }, top, main, bottom, toast());
   }
 
   // ---------- persistent leaderboard (top 5) with FLIP moves + score count-up ----------
@@ -333,8 +333,9 @@
       onclick: function () { emitAck('host:start', {}); } });
     var hero = h('div', { class: 'lobby-hero' },
       h('div', { class: 'lobby-hero__label', text: 'Join with code' }),
+      h('div', { class: 'ornament-rule', 'aria-hidden': 'true' }),
       h('div', { class: 'room-code', text: r.code }),
-      h('div', { class: 'postmark', 'aria-hidden': 'true' }));
+      h('div', { class: 'ornament-rule', 'aria-hidden': 'true' }));
     var qr = h('div', { class: 'qr-card' },
       h('div', { class: 'qr-frame' }, S.qr ? h('img', { src: S.qr, alt: 'QR code to join the game', width: '256', height: '256' }) : null),
       h('div', { class: 'qr-card__label', text: 'Scan to join' }));
@@ -346,7 +347,7 @@
       n ? playerChips(r) : h('p', { class: 'players-empty', text: r.reverent ? 'Welcome. We will begin when everyone has arrived.' : 'Waiting for players to join…' })
     ];
     var main = h('div', { class: 'lobby-grid' }, h('div', { class: 'stage__col' }, left), h('div', { class: 'stage__col lobby-side' }, qr, howToCard(r)));
-    show([stage(r, { pill: 'Lobby', soft: true, main: main, controls: [start] })], { stage: true });
+    show([stage(r, { cls: 'stage--lobby', pill: 'Lobby', soft: true, main: main, controls: [start] })], { stage: true });
   }
 
   function totalMsFor(q) {
@@ -457,7 +458,7 @@
     var last = r.qIndex + 1 >= r.qTotal;
     var next = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: last ? 'Finish' : 'Next question', onclick: function () { emitAck('host:next', {}); } });
     var end = h('button', { class: 'btn btn--ghost', type: 'button', text: 'End game', onclick: function () { emitAck('host:end', {}); } });
-    var scr = show([stage(r, { pill: 'Question ' + (q.index + 1) + ' of ' + q.total, main: main, lb: true, controls: [end, next], note: r.reverent ? 'A moment to reflect' : 'Take a breath, the next question is coming' })], { stage: true });
+    var scr = show([stage(r, { cls: 'reveal-view', pill: 'Question ' + (q.index + 1) + ' of ' + q.total, main: main, lb: true, controls: [end, next], note: r.reverent ? 'A moment to reflect' : 'Take a breath, the next question is coming' })], { stage: true });
     if (S.burstFor !== q.index && rv.stats && rv.stats.correct > 0 && !r.reverent && window.Flower && Flower.burst) {
       S.burstFor = q.index;
       try { Flower.burst(scr.querySelector('.stage'), { count: 30 }); } catch (e) { /* ignore */ }
@@ -479,9 +480,10 @@
     } });
     var main = [h('div', { class: 'over' },
       h('h1', { class: 'over__title', text: r.reverent ? 'Thank you for gathering with us' : 'Thank you all for playing' }),
+      h('div', { class: 'ornament-rule', 'aria-hidden': 'true' }),
       h('div', { class: 'podium' }, cols),
       quote(r.closing))];
-    var scr = show([stage(r, { pill: 'Final results', soft: true, main: main, controls: [again] })], { stage: true });
+    var scr = show([stage(r, { cls: 'stage--over', pill: 'Final results', soft: true, main: main, controls: [again] })], { stage: true });
     if (!r.reverent && window.Flower && Flower.burst) { try { Flower.burst(scr.querySelector('.stage'), { count: 40 }); } catch (e) { /* ignore */ } }
   }
 

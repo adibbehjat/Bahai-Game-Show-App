@@ -9,7 +9,6 @@
   if (window.Flower) {
     try {
       var slot = document.getElementById('hero-art');
-      if (slot) slot.appendChild(Flower.blossom({ size: 208 }));
       Flower.decorate(document.getElementById('landing'));
     } catch (e) { /* art is decoration only */ }
   }
