@@ -495,7 +495,7 @@
     } });
     var main = [h('div', { class: 'over' },
       h('h1', { class: 'over__title', text: r.reverent ? 'Thank you for gathering with us' : 'Thank you all for playing' }),
-      h('div', { class: 'ornament-rule', 'aria-hidden': 'true' }),
+      h('div', { class: 'ornament-flourish', 'aria-hidden': 'true' }),
       h('div', { class: 'podium' }, cols),
       quote(r.closing))];
     var scr = show([stage(r, { cls: 'stage--over', pill: 'Final results', soft: true, main: main, controls: [again] })], { stage: true });

@@ -23,11 +23,11 @@ This is the stable interface between the artwork and the code. **Keep filenames,
 | `branch-warm.png`, `branch-plum.png`, `branch-green.png` | **Smaller edge branch**: a slender stem entering from the LEFT edge with two small blooms, 4 to 5 leaves and a bud; CSS mirrors it for the right edge | 640x300 | yes | same three sets | `decorate()` (kind `branch`, used on welcome, lobby, podium, phone) |
 | `petal-<cw>.png` (7) | Single detached petal sprite, cupped, pointing UP, base at bottom centre (about x=64, y=122 of 128). Timer ring, burst, drifting petals | 128x128 | yes | one per colourway | `petalTimer()`, `burst()`, `decorate()` drift |
 | `petal-<cw>@2x.png` (7) | Same, @2x | 256x256 | yes | same | `srcset` 2x |
-| `bud-gold.png`, `bud-rose.png`, `bud-coral.png`, `bud-plum.png` | Single round closed bud with serrated sepals, centred | 256x256 | yes | gold, rose, coral, plum | *planned* (styleguide only) |
+| `bud-gold.png`, `bud-rose.png`, `bud-coral.png`, `bud-plum.png`, `bud-sage.png` | Single round closed bud with serrated sepals, centred | 256x256 | yes | gold, rose, coral, plum, sage | *planned* (styleguide only) |
 | `leaf-a.png`, `leaf-b.png`, `leaf-c.png` | Single serrated, veined sage leaf, three different shapes (broad, medium, narrow), pointing UP, base at bottom centre | 256x256 | yes | sage foliage | *planned* (styleguide only) |
-| `ornament-rule.png` | Delicate antique-gold divider: hairline with a small centre lozenge/flourish, symmetrical | 640x40 | yes | antique gold `#B4832A` | *planned* (CSS currently draws the same shape with an inline SVG token `--orn-divider`) |
-| `ornament-flourish.png` | Small symmetrical gilt scroll flourish for under titles | 240x80 | yes | antique gold | *planned* |
-| `ornament-corner.png` | Gilt Art Nouveau corner ornament for the TOP-LEFT corner (CSS flips it) | 128x128 | yes | antique gold | *planned* (CSS uses inline SVG tokens `--orn-tl`, `--orn-br`) |
+| `ornament-rule.png` | Delicate antique-gold divider: hairline with a small centre lozenge/flourish, symmetrical | 640x40 | yes | antique gold `#B4832A` | **owner art (batch 4)**; `.svg` twins used via CSS mask tinted by `--gilt` (corner also as `ornament-corner-br.svg`, rotated 180deg); PNGs are fallbacks |
+| `ornament-flourish.png` | Small symmetrical gilt scroll flourish for under titles | 240x80 | yes | antique gold | **owner art (batch 4)**; `.svg` twins used via CSS mask tinted by `--gilt` (corner also as `ornament-corner-br.svg`, rotated 180deg); PNGs are fallbacks |
+| `ornament-corner.png` | Gilt Art Nouveau corner ornament for the TOP-LEFT corner (CSS flips it) | 128x128 | yes | antique gold | **owner art (batch 4)**; `.svg` twins used via CSS mask tinted by `--gilt` (corner also as `ornament-corner-br.svg`, rotated 180deg); PNGs are fallbacks |
 | `paper.png` | Seamless, very faint paper grain tile; barely visible on eggshell | 256x256 | semi-transparent (alpha at most about 10%) | warm brown specks | `--paper-texture` in `theme.css` |
 | `wash-default.png`, `wash-naw-ruz.png`, `wash-ridvan.png`, `wash-declaration-bab.png`, `wash-birth-bab.png`, `wash-birth-bahaullah.png`, `wash-covenant.png`, `wash-martyrdom-bab.png`, `wash-ascension-bahaullah.png`, `wash-ascension-abdulbaha.png` | Barely-there soft colour bloom in the corners, stretched to cover the page (alpha at most about 12%; text contrast is verified against it). One per theme id | 480x270 | semi-transparent | theme accent tints (default gold/rose, naw-ruz sage, ridvan rose, births champagne/gold, covenant sage/mauve, solemn greys) | `--wash` in `theme.css` |
 
@@ -49,12 +49,12 @@ Two styles are now in the folder: **batch 1** (feathery, light: `blossom-gold`, 
 | `bud-gold`, `bud-rose` | **owner art**, batch 2 (`bud-rose` recoloured to dusty rose) |
 | `bud-coral` | **owner art**, batch 3 (orange-gold bud; assigned to coral by colour) |
 | `bud-plum` | **owner art**, batch 3 (gold bud flushed mauve-pink; assigned to plum by colour, could also be rose) |
-| `bud-sage` | not in the contract yet and not supplied |
+| `bud-sage` | in the contract, **not yet supplied**. `flower.js` maps sage-hero themes (e.g. covenant) to it via `BUD_FOR`, falls back to `bud-gold` until it is added to `BUD_AVAILABLE` |
 | `petal-gold`, `petal-ivory`, `petal-rose`, `petal-coral`, `petal-spring` (+ `@2x`) | **owner art**, batches 1 and 2 |
 | `petal-plum`, `petal-sage` (+ `@2x`) | **owner art**, batch 3, base at bottom centre, saved as full-alpha PNG32 for clean edges |
 | `leaf-a`, `leaf-b`, `leaf-c` | **owner art**, batch 1; not yet placed on a screen |
 | `paper.png` | **owner art, converted** (batch 2): luminance turned into a walnut alpha overlay (alpha at most about 4%) layered over the eggshell colour; tiles seamlessly |
-| `ornament-*`, `wash-*` | placeholder (procedural, `npm run build-art`) |
+| `wash-*` | placeholder (procedural, `npm run build-art`) |
 Where the art is used: `bud-*` is a single edge accent (top-right) on pages outside the host stage and phone; `branch-*` is the opposite-edge branch (welcome, lobby, podium); `leaf-*` are reserved.
 Safeguard: owner-supplied files are listed in `OWNER-ART.json` (same folder). `npm run build-art` loads it, prints `skipped (owner art): <file>` and never writes those files, even with `--only=<name,...>`; only `--force-owner` overrides it. Add a filename to the manifest whenever owner art replaces a placeholder. `--only=blossom-coral,bud-gold` regenerates just those placeholders. (Backup of the original placeholders: `/tmp/art-placeholders-backup/`.)
 

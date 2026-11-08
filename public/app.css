@@ -57,7 +57,7 @@ body { margin: 0; min-height: 100vh; }
 /* hairline gilt border + two small ornaments; the parchment stays visible (negative space first) */
 .stage::before { content: ""; position: absolute; inset: 1.4cqw; z-index: 3; pointer-events: none; border: 1px solid var(--gilt); border-radius: 0.8cqw; }
 .stage::after { content: ""; position: absolute; inset: 1.4cqw; z-index: 3; pointer-events: none;
-  background: var(--orn-tl) left top / 3.6cqw no-repeat, var(--orn-br) right bottom / 3.6cqw no-repeat; }
+  background: var(--gilt); -webkit-mask: var(--orn-tl) left top / 5cqw no-repeat, var(--orn-br) right bottom / 5cqw no-repeat; mask: var(--orn-tl) left top / 5cqw no-repeat, var(--orn-br) right bottom / 5cqw no-repeat; }
 .stage .decor-layer { border-radius: 0.8cqw; }
 .stage .flourish { --fl: clamp(6rem, 11vw, 14rem); opacity: 0.92; }
 .stage .flourish--br { display: none; }
@@ -233,7 +233,7 @@ body { margin: 0; min-height: 100vh; }
 /* ================= Brief refinements: printed correspondence, negative space ================= */
 /* lobby: big room code between two delicate rules; no frame */
 .stage .room-code { border: 0; outline: 0; background: none; box-shadow: none; padding: 0; font-size: 10.5cqw; letter-spacing: 0.14em; font-variation-settings: var(--display-title-variation); }
-.stage .lobby-hero .ornament-rule { width: 38cqw; margin: 0.8cqh auto; height: 2.4cqh; }
+.stage .lobby-hero .ornament-rule { width: 32cqw; margin: 0.4cqh auto; height: auto; }
 .stage .qr-frame { padding: 0.9cqw; border: 1px solid var(--gilt); border-radius: 0.3cqw; box-shadow: 0 0 0 0.45cqw #fff, 0 0 0 calc(0.45cqw + 1px) var(--gilt-soft); margin: 0.6cqw; }
 .howto { padding: 1.4cqh 0 0; border: 0; border-top: 1px solid var(--gilt-soft); }
 .howto__list li { grid-template-columns: 7cqw minmax(0, 1fr); }
@@ -260,7 +260,7 @@ body { margin: 0; min-height: 100vh; }
 .stage .podium__step { border: 1px solid var(--gilt); border-bottom: 0; border-radius: 0.8cqw 0.8cqw 0 0; background: var(--color-surface); box-shadow: inset 0 0 0 0.35cqw var(--color-surface), inset 0 0 0 calc(0.35cqw + 1px) var(--gilt-soft); }
 .stage .podium__step--1 { background: color-mix(in srgb, var(--color-accent) 40%, var(--color-surface)); color: var(--color-ink); }
 .stage .podium { border-bottom: 1px solid var(--gilt); }
-.over .ornament-rule { width: 30cqw; margin: 0.4cqh auto; height: 2.2cqh; }
+.over .ornament-flourish { width: 14cqw; margin: 0 auto; height: auto; }
 .stage .big-question { font-weight: 600; }
 
 /* ===== Badge tokens (emoji and numerals share one optical box) ===== */

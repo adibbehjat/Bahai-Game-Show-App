@@ -146,8 +146,8 @@
   --motion-drift: 1;     /* 0 hides drifting petals */
 
   /* paper texture + vignette */
-  --paper-texture: url("/theme/art/paper.png?v=cd094d22");
-  --wash: url("/theme/art/wash-default.png?v=cd094d22");
+  --paper-texture: url("/theme/art/paper.png?v=4cba391e");
+  --wash: url("/theme/art/wash-default.png?v=4cba391e");
   --vignette: rgba(59, 42, 30, 0.07);
   --flourish-opacity: 0.9;
 }
@@ -809,15 +809,15 @@ img, svg { max-width: 100%; }
    Only tokens change. Every text pairing stays >= 4.5:1.
    ================================================================ */
 [data-theme="default"] { /* uses :root */ }
-[data-theme="naw-ruz"] { --wash: url("/theme/art/wash-naw-ruz.png?v=cd094d22"); }
-[data-theme="ridvan"] { --wash: url("/theme/art/wash-ridvan.png?v=cd094d22"); }
-[data-theme="birth-bab"] { --wash: url("/theme/art/wash-birth-bab.png?v=cd094d22"); }
-[data-theme="birth-bahaullah"] { --wash: url("/theme/art/wash-birth-bahaullah.png?v=cd094d22"); }
-[data-theme="declaration-bab"] { --wash: url("/theme/art/wash-declaration-bab.png?v=cd094d22"); }
-[data-theme="covenant"] { --wash: url("/theme/art/wash-covenant.png?v=cd094d22"); }
-[data-theme="martyrdom-bab"] { --wash: url("/theme/art/wash-martyrdom-bab.png?v=cd094d22"); }
-[data-theme="ascension-bahaullah"] { --wash: url("/theme/art/wash-ascension-bahaullah.png?v=cd094d22"); }
-[data-theme="ascension-abdulbaha"] { --wash: url("/theme/art/wash-ascension-abdulbaha.png?v=cd094d22"); }
+[data-theme="naw-ruz"] { --wash: url("/theme/art/wash-naw-ruz.png?v=4cba391e"); }
+[data-theme="ridvan"] { --wash: url("/theme/art/wash-ridvan.png?v=4cba391e"); }
+[data-theme="birth-bab"] { --wash: url("/theme/art/wash-birth-bab.png?v=4cba391e"); }
+[data-theme="birth-bahaullah"] { --wash: url("/theme/art/wash-birth-bahaullah.png?v=4cba391e"); }
+[data-theme="declaration-bab"] { --wash: url("/theme/art/wash-declaration-bab.png?v=4cba391e"); }
+[data-theme="covenant"] { --wash: url("/theme/art/wash-covenant.png?v=4cba391e"); }
+[data-theme="martyrdom-bab"] { --wash: url("/theme/art/wash-martyrdom-bab.png?v=4cba391e"); }
+[data-theme="ascension-bahaullah"] { --wash: url("/theme/art/wash-ascension-bahaullah.png?v=4cba391e"); }
+[data-theme="ascension-abdulbaha"] { --wash: url("/theme/art/wash-ascension-abdulbaha.png?v=4cba391e"); }
 
 /* Naw-Ruz: spring green */
 [data-theme="naw-ruz"] {
@@ -1122,11 +1122,10 @@ img, svg { max-width: 100%; }
   --card-stock: #FFFDF8;
   --halftone: radial-gradient(rgba(94, 58, 14, 0.05) 0.7px, transparent 0.9px);
   --emboss: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(74, 46, 26, 0.12);
-  --orn-tl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='%23B4832A' stroke-width='2' stroke-linecap='round'%3E%3Cg transform=''%3E%3Cpath d='M4 4H34M4 4V34'/%3E%3Cpath d='M10 10C28 10 38 18 36 30 34 37 25 38 23 31 21 25 28 21 31 25'/%3E%3Cpath d='M10 10C10 28 18 38 30 36 37 34 38 25 31 23 25 21 21 28 25 31'/%3E%3Ccircle cx='10' cy='10' r='3' fill='%23B4832A'/%3E%3Ccircle cx='44' cy='6' r='1.8' fill='%23B4832A'/%3E%3Ccircle cx='6' cy='44' r='1.8' fill='%23B4832A'/%3E%3Cpath d='M40 4C46 4 50 8 50 12M4 40C4 46 8 50 12 50'/%3E%3C/g%3E%3C/svg%3E");
-  --orn-tr: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='%23B4832A' stroke-width='2' stroke-linecap='round'%3E%3Cg transform='translate(64 0) scale(-1 1)'%3E%3Cpath d='M4 4H34M4 4V34'/%3E%3Cpath d='M10 10C28 10 38 18 36 30 34 37 25 38 23 31 21 25 28 21 31 25'/%3E%3Cpath d='M10 10C10 28 18 38 30 36 37 34 38 25 31 23 25 21 21 28 25 31'/%3E%3Ccircle cx='10' cy='10' r='3' fill='%23B4832A'/%3E%3Ccircle cx='44' cy='6' r='1.8' fill='%23B4832A'/%3E%3Ccircle cx='6' cy='44' r='1.8' fill='%23B4832A'/%3E%3Cpath d='M40 4C46 4 50 8 50 12M4 40C4 46 8 50 12 50'/%3E%3C/g%3E%3C/svg%3E");
-  --orn-bl: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='%23B4832A' stroke-width='2' stroke-linecap='round'%3E%3Cg transform='translate(0 64) scale(1 -1)'%3E%3Cpath d='M4 4H34M4 4V34'/%3E%3Cpath d='M10 10C28 10 38 18 36 30 34 37 25 38 23 31 21 25 28 21 31 25'/%3E%3Cpath d='M10 10C10 28 18 38 30 36 37 34 38 25 31 23 25 21 21 28 25 31'/%3E%3Ccircle cx='10' cy='10' r='3' fill='%23B4832A'/%3E%3Ccircle cx='44' cy='6' r='1.8' fill='%23B4832A'/%3E%3Ccircle cx='6' cy='44' r='1.8' fill='%23B4832A'/%3E%3Cpath d='M40 4C46 4 50 8 50 12M4 40C4 46 8 50 12 50'/%3E%3C/g%3E%3C/svg%3E");
-  --orn-br: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64' fill='none' stroke='%23B4832A' stroke-width='2' stroke-linecap='round'%3E%3Cg transform='translate(64 64) scale(-1 -1)'%3E%3Cpath d='M4 4H34M4 4V34'/%3E%3Cpath d='M10 10C28 10 38 18 36 30 34 37 25 38 23 31 21 25 28 21 31 25'/%3E%3Cpath d='M10 10C10 28 18 38 30 36 37 34 38 25 31 23 25 21 21 28 25 31'/%3E%3Ccircle cx='10' cy='10' r='3' fill='%23B4832A'/%3E%3Ccircle cx='44' cy='6' r='1.8' fill='%23B4832A'/%3E%3Ccircle cx='6' cy='44' r='1.8' fill='%23B4832A'/%3E%3Cpath d='M40 4C46 4 50 8 50 12M4 40C4 46 8 50 12 50'/%3E%3C/g%3E%3C/svg%3E");
-  --orn-divider: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 240 20' fill='none' stroke='%23B4832A' stroke-width='1.6' stroke-linecap='round'%3E%3Crect x='84' y='0' width='72' height='20' fill='%23F9F6EE' stroke='none'/%3E%3Cpath d='M96 10C102 10 104 3 110 4 115 5 114 10 110 11M144 10C138 10 136 3 130 4 125 5 126 10 130 11'/%3E%3Cpath d='M120 2L128 10L120 18L112 10Z' fill='%23B4832A'/%3E%3Ccircle cx='88' cy='10' r='1.6' fill='%23B4832A'/%3E%3Ccircle cx='152' cy='10' r='1.6' fill='%23B4832A'/%3E%3C/svg%3E");
+  --orn-tl: url(/theme/art/ornament-corner.svg?v=4cba391e);      /* owner art, tinted with --gilt through mask-image */
+  --orn-br: url(/theme/art/ornament-corner-br.svg?v=4cba391e);   /* same corner turned 180deg (masks cannot rotate) */
+  --orn-rule: url(/theme/art/ornament-rule.svg?v=4cba391e);
+  --orn-flourish: url(/theme/art/ornament-flourish.svg?v=4cba391e);
 }
 [data-reverent="true"], [data-theme="martyrdom-bab"], [data-theme="ascension-bahaullah"], [data-theme="ascension-abdulbaha"] {
   --gilt: #8F7A5C; --gilt-soft: #BBAA8E; --card-stock: #F1EEE7;
@@ -1135,17 +1134,19 @@ img, svg { max-width: 100%; }
 .hairline-frame { position: relative; }
 .hairline-frame::before { content: ""; position: absolute; inset: var(--pc-inset, 0.5rem); border: 1px solid var(--gilt); border-radius: var(--pc-radius, 0.6rem); pointer-events: none; }
 .hairline-frame::after { content: ""; position: absolute; inset: var(--pc-inset, 0.5rem); pointer-events: none;
-  background: var(--orn-tl) left top / var(--pc-orn, 2rem) no-repeat, var(--orn-br) right bottom / var(--pc-orn, 2rem) no-repeat; }
-.ornament-rule { height: 1.4rem; margin: var(--space-3) auto; width: min(100%, 28rem); background: var(--orn-divider) center / auto 100% no-repeat, linear-gradient(var(--gilt), var(--gilt)) center / 100% 1px no-repeat; }
+  background: var(--gilt); -webkit-mask: var(--orn-tl) left top / var(--pc-orn, 2rem) no-repeat, var(--orn-br) right bottom / var(--pc-orn, 2rem) no-repeat; mask: var(--orn-tl) left top / var(--pc-orn, 2rem) no-repeat, var(--orn-br) right bottom / var(--pc-orn, 2rem) no-repeat; }
+.ornament-rule, .ornament-flourish { display: block; margin: var(--space-3) auto; background: var(--gilt); -webkit-mask: var(--orn-rule) center / contain no-repeat; mask: var(--orn-rule) center / contain no-repeat; }
+.ornament-rule { width: min(100%, 32rem); aspect-ratio: 16 / 1; }
+.ornament-flourish { width: min(70%, 15rem); aspect-ratio: 3 / 1; -webkit-mask-image: var(--orn-flourish); mask-image: var(--orn-flourish); }
 .rule-hair { border: 0; border-top: 1px solid var(--gilt-soft); margin: var(--space-3) 0; }
 .small-caps { font-variant-caps: all-small-caps; letter-spacing: 0.12em; }
 
 /* ---- Phones / tablets: a light hairline border, art only on the outer edge (orientation-aware) ---- */
-body.page-play { --pc-margin: 0.55rem; --pc-pad: 1rem; --pc-orn: 1.8rem; height: 100vh; height: 100dvh; overflow: hidden; }
-@media (orientation: landscape) { body.page-play { --pc-margin: 0.35rem; --pc-pad: 0.6rem; --pc-orn: 1.5rem; } }
+body.page-play { --pc-margin: 0.55rem; --pc-pad: 1rem; --pc-orn: 3.2rem; height: 100vh; height: 100dvh; overflow: hidden; }
+@media (orientation: landscape) { body.page-play { --pc-margin: 0.35rem; --pc-pad: 0.6rem; --pc-orn: 2.6rem; } }
 body.page-play::before { content: none; }
 body.page-play::after { content: ""; position: fixed; inset: var(--pc-margin); z-index: -1; pointer-events: none; border: 1px solid var(--gilt); border-radius: 0.9rem;
-  background: var(--orn-tl) left top / var(--pc-orn) no-repeat, var(--orn-br) right bottom / var(--pc-orn) no-repeat; }
+  background: var(--gilt); -webkit-mask: var(--orn-tl) left top / var(--pc-orn) no-repeat, var(--orn-br) right bottom / var(--pc-orn) no-repeat; mask: var(--orn-tl) left top / var(--pc-orn) no-repeat, var(--orn-br) right bottom / var(--pc-orn) no-repeat; }
 body.page-play .decor-layer--fixed { inset: var(--pc-margin); border-radius: 0.9rem; z-index: -2; }
 body.page-play .flourish { --fl: clamp(4.5rem, 22vw, 7.5rem); opacity: 0.85; }
 body.page-play .flourish--tr, body.page-play .flourish--bl { display: none; }
@@ -1161,7 +1162,7 @@ body.page-play .player-bar[hidden] { display: none; }
   body.kit-page { height: 100vh; height: 100dvh; overflow: hidden; --pc-margin: 0.55rem; }
   body.kit-page::before { content: none; }
   body.kit-page::after { content: ""; position: fixed; inset: var(--pc-margin); z-index: -1; pointer-events: none; border: 1px solid var(--gilt); border-radius: 0.9rem;
-    background: var(--orn-tl) left top / 1.8rem no-repeat, var(--orn-br) right bottom / 1.8rem no-repeat; }
+    background: var(--gilt); -webkit-mask: var(--orn-tl) left top / 1.8rem no-repeat, var(--orn-br) right bottom / 1.8rem no-repeat; mask: var(--orn-tl) left top / 1.8rem no-repeat, var(--orn-br) right bottom / 1.8rem no-repeat; }
   body.kit-page main.kit { position: fixed; top: calc(var(--pc-margin) + 1.1rem); left: calc(var(--pc-margin) + 1.1rem); right: calc(var(--pc-margin) + 1.1rem); bottom: calc(var(--pc-margin) + 1.1rem); overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 1.2rem 0.2rem 1rem; max-width: none; margin: 0; }
   body.kit-page .flourish { --fl: clamp(3.5rem, 18vw, 5.5rem); opacity: 0.75; }
   body.kit-page .kit-header { background: transparent; border: 0; box-shadow: none; padding: 0; }

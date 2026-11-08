@@ -19,7 +19,7 @@
 
   var NS = 'http://www.w3.org/2000/svg';
   var ART = '/theme/art/';
-  var ART_VERSION = 'cd094d22';            // written by `npm run art-version`; busts the browser cache when art changes
+  var ART_VERSION = '4cba391e';            // written by `npm run art-version`; busts the browser cache when art changes
   var V = '?v=' + ART_VERSION;
   var COLORWAYS = ['gold', 'rose', 'coral', 'plum', 'sage', 'ivory', 'spring'];
   var THEME_ART = {
@@ -75,8 +75,10 @@
   function sprayUrls(n) { return { x1: ART + 'spray-' + n + '@1x.png' + V, x2: ART + 'spray-' + n + '.png' + V }; }
   function petalUrls(cw) { return { x1: ART + 'petal-' + cw + '.png' + V, x2: ART + 'petal-' + cw + '@2x.png' + V }; }
   function branchUrls(n) { var u = ART + 'branch-' + n + '.png' + V; return { x1: u, x2: u }; }
-  var BUD_FOR = { gold: 'gold', rose: 'rose', coral: 'coral', plum: 'plum', sage: 'gold', ivory: 'gold', spring: 'gold' };
-  function budUrls(cw) { var u = ART + 'bud-' + (BUD_FOR[cw] || 'gold') + '.png' + V; return { x1: u, x2: u }; }
+  var BUD_FOR = { gold: 'gold', rose: 'rose', coral: 'coral', plum: 'plum', sage: 'sage', ivory: 'gold', spring: 'gold' };
+  // bud-sage.png is optional owner art: until the file is dropped in and listed here, sage falls back to bud-gold.
+  var BUD_AVAILABLE = { gold: 1, rose: 1, coral: 1, plum: 1 };
+  function budUrls(cw) { var c = BUD_FOR[cw] || 'gold'; if (!BUD_AVAILABLE[c]) c = 'gold'; var u = ART + 'bud-' + c + '.png' + V; return { x1: u, x2: u }; }
   function urlsFor(kind, name) {
     return kind === 'hero' ? heroUrls(name) : kind === 'spray' ? sprayUrls(name) : kind === 'branch' ? branchUrls(name) : kind === 'bud' ? budUrls(name) : petalUrls(name);
   }
