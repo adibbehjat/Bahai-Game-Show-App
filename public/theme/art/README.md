@@ -32,15 +32,16 @@ This is the stable interface between the artwork and the code. **Keep filenames,
 | `wash-default.png`, `wash-naw-ruz.png`, `wash-ridvan.png`, `wash-declaration-bab.png`, `wash-birth-bab.png`, `wash-birth-bahaullah.png`, `wash-covenant.png`, `wash-martyrdom-bab.png`, `wash-ascension-bahaullah.png`, `wash-ascension-abdulbaha.png` | Barely-there soft colour bloom in the corners, stretched to cover the page (alpha at most about 12%; text contrast is verified against it). One per theme id | 480x270 | semi-transparent | theme accent tints (default gold/rose, naw-ruz sage, ridvan rose, births champagne/gold, covenant sage/mauve, solemn greys) | `--wash` in `theme.css` |
 
 ## Status: owner art vs placeholder
-Two styles are now in the folder: **batch 1** (feathery, light: `blossom-gold`, `blossom-ivory`, `blossom-rose`, `spray-warm`) and **batch 2/3** (dense incurved lithographic petals: `blossom-coral`, `blossom-spring`, `blossom-plum`, `spray-green`, `spray-plum`, branches and buds). Re-doing gold, ivory and rose in the dense style would unify the set.
+Two styles are now in the folder: **batch 1** (feathery, light; now fully replaced by batch 5) and **batch 2/3** (dense incurved lithographic petals: `blossom-coral`, `blossom-spring`, `blossom-plum`, `spray-green`, `spray-plum`, branches and buds). Re-doing gold, ivory and rose in the dense style would unify the set.
 | Asset | Status |
 |---|---|
-| `blossom-gold`, `blossom-ivory`, `blossom-rose` (+ `@1x`) | **owner art**, batch 1, feathery style (awaiting dense re-do) |
+| `blossom-gold`, `blossom-ivory` (+ `@1x`) | **owner art**, batch 5 (dense consistency redo); `@1x` files quantised to PNG8 for the size budget |
+| `blossom-rose` (+ `@1x`) | **owner art**, batch 5, tuned toward dusty rose (`-modulate 100,70,98`) |
 | `blossom-coral` (+ `@1x`) | **owner art**, batch 2, dense style |
 | `blossom-spring` (+ `@1x`) | **owner art**, batch 3 (softer sage-green and cream; replaces the batch 2 olive version, backup in `/tmp/art-placeholders-backup/b2/`) |
 | `blossom-plum` (+ `@1x`) | **owner art**, batch 3 (dusty mauve-pink with a deep magenta heart) |
-| `blossom-sage` (+ `@1x`) | **placeholder** (still missing owner art) |
-| `spray-warm` (+ `@1x`) | **owner art**, batch 1 (feathery), trimmed and anchored top-left |
+| `blossom-sage` (+ `@1x`) | **owner art**, batch 5, desaturated and warmed toward grey-green (`-modulate 100,65,90`) |
+| `spray-warm` (+ `@1x`) | **owner art**, batch 5 (dense), trimmed and anchored top-left; used by default, ridvan, birth-bab, birth-bahaullah |
 | `spray-green` (+ `@1x`) | **owner art**, batch 2 |
 | `spray-plum` (+ `@1x`) | **owner art**, batch 3, trimmed to its alpha bbox and anchored top-left (stems bleed off the corner) |
 | `branch-warm` | **owner art**, batch 2 |
@@ -49,8 +50,8 @@ Two styles are now in the folder: **batch 1** (feathery, light: `blossom-gold`, 
 | `bud-gold`, `bud-rose` | **owner art**, batch 2 (`bud-rose` recoloured to dusty rose) |
 | `bud-coral` | **owner art**, batch 3 (orange-gold bud; assigned to coral by colour) |
 | `bud-plum` | **owner art**, batch 3 (gold bud flushed mauve-pink; assigned to plum by colour, could also be rose) |
-| `bud-sage` | in the contract, **not yet supplied**. `flower.js` maps sage-hero themes (e.g. covenant) to it via `BUD_FOR`, falls back to `bud-gold` until it is added to `BUD_AVAILABLE` |
-| `petal-gold`, `petal-ivory`, `petal-rose`, `petal-coral`, `petal-spring` (+ `@2x`) | **owner art**, batches 1 and 2 |
+| `bud-sage` | **owner art**, batch 5, tuned like `blossom-sage`; `BUD_AVAILABLE.sage` is on |
+| `petal-gold`, `petal-ivory` (batch 5 redo), `petal-rose`, `petal-coral`, `petal-spring` (+ `@2x`) | **owner art**, batches 1 and 2 |
 | `petal-plum`, `petal-sage` (+ `@2x`) | **owner art**, batch 3, base at bottom centre, saved as full-alpha PNG32 for clean edges |
 | `leaf-a`, `leaf-b`, `leaf-c` | **owner art**, batch 1; not yet placed on a screen |
 | `paper.png` | **owner art, converted** (batch 2): luminance turned into a walnut alpha overlay (alpha at most about 4%) layered over the eggshell colour; tiles seamlessly |

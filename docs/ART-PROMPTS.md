@@ -9,18 +9,18 @@ Legend: ✅ owner art, dense style / ⚠️ owner art, OLD feathery style, redo 
 | Asset | Status |
 |---|---|
 | `blossom-coral`, `blossom-spring`, `blossom-plum` | ✅ |
-| `blossom-gold`, `blossom-ivory`, `blossom-rose` | ⚠️ redo |
-| `blossom-sage` | ❌ |
+| `blossom-gold`, `blossom-ivory`, `blossom-rose` | ✅ |
+| `blossom-sage` | ✅ |
 | `spray-green`, `spray-plum` | ✅ |
-| `spray-warm` | ⚠️ redo (optional, lower priority) |
+| `spray-warm` | ✅ |
 | `branch-warm`, `branch-plum`, `branch-green` | ✅ |
 | `bud-gold`, `bud-rose`, `bud-coral`, `bud-plum` | ✅ |
-| `bud-sage` | ❌ new (not yet in the README contract; we will add the file mapping) |
+| `bud-sage` | ✅ |
 | `petal-rose`, `petal-coral`, `petal-spring`, `petal-plum`, `petal-sage` | ✅ |
-| `petal-gold`, `petal-ivory` | ⚠️ redo |
+| `petal-gold`, `petal-ivory` | ✅ |
 | `leaf-a`, `leaf-b`, `leaf-c` | ✅ |
 | `paper` | ✅ |
-| `ornament-rule`, `ornament-flourish`, `ornament-corner` | ✅ (in the owner manifest; README still calls them placeholder) |
+| `ornament-rule`, `ornament-flourish`, `ornament-corner` | ✅ |
 | `wash-<theme>` (10) | ➖ generated in code, not needed |
 
 ## Next batch (batch 5): consistency redo
