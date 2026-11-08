@@ -1189,3 +1189,10 @@ body.page-play .player-bar { flex-wrap: wrap; row-gap: 0.1rem; column-gap: 0.8re
 body.page-play .player-bar__name { flex: 1 1 9rem; min-width: 0; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; text-align: left; }
 body.page-play .player-bar__score, body.page-play .player-bar__rank, body.page-play .player-bar__badge { flex: none; }
 body.page-play #app { bottom: calc(var(--pc-margin) + 4.4rem); }
+
+/* compact badge picker: 5 per row (9 flower emoji, numbers 0 to 19), >=44px targets, no horizontal overflow.
+   `body .badge-grid` outranks any page-level grid rule. */
+body .badge-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.4rem; max-height: none; overflow: visible; padding: 2px; width: 100%; }
+body .badge { min-width: 0; min-height: 2.75rem; height: 3rem; font-size: 1.5rem; border-radius: 0.75rem; }
+body .badge--number { font-family: var(--font-display); font-weight: 800; font-size: 1.2rem; font-variant-numeric: lining-nums tabular-nums; }
+.name-card, .name-card > * { min-width: 0; max-width: 100%; }

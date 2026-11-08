@@ -262,3 +262,21 @@ body { margin: 0; min-height: 100vh; }
 .stage .podium { border-bottom: 1px solid var(--gilt); }
 .over .ornament-rule { width: 30cqw; margin: 0.4cqh auto; height: 2.2cqh; }
 .stage .big-question { font-weight: 600; }
+
+/* ===== Badge tokens (emoji and numerals share one optical box) ===== */
+.badge-tag { display: inline-grid; place-items: center; width: var(--bt, 3.2cqw); height: var(--bt, 3.2cqw); flex: none; line-height: 1; text-align: center; }
+.badge-tag[hidden] { display: none; }
+.badge-tag--emoji { font-size: calc(var(--bt, 3.2cqw) * 0.8); }
+.badge-tag--num { border: 1px solid var(--gilt); border-radius: 50%; background: var(--color-surface); color: var(--color-ink); font: 800 calc(var(--bt, 3.2cqw) * 0.5)/1 var(--font-display); font-variant-numeric: lining-nums tabular-nums; }
+.chip-badge { --bt: 3.2cqw; min-width: 0; }
+.lb__badge { --bt: 2.6cqw; }
+.lb__row { grid-template-columns: 2.4cqw 2.6cqw minmax(0, 1fr) auto; }
+/* podium steps: place numeral tucked into the corner so badge, name and score fit on a projector */
+.stage .podium__step { position: relative; justify-content: center; gap: 0.1cqh; padding: 0.8cqh 0.6cqw; }
+.stage .podium__step::before { position: absolute; top: 0.5cqh; left: 0.9cqw; font-size: 2.2cqw; }
+.podium__badge { --bt: 4cqw; margin-bottom: 0; }
+.stage .podium__step--1 .podium__badge { --bt: 4.8cqw; }
+.stage .podium__step--1 { height: 26cqh; } .stage .podium__step--2 { height: 21cqh; } .stage .podium__step--3 { height: 18cqh; }
+.podium__col--1 .blossom { width: 12cqh; height: 12cqh; }
+.podium__col--2 .blossom, .podium__col--3 .blossom { width: 9cqh; height: 9cqh; }
+.stage .podium { max-height: 50cqh; }

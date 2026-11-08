@@ -205,8 +205,8 @@ test('malformed, oversized and extra-key payloads are dropped', async () => {
     await dropped('player:join', { code: room.code, ...ok, adj: -1 });
     await dropped('player:join', { code: room.code, ...ok, flower: 1.5 });
     await dropped('player:join', { code: room.code, ...ok, flower: '1' });
-    await dropped('player:join', { code: room.code, ...ok, badge: { kind: 'number', value: 100 } });
-    await dropped('player:join', { code: room.code, ...ok, badge: { kind: 'number', value: 0 } });
+    await dropped('player:join', { code: room.code, ...ok, badge: { kind: 'number', value: 20 } });
+    await dropped('player:join', { code: room.code, ...ok, badge: { kind: 'number', value: -1 } });
     await dropped('player:join', { code: room.code, ...ok, badge: { kind: 'emoji', value: GameNames.EMOJIS.length } });
     await dropped('player:join', { code: room.code, ...ok, badge: { kind: 'text', value: 'hi' } });
     await dropped('player:join', { code: room.code, ...ok, badge: { kind: 'number', value: 1, extra: 1 } });
@@ -260,6 +260,22 @@ test('names are composed server-side; duplicates get Name taken', async () => {
     assert.equal(emoji.badge.text, GameNames.EMOJIS[0]);
     const st2 = await host.rec.wait('room:state', (x) => x.players.length === 2);
     assert.ok(st2.players.every((x) => x.name === nameFor(5)));
+  } finally { await s.shutdown(); }
+});
+
+test('number badge 0 works end to end; 20 is rejected', async () => {
+  const s = await startServer();
+  try {
+    const host = await hostLogin(s);
+    const room = await createRoom(host);
+    const p = await s.connect();
+    assert.equal(await emitAck(p, 'player:join', { code: room.code, ...selFor(40), badge: { kind: 'number', value: 20 } }, 250), null);
+    const res = await emitAck(p, 'player:join', { code: room.code, ...selFor(40), badge: { kind: 'number', value: 0 } });
+    assert.equal(res.ok, true);
+    assert.deepEqual(res.badge, { kind: 'number', text: '0' });
+    assert.equal(res.display, nameFor(40) + ' 0');
+    const st = await host.rec.wait('room:state', (x) => x.players.length === 1);
+    assert.deepEqual(st.players[0].badge, { kind: 'number', text: '0' });
   } finally { await s.shutdown(); }
 });
 

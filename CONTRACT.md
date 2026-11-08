@@ -207,3 +207,9 @@ Allowed themes: flowers and plants, gentle animals, birds, fruit, sky (sun, moon
 ### No audio (owner decision, Revision 3a)
 - **No audio of any kind:** no speechSynthesis, sound effects, music or read-aloud. Remove `host:speak`, `speakWord` from the spell `question:show` payload, and any "Hear the word" UI. Spelling questions show the `clue` only.
 - **No banter or trash talk.** Microcopy stays warm, brief and dignified.
+
+### Simpler names and badges (owner request, Revision 4)
+- **`GameNames.FLOWERS`:** simple, easy-to-pronounce, everyday flower names only (e.g. Rose, Lily, Daisy, Tulip, Iris, Lotus, Poppy, Violet, Lilac, Aster, Clover, Daffodil, Sunflower, Bluebell, Primrose, Jasmine, Marigold, Orchid, Peony, Snowdrop, Lavender, Buttercup, Pansy). Drop hard ones such as Chrysanthemum, Hyacinth, Freesia, Gardenia, Camellia and Zinnia. `combinations()` must stay **≥ 600**.
+- **`GameNames.EMOJIS`:** flowers only, each a single code point with broad device support: 🌸 🌹 🌺 🌻 🌼 🌷 🪷 💐 💮. No 🥀 (wilted), and nothing that needs U+FE0F.
+- **Numbers:** `NUMBER_MIN = 0` and `NUMBER_MAX = 19`.
+- **Badges render everywhere a player is named:** lobby chips, the top-5 sidebar, the **podium** (`game:over` podium entries carry `badge: {kind, text}`), the phone footer, and the phone's final screen.

@@ -66,6 +66,21 @@
   function reducedMotion() { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
   function reverent() { return !!(S.room && S.room.reverent); }
 
+  // Badge token: emoji and numerals share one optical box so they look intentional everywhere.
+  function isNumeral(t) { return /^\d+$/.test(String(t)); }
+  function setBadge(el, text) {
+    el.textContent = text || '';
+    el.className = (el.className || '').replace(/\s*badge-tag(--\w+)?/g, '') + ' badge-tag ' + (isNumeral(text) ? 'badge-tag--num' : 'badge-tag--emoji');
+    el.hidden = !text;
+  }
+  function badgeNode(text) {
+    if (!text) return null;
+    var n = document.createElement('span');
+    n.setAttribute('aria-hidden', 'true');
+    setBadge(n, text);
+    return n;
+  }
+
   function blossomImg(size, seed) {
     if (!window.Flower || !Flower.blossom) return null;
     try { return Flower.blossom({ size: size, seed: seed }); } catch (e) { return null; }
@@ -157,7 +172,7 @@
         LB.rows[key] = row;
       }
       row.rank.textContent = String(p.rank);
-      row.badge.textContent = p.badgeText || '';
+      setBadge(row.badge, p.badgeText || '');
       row.name.textContent = p.name;
       row.el.className = 'lb__row lb__row--' + Math.min(p.rank, 4);
       var from = row.value;
@@ -304,7 +319,7 @@
     var wrap = h('div', { class: 'players-grid' });
     room.players.forEach(function (p) {
       var chip = h('span', { class: 'player-chip' + (p.connected ? '' : ' player-chip--disconnected') },
-        p.badge && p.badge.text ? h('span', { class: 'chip-badge', 'aria-hidden': 'true', text: p.badge.text }) : null,
+        p.badge && p.badge.text ? (function () { var b = badgeNode(p.badge.text); b.className += ' chip-badge'; return b; })() : null,
         h('span', { class: 'chip-name', text: p.name }));
       chip.append(h('button', { class: 'btn btn--ghost chip-kick', type: 'button', 'aria-label': 'Remove ' + p.name, title: 'Remove', text: '×',
         onclick: function () { emitAck('host:kick', { playerId: p.id }); } }));
@@ -473,7 +488,7 @@
       if (!pod[i]) return;
       cols.push(h('div', { class: 'podium__col podium__col--' + (i + 1) },
         blossomImg(i === 0 ? 200 : 140, i * 2 + 1),
-        h('div', { class: 'podium__step podium__step--' + (i + 1) }, h('span', { class: 'podium__name', text: pod[i].name }), h('span', { class: 'podium__score', text: String(pod[i].score) }))));
+        h('div', { class: 'podium__step podium__step--' + (i + 1) }, (function () { var b = badgeNode(pod[i].badge && pod[i].badge.text); if (b) b.className += ' podium__badge'; return b; })(), h('span', { class: 'podium__name', text: pod[i].name }), h('span', { class: 'podium__score', text: String(pod[i].score) }))));
     });
     var again = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'New game', onclick: function () {
       S.room = null; S.code = null; S.q = null; S.reveal = null; S.podium = null; S.lb = null; LB.rows = {}; if (LB.list) LB.list.replaceChildren(); if (LB.foot) LB.foot.textContent = ''; goPacks();

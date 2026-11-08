@@ -91,7 +91,7 @@
     var emojiGrid = h('div', { class: 'badge-grid', role: 'group', 'aria-label': 'Choose an emoji' }, emojiBtns);
     var numGrid = h('div', { class: 'badge-grid badge-grid--numbers', role: 'group', 'aria-label': 'Choose a number' }, numBtns);
     var tabEmoji = h('button', { class: 'segmented__btn', type: 'button', text: 'Emoji', onclick: function () { sel.badge = { kind: 'emoji', value: 0 }; paint(); } });
-    var tabNumber = h('button', { class: 'segmented__btn', type: 'button', text: 'Number', onclick: function () { sel.badge = { kind: 'number', value: 1 + Math.floor(Math.random() * 99) }; paint(); } });
+    var tabNumber = h('button', { class: 'segmented__btn', type: 'button', text: 'Number', onclick: function () { sel.badge = { kind: 'number', value: GameNames.NUMBER_MIN + Math.floor(Math.random() * (GameNames.NUMBER_MAX - GameNames.NUMBER_MIN + 1)) }; paint(); } });
 
     function paint() {
       var c = GameNames.compose(sel);
@@ -303,10 +303,17 @@
 
   function viewOver() {
     var pod = P.podium ? P.podium.podium : [];
-    var list = h('ol', { class: 'scoreboard' }, pod.map(function (p, i) {
-      return h('li', { class: 'scoreboard__row' }, h('span', { class: 'scoreboard__name', text: p.name }), h('span', { class: 'scoreboard__score', text: String(p.score) }));
+    var list = h('ol', { class: 'scoreboard' }, pod.map(function (p) {
+      return h('li', { class: 'scoreboard__row' },
+        h('span', { class: 'scoreboard__name', text: (p.badge ? p.badge.text + ' ' : '') + p.name }),
+        h('span', { class: 'scoreboard__score', text: String(p.score) }));
     }));
-    show([h('h1', { text: 'Thank you for playing' }), list, h('p', { class: 'result-line', text: 'Your score: ' + P.score })]);
+    show([
+      h('h1', { text: 'Thank you for playing' }),
+      h('p', { class: 'result-line player-final', text: (P.badge ? P.badge.text + ' ' : '') + P.name }),
+      list,
+      h('p', { class: 'result-line', text: 'Your score: ' + P.score }),
+    ]);
   }
 
   function render() {
