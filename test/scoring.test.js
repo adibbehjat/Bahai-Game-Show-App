@@ -81,3 +81,30 @@ test('spell folds apostrophe variants', () => {
   const q = { type: 'spell', clue: 'c', word: "Bahá'u'lláh" };
   assert.equal(S.scoreAnswer(q, 'bahá’u’lláh', full).matchPct, 100);
 });
+
+test('browser build of scoring loads in a fake window and matches the Node build', () => {
+  const vm = require('node:vm');
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const dir = path.join(__dirname, '..', 'public', 'shared');
+  const ctx = {};
+  ctx.window = ctx; ctx.self = ctx;
+  vm.createContext(ctx);
+  for (const f of ['schema.js', 'scoring.js']) vm.runInContext(fs.readFileSync(path.join(dir, f), 'utf8'), ctx, { filename: f });
+  assert.equal(typeof ctx.GameScoring.scoreAnswer, 'function');
+  const cases = [
+    [{ type: 'single', choices: ['a', 'b'], answer: 1 }, 1],
+    [{ type: 'truefalse', answer: false }, false],
+    [{ type: 'multi', choices: ['a', 'b', 'c', 'd'], answer: [0, 2] }, [0, 1]],
+    [{ type: 'order', items: ['x', 'y', 'z'], answer: [2, 0, 1] }, [2, 1, 0]],
+    [{ type: 'spell', clue: 'c', word: 'Ridván', accept: ['rizvan'] }, 'ridvon'],
+    [{ type: 'spell', clue: 'c', word: 'Ridván' }, 'Ridván'],
+  ];
+  for (const [q, v] of cases) {
+    for (const opts of [full, half, none, { ...half, gentle: true }]) {
+      assert.deepEqual(JSON.parse(JSON.stringify(ctx.GameScoring.scoreAnswer(q, v, opts))), S.scoreAnswer(q, v, opts));
+    }
+  }
+  assert.equal(ctx.GameScoring.levenshtein('kitten', 'sitting'), 3);
+  assert.equal(ctx.GameScoring.speedFactor(5000, 10000), 0.75);
+});
