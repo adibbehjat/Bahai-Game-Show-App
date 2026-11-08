@@ -29,5 +29,10 @@
     return !!prevQ && !!nextQ && prevQ.index === nextQ.index;
   }
 
-  return { isUpdate: isUpdate, showLocked: showLocked, applyAnswerAck: applyAnswerAck, fromRejoin: fromRejoin };
+  // Room code typing helper: uppercase, drop characters outside the code alphabet, cap at 4.
+  function cleanCode(raw) {
+    return String(raw == null ? '' : raw).toUpperCase().replace(/[^ABCDEFGHJKLMNPQRSTUVWXYZ23456789]/g, '').slice(0, 4);
+  }
+
+  return { cleanCode: cleanCode, isUpdate: isUpdate, showLocked: showLocked, applyAnswerAck: applyAnswerAck, fromRejoin: fromRejoin };
 }));

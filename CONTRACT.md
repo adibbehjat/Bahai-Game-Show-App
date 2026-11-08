@@ -104,7 +104,7 @@ Every payload is a plain object and is validated server-side with exact keys and
 - **Headers:** helmet with CSP `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`. The `/kit` page uses `connect-src 'none'`.
 - **Rendering:** client code uses only `textContent` / `createElement` / `setAttribute` for dynamic data. Never use `innerHTML`, `insertAdjacentHTML`, `outerHTML`, `document.write`, `eval`, or `new Function`. The server-generated QR SVG is inserted as an `<img src="data:image/svg+xml;base64,...">`.
 - **Rooms:**
-  - Room codes are 6 characters from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`, generated with `crypto.randomInt`.
+  - Room codes are 4 characters (see Revision 5) from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789`, generated with `crypto.randomInt`.
   - Only an authenticated host can create a room.
   - A join for an unknown or ended code returns `Game not found`, and the socket joins nothing.
   - Player tokens are HMAC-signed `{room, pid, iat}`, and each socket is bound server-side to exactly one room.
@@ -213,3 +213,17 @@ Allowed themes: flowers and plants, gentle animals, birds, fruit, sky (sun, moon
 - **`GameNames.EMOJIS`:** flowers only, each a single code point with broad device support: 🌸 🌹 🌺 🌻 🌼 🌷 🪷 💐 💮. No 🥀 (wilted), and nothing that needs U+FE0F.
 - **Numbers:** `NUMBER_MIN = 0` and `NUMBER_MAX = 19`.
 - **Badges render everywhere a player is named:** lobby chips, the top-5 sidebar, the **podium** (`game:over` podium entries carry `badge: {kind, text}`), the phone footer, and the phone's final screen.
+
+### Shorter room codes (owner request, Revision 5)
+- Room codes are **4 characters** from `ABCDEFGHJKLMNPQRSTUVWXYZ23456789` (32⁴ ≈ 1.05M), generated with `crypto.randomInt`, and regenerated on collision with an active room. All other join protections are unchanged: the failed-join limit, per-socket caps, room TTLs and kick.
+- **Uppercase only.** The server accepts exactly `/^[A-HJ-NP-Z2-9]{4}$/` with no case folding. Join inputs uppercase as the user types and drop characters outside the alphabet, so lower-case never appears. All examples and docs show uppercase codes.
+
+### Lobby timeout (owner decision, Revision 6)
+- **A room still in `lobby` closes after 5 minutes without activity** (`LOBBY_IDLE_MS = 5 * 60 * 1000`). "Activity" means any host action or any player join, rejoin or leave. Rooms in `question` or `reveal` keep the 30-minute idle rule, and `over` rooms keep the 10-minute rule.
+- **Visible countdown.** In the lobby phase, `room:state` carries `closesAt` (server epoch ms; `null` outside the lobby) and `serverNow`. The host lobby shows a persistent countdown, e.g. "Room open · closes in 4:32 if the game doesn't start". Any activity resets it, and it turns into the warning style in the final minute.
+- **The server warns before closing.** It emits `room:closing {inSeconds: 60}` to the room once, 60 seconds before the lobby timeout (reset if activity happens).
+- **The server announces the close.** It emits `room:closed {reason: 'idle' | 'ended'}` to the room, then disconnects everyone from the room channel and invalidates its tokens. The host shows "This room closed after 5 minutes without activity", with a "Create a new room" button. Phones show "This game has closed" and return to the join screen.
+
+### Try-it preview in the kit (owner request, Revision 7)
+- **Shared scoring:** scoring logic moves to `public/shared/scoring.js` (UMD: `window.GameScoring` in the browser, `module.exports` in Node, depending only on `GameSchema`). `lib/scoring.js` becomes a thin re-export so the server and the tests are unchanged. The API stays the same: `scoreAnswer(q, value, {remainingMs, totalMs, gentle}) -> {correct, partial, points, matchPct?, ...}`, plus `levenshtein`/`similarity` and the speed factor.
+- **Kit "Try it" mode:** the preview becomes interactive. The author answers the draft question exactly as a player would on the phone (tap, multi-select plus Submit, order tap-to-number with Undo, spell typing), then sees the phone result (correct, partial, points or match %) and the big-screen reveal (correct answer highlighted, explanation, source, aggregate spell stats with no attempt text). This runs entirely client-side with no network.

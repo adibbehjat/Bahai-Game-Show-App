@@ -16,7 +16,8 @@
     "validate-questions": "node scripts/validate-questions.js",
     "render-deploy": "node scripts/render-deploy.js",
     "build-art": "node scripts/build-art.js",
-    "art-version": "node scripts/art-version.js"
+    "art-version": "node scripts/art-version.js",
+    "screenshots": "node scripts/capture-screenshots.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",

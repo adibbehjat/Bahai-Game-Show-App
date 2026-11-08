@@ -20,7 +20,7 @@
       <p class="muted">A party game for celebrating together.</p>
       <form id="join-form" class="form-open" action="/play" method="get" autocomplete="off">
         <label class="label" for="room">Join a game</label>
-        <input class="input code-input" id="room" name="room" type="text" maxlength="6" placeholder="ROOM CODE"
+        <input class="input code-input" id="room" name="room" type="text" maxlength="4" inputmode="text" placeholder="ROOM CODE"
                autocomplete="off" autocapitalize="characters" autocorrect="off" spellcheck="false" required>
         <button class="btn btn--primary btn--lg" type="submit">Join</button>
       </form>
@@ -29,6 +29,7 @@
       <p class="muted"><a href="/kit">Question kit</a></p>
     </div>
   </main>
+  <script src="/shared/playstate.js"></script>
   <script src="/theme/flower.js"></script>
   <script src="/index.js"></script>
 </body>

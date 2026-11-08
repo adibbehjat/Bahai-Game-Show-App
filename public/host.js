@@ -10,7 +10,7 @@
     packs: null, selectedPack: null,
     room: null, code: null, joinUrl: null, qr: null,
     q: null, progress: { answered: 0, total: 0 }, reveal: null, lb: null, burstFor: -1, extendsUsed: 0, podium: null,
-    offset: 0,
+    offset: 0, closingUntil: 0, closed: null,
   };
   var cleanups = [];
   var timerHandle = null;
@@ -355,8 +355,23 @@
       h('div', { class: 'qr-frame' }, S.qr ? h('img', { src: S.qr, alt: 'QR code to join the game', width: '256', height: '256' }) : null),
       h('div', { class: 'qr-card__label', text: 'Scan to join' }));
     var n = r.players.length;
+    var notice = null;
+    if (S.closingUntil > Date.now()) {
+      var clock = h('strong', { class: 'closing-notice__time' });
+      notice = h('p', { class: 'closing-notice', role: 'status' }, h('span', { class: 'closing-notice__lead', text: 'Room open \u00b7 closes in ' }), clock, h('span', { text: " if the game doesn't start" }));
+      var tick = function () {
+        var ms = S.closingUntil - Date.now();
+        var sec = Math.max(0, Math.ceil(ms / 1000));
+        clock.textContent = Math.floor(sec / 60) + ':' + (sec % 60 < 10 ? '0' : '') + (sec % 60);
+        notice.classList.toggle('closing-notice--warn', sec <= 60);
+      };
+      tick();
+      var iv = setInterval(tick, 500);
+      cleanups.push(function () { clearInterval(iv); });
+    }
     var left = [
       hero,
+      notice,
       quote(r.opening, 'lobby-quote'),
       h('div', { class: 'players-head' }, h('span', { text: 'Players' }), h('span', { text: String(n) })),
       n ? playerChips(r) : h('p', { class: 'players-empty', text: r.reverent ? 'Welcome. We will begin when everyone has arrived.' : 'Waiting for players to join…' })
@@ -502,7 +517,23 @@
     if (!r.reverent && window.Flower && Flower.burst) { try { Flower.burst(scr.querySelector('.stage'), { count: 40 }); } catch (e) { /* ignore */ } }
   }
 
+  function viewClosed() {
+    var idle = S.closed === 'idle';
+    var again = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'Create a new room', onclick: function () {
+      S.closed = null; S.closingUntil = 0; S.room = null; S.code = null; S.q = null; S.reveal = null; S.podium = null; S.lb = null;
+      LB.rows = {}; if (LB.list) LB.list.replaceChildren(); if (LB.foot) LB.foot.textContent = '';
+      if (S.authed) goPacks(); else render();
+    } });
+    show([h('div', { class: 'stack host-center host-center--narrow closed-card', role: 'status' },
+      h('div', { class: 'hero-art' }, blossomImg(200, 5)),
+      h('h1', { text: idle ? 'This room closed after 5 minutes without activity' : 'This game has ended' }),
+      h('div', { class: 'ornament-flourish', 'aria-hidden': 'true' }),
+      h('p', { class: 'muted', text: idle ? 'No one needs to do anything. You can open a fresh room whenever you are ready.' : 'Thank you for gathering together.' }),
+      again)], { center: true });
+  }
+
   function render() {
+    if (S.closed) { viewClosed(); return; }
     if (!S.authed) { viewPin(); return; }
     var r = S.room;
     if (!r) { if (S.view === 'packs') viewPacks(); else viewPin(); return; }
@@ -522,6 +553,7 @@
   // ---------- socket ----------
   socket.on('room:state', function (st) {
     S.room = st; S.code = st.code; S.view = 'room';
+    S.closingUntil = st.phase === 'lobby' && st.closesAt ? Date.now() + (st.closesAt - (st.serverNow || Date.now())) : 0;
     if (st.phase === 'question' || st.phase === 'lobby') S.reveal = null;
     render();
   });
@@ -542,6 +574,14 @@
   });
   socket.on('question:reveal', function (rv) { S.reveal = rv; render(); });
   socket.on('leaderboard', onLeaderboard);
+  socket.on('room:closing', function (d) {
+    var sec = d && Number(d.inSeconds);
+    S.closingUntil = Date.now() + (isFinite(sec) && sec > 0 ? sec : 60) * 1000;
+    if (S.room && S.room.phase === 'lobby' && !S.closed) render();
+  });
+  socket.on('room:closed', function (d) {
+    S.closingUntil = 0; S.closed = d && d.reason === 'ended' ? 'ended' : 'idle'; render();
+  });
   socket.on('game:over', function (g) { S.podium = g; render(); });
 
   function resume() {

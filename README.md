@@ -1,18 +1,43 @@
 # Holy Day Game Show
 
+![Holy Day Game Show: the host screen and two phones](docs/screenshots/hero.png)
+
 A Jackbox-style party game for Bahá'í Holy Day gatherings. One screen (a TV or projector) shows the game; everyone else joins on their phone with a short room code or by scanning a QR code. Nothing to install, no accounts, no typing names. It is free, open source, and made to be forked and hosted by any community.
 
-<!-- Screenshot placeholder: host lobby with room code and QR -->
-<!-- Screenshot placeholder: a question on the big screen -->
-<!-- Screenshot placeholder: a phone showing the answer buttons -->
+## Screenshots
+
+These are made with the demo (template) questions.
+
+| | |
+|---|---|
+| ![Welcome page](docs/screenshots/host-welcome.png)<br>The welcome page | ![Host lobby with room code and QR](docs/screenshots/host-lobby.png)<br>Lobby: room code, QR code and players |
+| ![A single-choice question](docs/screenshots/host-question.png)<br>A question with the live top-5 | ![A sequence puzzle](docs/screenshots/host-question-order.png)<br>The sequence ("put in order") puzzle |
+| ![The answer reveal](docs/screenshots/host-reveal.png)<br>Reveal with explanation and source | ![The podium](docs/screenshots/host-podium.png)<br>The podium |
+| ![A reverent pack](docs/screenshots/host-question-reverent.png)<br>Reverent packs are muted, with no confetti | ![A Naw-Ruz themed lobby](docs/screenshots/host-lobby-naw-ruz.png)<br>Each pack can have its own theme |
+
+On phones:
+
+| Join | Question | Ordering | Locked in | Result | Final |
+|---|---|---|---|---|---|
+| ![](docs/screenshots/phone-join.png) | ![](docs/screenshots/phone-question.png) | ![](docs/screenshots/phone-order.png) | ![](docs/screenshots/phone-locked.png) | ![](docs/screenshots/phone-result.png) | ![](docs/screenshots/phone-final.png) |
+
+The question kit (`/kit`) helps you write questions:
+
+![The question kit on a desktop](docs/screenshots/kit-desktop.png)
+
+| Format guide | On a phone |
+|---|---|
+| ![The Format guide drawer](docs/screenshots/kit-guide.png) | ![The kit on a phone](docs/screenshots/kit-phone.png) |
+
+**Refreshing screenshots.** After a visual change, run `npm run screenshots`. It plays a demo game on a throwaway local server. It needs Playwright and ImageMagick, which are not project dependencies. The setup is in the header of `scripts/capture-screenshots.js`.
 
 ## Run a game night in 5 steps
 
 1. Get the game running (see [Deploying](#deploying); a laptop on the venue Wi-Fi is enough).
 2. Open the site on the computer connected to the big screen, choose **Host a game**, and enter the host PIN.
 3. Pick a question pack and how many questions. Reverent packs use muted visuals, no confetti, and spelling off by default.
-4. Show the room code and QR code. Everyone scans it or taps **Join a game**, and picks a name.
-5. Press **Start game**. After each question you see the answer, an explanation and the source; at the end there is a podium.
+4. Show the room code (4 letters and numbers, such as `K7QM`) and the QR code. Everyone scans it or taps **Join a game**, and picks a name.
+5. Press **Start game** within 5 minutes of the last player joining, or the room closes and you create a new one. After each question you see the answer, an explanation and the source; at the end there is a podium.
 
 If the host page is reloaded it resumes the same game, and players who lose signal rejoin automatically.
 
@@ -46,7 +71,7 @@ Laptop at the venue, a VPS with Apache, nginx or Caddy, Docker, or a hosting pla
 
 ## Adding questions
 
-Questions live in `questions/<pack-id>/` as `pack.json` plus `questions.jsonl`. Open `/kit` on a running server for a form that builds valid lines for you (nothing is sent anywhere), paste them into the file, run `npm run validate-questions`, and restart the server. See `questions/_template` for one example of every type, and `CONTRACT.md` for the full rules.
+Questions live in `questions/<pack-id>/` as `pack.json` plus `questions.jsonl`. Open `/kit` on a running server for a form that builds valid lines for you (nothing is sent anywhere; its **Download template** button gives you a starter file), paste them into the file, run `npm run validate-questions`, and restart the server. See `questions/_template` for one example of every type, [docs/QUESTION-FORMAT.md](docs/QUESTION-FORMAT.md) for every field and limit, and [docs/question.schema.json](docs/question.schema.json) for editors that validate JSON.
 
 **Content accuracy.** The project ships only clearly fake template questions. Use authoritative Bahá'í sources (the Writings, and official publications), cite them in each question's `source` field, and carefully verify any AI-generated content before using it with your community.
 

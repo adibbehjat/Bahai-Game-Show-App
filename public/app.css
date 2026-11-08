@@ -232,7 +232,7 @@ body { margin: 0; min-height: 100vh; }
 
 /* ================= Brief refinements: printed correspondence, negative space ================= */
 /* lobby: big room code between two delicate rules; no frame */
-.stage .room-code { border: 0; outline: 0; background: none; box-shadow: none; padding: 0; font-size: 10.5cqw; letter-spacing: 0.14em; font-variation-settings: var(--display-title-variation); }
+.stage .room-code { border: 0; outline: 0; background: none; box-shadow: none; padding: 0; font-size: 14cqw; letter-spacing: 0.16em; font-variation-settings: var(--display-title-variation); }
 .stage .lobby-hero .ornament-rule { width: 32cqw; margin: 0.4cqh auto; height: auto; }
 .stage .qr-frame { padding: 0.9cqw; border: 1px solid var(--gilt); border-radius: 0.3cqw; box-shadow: 0 0 0 0.45cqw #fff, 0 0 0 calc(0.45cqw + 1px) var(--gilt-soft); margin: 0.6cqw; }
 .howto { padding: 1.4cqh 0 0; border: 0; border-top: 1px solid var(--gilt-soft); }
@@ -280,3 +280,14 @@ body { margin: 0; min-height: 100vh; }
 .podium__col--1 .blossom { width: 12cqh; height: 12cqh; }
 .podium__col--2 .blossom, .podium__col--3 .blossom { width: 9cqh; height: 9cqh; }
 .stage .podium { max-height: 50cqh; }
+
+/* ===== Lobby closing notice and closed screen (Revision 6) ===== */
+.closing-notice { text-align: center; margin: 0.4cqh auto; padding: 0.5cqh 1.6cqw; width: fit-content; max-width: 100%; font-size: 1.45cqw; color: var(--color-ink-soft); border: 1px solid var(--gilt); border-radius: 0.8cqw; background: var(--color-surface); }
+.closing-notice__time { font: 800 1.1em/1 var(--font-display); color: var(--color-ink); font-variant-numeric: lining-nums tabular-nums; }
+.closed-card { text-align: center; align-items: center; }
+.closed-card h1 { font-size: clamp(1.6rem, 3.4vw, 2.6rem); line-height: 1.2; }
+.closed-card .ornament-flourish { width: min(60%, 12rem); }
+@media (prefers-reduced-motion: no-preference) { .closed-card { animation: closed-in 600ms ease-out both; } }
+@keyframes closed-in { from { opacity: 0; } to { opacity: 1; } }
+.closing-notice--warn { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface)); color: var(--color-ink); }
+.closing-notice--warn .closing-notice__lead::before { content: "\2022  "; }

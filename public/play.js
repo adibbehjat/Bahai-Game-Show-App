@@ -5,10 +5,10 @@
   var bar = document.getElementById('bar');
   var socket = io({ transports: ['websocket', 'polling'] });
 
-  var urlCode = (new URLSearchParams(location.search).get('room') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+  var urlCode = PlayState.cleanCode(new URLSearchParams(location.search).get('room') || '');
   var P = {
     joined: false, code: urlCode || localStorage.getItem('hgs.lastRoom') || '', name: '', id: null, score: 0,
-    room: null, q: null, answeredFor: null, result: null, reveal: null, rank: null, notice: '', badge: null, podium: null,
+    room: null, q: null, answeredFor: null, result: null, reveal: null, rank: null, closing: false, notice: '', badge: null, podium: null,
     offset: 0, error: '', busy: false,
   };
   var cleanups = [];
@@ -75,8 +75,17 @@
   function viewJoin() {
     if (!sel) sel = GameNames.random();
     badgeKind = sel.badge.kind;
-    var code = h('input', { class: 'input', id: 'code', type: 'text', maxlength: '6', value: P.code, autocomplete: 'off', autocapitalize: 'characters', autocorrect: 'off', spellcheck: 'false', placeholder: 'ABC234', 'aria-label': 'Room code' });
-    code.addEventListener('input', function () { code.value = code.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); P.code = code.value; });
+    var code = h('input', { class: 'input', id: 'code', type: 'text', maxlength: '4', value: P.code, autocomplete: 'off', autocapitalize: 'characters', autocorrect: 'off', spellcheck: 'false', inputmode: 'text', placeholder: 'AB23', 'aria-label': 'Room code' });
+    code.addEventListener('input', function () {
+      var caret = code.selectionStart == null ? code.value.length : code.selectionStart;
+      var cleaned = PlayState.cleanCode(code.value);
+      var newCaret = PlayState.cleanCode(code.value.slice(0, caret)).length;
+      if (cleaned !== code.value) {
+        code.value = cleaned;
+        try { code.setSelectionRange(newCaret, newCaret); } catch (e) { /* ignore */ }
+      }
+      P.code = code.value;
+    });
 
     var nameEl = h('div', { class: 'name-card__name', 'aria-live': 'polite' });
     var emojiBtns = GameNames.EMOJIS.map(function (e, i) {
@@ -110,8 +119,8 @@
     var shuffle = h('button', { class: 'btn btn--ghost shuffle-btn', type: 'button', text: '\uD83D\uDD00 Shuffle', onclick: function () { sel = GameNames.random(); paint(); } });
 
     function submit() {
-      var c = code.value.trim().toUpperCase();
-      if (c.length !== 6 || P.busy) { if (c.length !== 6) { P.error = 'Game not found'; P.notice = ''; render(); } return; }
+      var c = PlayState.cleanCode(code.value);
+      if (c.length !== 4 || P.busy) { if (c.length !== 4) { P.error = 'Game not found'; P.notice = ''; render(); } return; }
       P.busy = true;
       emitAck('player:join', { code: c, adj: sel.adj, flower: sel.flower, badge: { kind: sel.badge.kind, value: sel.badge.value } }).then(function (res) {
         P.busy = false;
@@ -148,7 +157,7 @@
   }
 
   function viewWaiting(msg) {
-    show([h('h1', { text: msg || 'You are in!' }), h('p', { class: 'muted', text: 'Watch the big screen. The game will start soon.' })]);
+    show([h('h1', { text: msg || 'You are in!' }), h('p', { class: 'muted', text: P.closing ? 'Waiting for the host to start...' : 'Watch the big screen. The game will start soon.' })]);
     if (window.Flower && Flower.blossom) {
       try { app.querySelector('.play-center').prepend(Flower.blossom({ petals: 8, layers: 2, size: 120 })); } catch (e) { /* ignore */ }
     }
@@ -336,7 +345,7 @@
 
   // ---------- socket ----------
   socket.on('room:state', function (st) {
-    P.room = st;
+    P.room = st; P.closing = false;
     if (P.id) {
       var me = st.players.filter(function (p) { return p.id === P.id; })[0];
       if (me) P.score = me.score;
@@ -349,6 +358,14 @@
     P.q = q;
     if (!update) { P.result = null; P.reveal = null; P.error = ''; }
     P.offset = q.serverNow - Date.now();
+    render();
+  });
+  socket.on('room:closing', function () { P.closing = true; if (P.room && P.room.phase === 'lobby') render(); });
+  socket.on('room:closed', function () {
+    try { localStorage.removeItem('hgs.player.' + P.code); localStorage.removeItem('hgs.lastRoom'); } catch (e) { /* ignore */ }
+    P.joined = false; P.room = null; P.q = null; P.result = null; P.reveal = null; P.rank = null; P.podium = null;
+    P.answeredFor = null; P.closing = false; P.id = null; P.code = '';
+    P.error = ''; P.notice = 'This game has closed.';
     render();
   });
   socket.on('question:reveal', function (rv) { P.reveal = rv; });

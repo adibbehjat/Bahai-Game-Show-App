@@ -45,7 +45,9 @@ test('production config fails closed', () => {
 test('client code never uses unsafe DOM sinks; HTML has no inline script/style/handlers', () => {
   const pub = path.join(__dirname, '..', 'public');
   const bad = /innerHTML|insertAdjacentHTML|outerHTML|document\.write|\beval\s*\(|new Function/;
-  for (const f of fs.readdirSync(pub).filter((x) => x.endsWith('.js'))) {
+  const jsFiles = fs.readdirSync(pub).filter((x) => x.endsWith('.js')).map((x) => x)
+    .concat(fs.readdirSync(path.join(pub, 'shared')).filter((x) => x.endsWith('.js')).map((x) => 'shared/' + x));
+  for (const f of jsFiles) {
     const src = fs.readFileSync(path.join(pub, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     assert.ok(!bad.test(src), `${f} uses an unsafe sink`);
   }
@@ -113,7 +115,7 @@ test('join of nonexistent room fails and socket receives no room broadcasts', as
   const s = await startServer();
   try {
     const p = await s.connect();
-    const res = await emitAck(p, 'player:join', { code: 'ABCDEF', ...selFor(3) });
+    const res = await emitAck(p, 'player:join', { code: 'ABCD', ...selFor(3) });
     assert.deepEqual(res, { ok: false, error: 'Game not found' });
     const host = await hostLogin(s);
     const room = await createRoom(host);
@@ -346,7 +348,7 @@ test('only failed joins count against the per-IP limit', async () => {
     for (let k = 0; k < 6 && bad < 21; k++) {
       const p = await s.connect();
       for (let j = 0; j < 4 && bad < 21; j++) {
-        const r = await emitAck(p, 'player:join', { code: 'ABCDEF', ...selFor(3) });
+        const r = await emitAck(p, 'player:join', { code: 'ABCD', ...selFor(3) });
         bad++;
         if (bad <= 20) assert.equal(r.error, 'Game not found');
         else assert.match(r.error, /Too many/);
@@ -362,8 +364,8 @@ test('join attempts are capped per socket', async () => {
   const s = await startServer();
   try {
     const p = await s.connect();
-    for (let i = 0; i < 5; i++) assert.equal((await emitAck(p, 'player:join', { code: 'ABCDEF', ...selFor(3) })).error, 'Game not found');
-    assert.match((await emitAck(p, 'player:join', { code: 'ABCDEF', ...selFor(3) })).error, /Too many/);
+    for (let i = 0; i < 5; i++) assert.equal((await emitAck(p, 'player:join', { code: 'ABCD', ...selFor(3) })).error, 'Game not found');
+    assert.match((await emitAck(p, 'player:join', { code: 'ABCD', ...selFor(3) })).error, /Too many/);
   } finally { await s.shutdown(); }
 });
 

@@ -23,7 +23,7 @@ test('full happy-path game with every question type', async () => {
     assert.ok(packs.packs.find((p) => p.id === 'fixture' && p.counts.total === 5));
 
     const room = await createRoom(host, 'fixture', 5, false);
-    assert.match(room.code, /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{6}$/);
+    assert.match(room.code, /^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{4}$/);
     assert.equal(room.joinUrl, `http://localhost:3719/play?room=${room.code}`);
     assert.match(room.qrSvg, /^data:image\/svg\+xml;base64,/);
 

@@ -27,9 +27,9 @@ Threats considered: guessing the host PIN, guessing room codes, a player pretend
 - No third-party scripts, fonts or CDNs.
 
 **Rooms and sessions**
-- Only a host who has entered the PIN can create a room. Room codes are random 6-character codes. Tokens are HMAC-signed, expire, and are bound to one room. Each socket is bound server-side to one room and the room is never read from a payload again.
+- Only a host who has entered the PIN can create a room. Room codes are 4 random characters from an unambiguous uppercase alphabet (about 1.05 million combinations). Guessing is limited by the failed-join rate limit (20 per IP per 10 minutes, 5 per socket), by short room lifetimes, and by the host's ability to remove anyone. Tokens are HMAC-signed, expire, and are bound to one room. Each socket is bound server-side to one room and the room is never read from a payload again.
 - Answers are never sent to clients before the reveal. Spelling attempts are scored and discarded immediately.
-- Rooms are destroyed 10 minutes after the game ends or after 30 minutes idle. Room and player counts are capped.
+- Room lifecycle: a room that has not started closes after 5 minutes without activity (the host lobby shows a countdown and phones see "This game has closed"); a game in progress closes after 30 minutes idle; a finished game after 10 minutes. Room and player counts are capped.
 
 **Rate limits and proxies**
 - Host PIN attempts: 5 per IP per 10 minutes.
