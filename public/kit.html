@@ -2,88 +2,130 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>Question Kit</title>
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-  <link rel="manifest" href="/site.webmanifest">
-  <meta name="theme-color" content="#F9F6EE">
   <link rel="stylesheet" href="/theme/theme.css">
   <link rel="stylesheet" href="/kit.css">
 </head>
-<body class="kit-page" data-theme="default">
+<body class="kit-page" data-theme="default" data-step="1">
   <div id="kit-deco" class="kit-deco" aria-hidden="true"></div>
+
+  <nav class="kit-progress" aria-label="Progress">
+    <p id="step-label" class="kit-step-label" aria-live="polite"></p>
+    <ol id="step-dots" class="kit-dots"></ol>
+  </nav>
+
   <main class="kit stack">
-    <header class="card stack kit-header">
+    <header class="card stack kit-header kit-step" data-s="1">
       <h1>Question Kit</h1>
       <p class="muted">Write questions for the game and get ready-to-paste lines. Nothing you do on this page is sent anywhere; it makes no network requests.</p>
-      <ol class="kit-steps">
-        <li>Copy the line(s).</li>
-        <li>On the server, paste into <code>questions/&lt;pack-id&gt;/questions.jsonl</code> (one per line).</li>
-        <li>Run <code>npm run validate-questions</code>.</li>
-        <li>Restart the server (<code>sudo systemctl restart game_show</code>).</li>
-      </ol>
+      <details id="howto" class="kit-howto">
+        <summary>How it works</summary>
+        <ol class="kit-steps">
+          <li>Copy the line(s).</li>
+          <li>On the server, paste into <code>questions/&lt;pack-id&gt;/questions.jsonl</code> (one per line).</li>
+          <li>Run <code>npm run validate-questions</code>.</li>
+          <li>Restart the server (<code>sudo systemctl restart game_show</code>).</li>
+        </ol>
+      </details>
     </header>
 
     <div class="kit-grid">
-      <section class="card stack" aria-labelledby="h-editor">
-        <h2 id="h-editor">1. Write a question</h2>
-        <fieldset class="kit-types">
-          <legend class="label">Question type</legend>
-          <div id="type-picker" class="cluster"></div>
-          <p id="type-desc" class="muted" aria-live="polite"></p>
-        </fieldset>
-        <form id="q-form" class="stack" autocomplete="off" novalidate></form>
-        <div id="errors" class="kit-errors" role="alert" aria-live="polite"></div>
-      </section>
+      <form id="q-form" class="card stack kit-editor" autocomplete="off" novalidate>
+        <h2 id="h-editor" class="kit-desk-title">1. Write a question</h2>
 
-      <section class="stack kit-side" aria-labelledby="h-preview">
+        <section class="kit-step stack" data-s="1" aria-labelledby="t1">
+          <h3 id="t1" class="kit-step-title" tabindex="-1">Choose a type</h3>
+          <div id="type-picker" class="kit-types" role="group" aria-label="Question type"></div>
+          <p id="type-desc" class="muted kit-type-desc" aria-live="polite"></p>
+        </section>
+
+        <section class="kit-step stack" data-s="2" aria-labelledby="t2">
+          <h3 id="t2" class="kit-step-title" tabindex="-1">Write the question</h3>
+          <div id="fields-q" class="stack"></div>
+        </section>
+
+        <section class="kit-step stack" data-s="3" aria-labelledby="t3">
+          <h3 id="t3" class="kit-step-title" tabindex="-1">Set the answers</h3>
+          <div id="fields-a" class="stack"></div>
+        </section>
+
+        <section class="kit-step stack" data-s="4" aria-labelledby="t4">
+          <h3 id="t4" class="kit-step-title" tabindex="-1">Extras (optional)</h3>
+          <details id="extras" class="kit-extras">
+            <summary>Explanation, source, time, difficulty</summary>
+            <div id="fields-x" class="stack"></div>
+          </details>
+        </section>
+      </form>
+
+      <section class="stack kit-side kit-step" data-s="5" aria-labelledby="h-preview">
         <div class="card stack">
-          <h2 id="h-preview">2. Preview</h2>
-          <label class="kit-inline"><input type="checkbox" id="show-answers" checked> Show correct answers in preview</label>
-          <h3>Big screen</h3>
-          <div id="preview-screen" class="kit-screen"></div>
-          <h3>Phone</h3>
-          <div id="preview-phone" class="kit-phone"></div>
+          <h2 id="h-preview" class="kit-step-title" tabindex="-1">Preview and copy</h2>
+          <label class="kit-inline"><input type="checkbox" id="show-answers" checked> Show correct answers</label>
+          <div class="kit-tabs" role="tablist" aria-label="Preview">
+            <button type="button" role="tab" id="tab-phone" class="btn btn--ghost" aria-selected="true" aria-controls="panel-phone">Phone</button>
+            <button type="button" role="tab" id="tab-screen" class="btn btn--ghost" aria-selected="false" aria-controls="panel-screen" tabindex="-1">Big screen</button>
+          </div>
+          <div id="panel-phone" class="kit-panel" role="tabpanel" aria-labelledby="tab-phone">
+            <h3 class="kit-desk-title">Phone</h3>
+            <div id="preview-phone" class="kit-phone"></div>
+          </div>
+          <div id="panel-screen" class="kit-panel is-off" role="tabpanel" aria-labelledby="tab-screen">
+            <h3 class="kit-desk-title">Big screen</h3>
+            <div id="preview-screen" class="kit-screen"></div>
+          </div>
         </div>
 
         <div class="card stack">
-          <h2>3. Output</h2>
+          <h2 class="kit-desk-title">3. Output</h2>
+          <div id="errors" class="kit-errors" aria-live="polite"></div>
           <label class="label" for="out-line">JSONL line</label>
           <textarea id="out-line" class="input kit-out" rows="3" readonly></textarea>
-          <div class="cluster">
+          <div class="cluster kit-actions">
             <button type="button" id="btn-copy" class="btn btn--primary" disabled>Copy line</button>
-            <button type="button" id="btn-add" class="btn" disabled>Add to session list</button>
+            <button type="button" id="btn-add" class="btn" disabled>Add to my list</button>
           </div>
-          <p id="status" class="muted" role="status" aria-live="polite"></p>
         </div>
       </section>
     </div>
 
-    <section class="card stack" aria-labelledby="h-list">
-      <h2 id="h-list">Session list <span id="list-count" class="muted"></span></h2>
+    <section id="sheet" class="card stack kit-sheet" aria-labelledby="h-list">
+      <div class="kit-sheet-head">
+        <h2 id="h-list" tabindex="-1">Your questions <span id="list-count" class="muted"></span></h2>
+        <button type="button" id="sheet-close" class="btn btn--ghost kit-sheet-close">Close</button>
+      </div>
       <p class="muted">Saved in this browser only (localStorage).</p>
       <ol id="session-list" class="kit-list"></ol>
-      <div class="cluster">
+      <div class="cluster kit-actions">
         <button type="button" id="btn-copy-all" class="btn btn--primary">Copy all</button>
         <button type="button" id="btn-download" class="btn">Download questions.jsonl</button>
         <button type="button" id="btn-clear" class="btn btn--ghost">Clear list</button>
       </div>
-    </section>
 
-    <section class="card stack" aria-labelledby="h-pack">
-      <h2 id="h-pack">pack.json helper</h2>
-      <form id="pack-form" class="stack" autocomplete="off" novalidate></form>
-      <div id="pack-errors" class="kit-errors" role="alert" aria-live="polite"></div>
-      <label class="label" for="pack-out">pack.json</label>
-      <textarea id="pack-out" class="input kit-out" rows="7" readonly></textarea>
-      <div class="cluster">
-        <button type="button" id="btn-pack-copy" class="btn btn--primary" disabled>Copy pack.json</button>
-        <button type="button" id="btn-pack-download" class="btn" disabled>Download pack.json</button>
-      </div>
+      <details id="packbox" class="kit-extras">
+        <summary id="h-pack">pack.json helper</summary>
+        <div class="stack">
+          <form id="pack-form" class="stack" autocomplete="off" novalidate></form>
+          <div id="pack-errors" class="kit-errors" aria-live="polite"></div>
+          <label class="label" for="pack-out">pack.json</label>
+          <textarea id="pack-out" class="input kit-out" rows="7" readonly></textarea>
+          <div class="cluster kit-actions">
+            <button type="button" id="btn-pack-copy" class="btn btn--primary" disabled>Copy pack.json</button>
+            <button type="button" id="btn-pack-download" class="btn" disabled>Download pack.json</button>
+          </div>
+        </div>
+      </details>
     </section>
   </main>
+
+  <p id="status" class="kit-toast" role="status" aria-live="polite"></p>
+
+  <nav class="kit-bar" aria-label="Steps">
+    <button type="button" id="bar-back" class="btn btn--ghost">‹ Back</button>
+    <button type="button" id="bar-list" class="btn btn--ghost" aria-expanded="false" aria-controls="sheet">List (0)</button>
+    <button type="button" id="bar-next" class="btn btn--primary">Next ›</button>
+  </nav>
 
   <script src="/shared/schema.js"></script>
   <script src="/theme/flower.js"></script>

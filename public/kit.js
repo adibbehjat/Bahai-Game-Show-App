@@ -12,9 +12,20 @@
     order: ['Put in order', 'Players arrange 3–6 items into the correct order.'],
     spell: ['Spelling challenge', 'A clue is shown on the big screen and players type the word.']
   };
+  var STEP_COUNT = 5;
+  var STEP_KEYS = {
+    2: ['q', 'clue'],
+    3: ['choices', 'items', 'answer', 'word', 'accept'],
+    4: ['explanation', 'source', 'time', 'difficulty']
+  };
+  var KEY_NAMES = { q: 'The question', clue: 'The clue', word: 'The word', choices: 'Choices', items: 'Items', answer: 'The answer',
+    accept: 'Alternate spellings', explanation: 'The explanation', source: 'The source', time: 'Time', difficulty: 'Difficulty' };
+
+  var mq = window.matchMedia ? window.matchMedia('(max-width: 600px)') : { matches: false };
+  function isPhone() { return !!mq.matches; }
 
   if (window.Flower && typeof window.Flower.decorate === 'function') {
-    try { window.Flower.decorate(document.getElementById("kit-deco"), { drift: false }); } catch (e) { /* decoration is optional */ }
+    try { window.Flower.decorate(document.getElementById('kit-deco'), { drift: false }); } catch (e) { /* decoration is optional */ }
   }
 
   // ---------- helpers ----------
@@ -43,8 +54,10 @@
     tf: true, orderItems: ['', '', ''], perm: [], clue: '', word: '', accept: [],
     explanation: '', source: '', time: '', difficulty: ''
   };
-  var counters = [];
-  var lastLine = null;
+  var step = 1, maxStep = 1, attempted = false, touched = {};
+  var counters = [], packCounters = [], errSlots = {};
+  var lastLine = null, lastResult = { ok: false, errors: [] };
+  var pendingFocus = null, pendingAcceptInput = null, statusTimer = null;
   var lines = loadLines();
 
   function loadLines() {
@@ -62,9 +75,7 @@
     function isIdentity() { return p.every(function (v, k) { return v === k; }); }
     var tries = 0;
     do {
-      for (i = n - 1; i > 0; i--) {
-        j = Math.floor(Math.random() * (i + 1)); t = p[i]; p[i] = p[j]; p[j] = t;
-      }
+      for (i = n - 1; i > 0; i--) { j = Math.floor(Math.random() * (i + 1)); t = p[i]; p[i] = p[j]; p[j] = t; }
       tries++;
     } while (n > 1 && isIdentity() && tries < 50);
     return p;
@@ -104,117 +115,232 @@
     return o;
   }
 
-  // ---------- form building ----------
+  // ---------- errors: mapping and plain language ----------
+  function errKey(m) {
+    var s = m.toLowerCase();
+    if (/^"type"/.test(s)) return 'type';
+    if (/^"q"/.test(s)) return 'q';
+    if (/^"clue"/.test(s)) return 'clue';
+    if (/^"word"/.test(s)) return 'word';
+    if (/^"accept"|^accepted spelling/.test(s)) return 'accept';
+    if (/^"choices"|^choice \d/.test(s)) return 'choices';
+    if (/^"items"|^item \d/.test(s)) return 'items';
+    if (/^"answer"/.test(s)) return 'answer';
+    if (/^"(explanation|source|time|difficulty)"/.test(s)) return s.slice(1, s.indexOf('"', 1));
+    return 'other';
+  }
+  function friendly(m) {
+    var specials = [
+      [/^"answer" must contain at least one correct choice/, 'Tick at least one correct answer.'],
+      [/^"answer" must be an integer index of the correct choice/, 'Mark the correct answer.'],
+      [/^"answer" must be true or false/, 'Choose True or False.'],
+      [/^"answer" must be a list of correct choice indices/, 'Tick at least one correct answer.']
+    ];
+    for (var i = 0; i < specials.length; i++) if (specials[i][0].test(m)) return specials[i][1];
+    var out = m.replace(/^"(\w+)"/, function (_, k) { return KEY_NAMES[k] || k; })
+      .replace(/ is required and must be text/, ' is needed')
+      .replace(/ must not be empty/, ' can’t be empty');
+    return out.charAt(0).toUpperCase() + out.slice(1);
+  }
+
+  // ---------- fields ----------
   function counter(input, max) {
-    var c = h('span', { class: 'kit-counter', 'aria-hidden': 'true' });
+    var c = h('span', { class: 'kit-counter', 'aria-hidden': 'true', hidden: '' });
     counters.push({ el: c, input: input, max: max });
     return c;
   }
-  var packCounters = [];
   function refreshCounters() {
     counters.concat(packCounters).forEach(function (c) {
       var n = S.normalizeText(c.input.value).length;
       c.el.textContent = n + '/' + c.max;
       c.el.classList.toggle('is-over', n > c.max);
+      c.el.hidden = n < c.max * 0.8;
     });
   }
-  function field(labelText, input, max, hint) {
+  function errSlot(key, forInput) {
+    var id = nextId('e');
+    var el = h('p', { class: 'kit-error', id: id, 'data-err': key });
+    el._input = forInput || null;
+    if (forInput) forInput.setAttribute('aria-describedby', id);
+    (errSlots[key] = errSlots[key] || []).push(el);
+    return el;
+  }
+  function field(key, labelText, input, max, hint) {
     var id = nextId('f');
     input.id = id;
-    var kids = [h('label', { class: 'label', for: id, text: labelText }), input];
-    if (hint) kids.push(h('span', { class: 'muted kit-meta', text: hint }));
-    if (max) kids.push(counter(input, max));
-    return h('div', { class: 'kit-field' }, kids);
+    var kids = [h('label', { class: 'label', for: id, text: labelText })];
+    if (hint) kids.push(h('span', { class: 'kit-hint', text: hint }));
+    kids.push(input);
+    kids.push(h('div', { class: 'kit-below' }, [errSlot(key, input), max ? counter(input, max) : null]));
+    return h('div', { class: 'kit-field', 'data-key': key }, kids);
   }
-  function textInput(key, ph, max) {
+  function textInput(key, ph) {
     return h('input', { class: 'input', type: 'text', placeholder: ph || '', value: st[key], on: { input: function (e) { st[key] = e.target.value; update(); } } });
   }
   function areaInput(key, ph, rows) {
     return h('textarea', { class: 'input', rows: rows || 3, placeholder: ph || '', value: st[key], on: { input: function (e) { st[key] = e.target.value; update(); } } });
   }
+  function iconBtn(text, label, onclick, disabled, extra) {
+    var b = h('button', { type: 'button', class: 'btn btn--ghost kit-icon', text: text, 'aria-label': label, on: { click: onclick } });
+    if (extra) Object.keys(extra).forEach(function (k) { b.setAttribute(k, extra[k]); });
+    if (disabled) b.setAttribute('disabled', '');
+    return b;
+  }
+  function addBtn(label, onclick, disabled) {
+    var b = h('button', { type: 'button', class: 'btn btn--ghost kit-add', text: label, on: { click: onclick } });
+    if (disabled) b.setAttribute('disabled', '');
+    return b;
+  }
+  function toggle(multi, i, checked, onchange) {
+    var inp = h('input', { type: multi ? 'checkbox' : 'radio', name: multi ? null : 'correct', class: 'visually-hidden',
+      'aria-label': 'Choice ' + (i + 1) + ' is correct', checked: checked, on: { change: onchange } });
+    return h('label', { class: 'kit-toggle' + (multi ? ' is-multi' : '') }, [inp, h('span', { class: 'kit-toggle__box', 'aria-hidden': 'true' })]);
+  }
+  function listWrap(key, hint) {
+    var w = h('div', { class: 'kit-list-edit stack', 'data-key': key });
+    if (hint) w.appendChild(h('p', { class: 'kit-hint', text: hint }));
+    return w;
+  }
 
-  function listEditor(arr, opts) {
-    // opts: min, max, noun, rowExtra(i)->node|null, onChange, maxLen, addLabel
-    var wrap = h('div', { class: 'stack' });
-    arr.forEach(function (val, i) {
-      var id = nextId('l');
-      var input = h('input', { class: 'input', id: id, type: 'text', value: val, 'aria-label': opts.noun + ' ' + (i + 1),
-        placeholder: opts.noun + ' ' + (i + 1), on: { input: function (e) { arr[i] = e.target.value; update(); } } });
-      var kids = [];
-      var extra = opts.rowExtra ? opts.rowExtra(i) : null;
-      if (extra) kids.push(extra);
-      kids.push(input);
-      kids.push(h('button', { type: 'button', class: 'btn btn--ghost btn--sm', 'aria-label': 'Remove ' + opts.noun + ' ' + (i + 1), text: '✕',
-        disabled: arr.length <= opts.min ? true : false, on: { click: function () { opts.remove(i); } } }));
-      var row = h('div', { class: 'kit-row' }, kids);
-      if (arr.length <= opts.min) row.lastChild.setAttribute('disabled', '');
-      else row.lastChild.removeAttribute('disabled');
-      wrap.appendChild(row);
-      wrap.appendChild(h('div', { class: 'kit-field' }, [counter(input, opts.maxLen)]));
+  function choicesEditor(multi) {
+    var wrap = listWrap('choices', multi ? 'Tick every correct answer.' : 'Tap the circle beside the correct answer.');
+    wrap.insertBefore(h('span', { class: 'label', text: 'Choices (' + L.choicesMin + '–' + L.choicesMax + ')' }), wrap.firstChild);
+    st.choices.forEach(function (val, i) {
+      var input = h('input', { class: 'input', type: 'text', value: val, 'aria-label': 'Choice ' + (i + 1) + ' text', placeholder: 'Choice ' + (i + 1),
+        on: { input: function (e) { st.choices[i] = e.target.value; update(); } } });
+      var tg = multi
+        ? toggle(true, i, st.multi.indexOf(i) !== -1, function (e) {
+          var k = st.multi.indexOf(i);
+          if (e.target.checked && k === -1) st.multi.push(i);
+          if (!e.target.checked && k !== -1) st.multi.splice(k, 1);
+          touched.answer = true; update();
+        })
+        : toggle(false, i, st.single === i, function () { st.single = i; touched.answer = true; update(); });
+      wrap.appendChild(h('div', { class: 'kit-row' }, [
+        tg,
+        h('div', { class: 'kit-col' }, [input, counter(input, L.choice)]),
+        iconBtn('✕', 'Remove choice ' + (i + 1), function () {
+          st.choices.splice(i, 1);
+          if (st.single === i) st.single = 0; else if (st.single > i) st.single--;
+          st.multi = st.multi.filter(function (x) { return x !== i; }).map(function (x) { return x > i ? x - 1 : x; });
+          pendingFocus = '[data-add="choice"]'; buildForm(); update();
+        }, st.choices.length <= L.choicesMin)
+      ]));
     });
-    var add = h('button', { type: 'button', class: 'btn btn--sm', text: opts.addLabel, on: { click: opts.add } });
-    if (arr.length >= opts.max) add.setAttribute('disabled', '');
+    var add = addBtn('+ Add choice', function () { st.choices.push(''); buildForm(); update(); var ins = $('fields-a').querySelectorAll('.kit-row .input'); if (ins.length) ins[ins.length - 1].focus(); }, st.choices.length >= L.choicesMax);
+    add.setAttribute('data-add', 'choice');
     wrap.appendChild(add);
+    wrap.appendChild(errSlot('choices'));
+    wrap.appendChild(errSlot('answer'));
     return wrap;
   }
 
-  function buildForm() {
-    var f = $('q-form');
-    clear(f); counters = [];
-    if (st.type === 'spell') {
-      f.appendChild(field('Clue (shown on the big screen)', areaInput('clue', 'A short clue for the word', 2), L.clue));
-      f.appendChild(field('Word', textInput('word', 'e.g. chrysanthemum'), L.word, 'Letters, spaces, hyphens and apostrophes only. Accents are optional for players but earn a bonus.'));
-      f.appendChild(h('div', { class: 'stack' }, [
-        h('span', { class: 'label', text: 'Accepted alternate spellings (optional, up to ' + L.acceptMax + ')' }),
-        listEditor(st.accept, { min: 0, max: L.acceptMax, noun: 'Alternate', maxLen: L.accept, addLabel: 'Add alternate',
-          add: function () { st.accept.push(''); buildForm(); update(); },
-          remove: function (i) { st.accept.splice(i, 1); buildForm(); update(); } })
+  function moveItem(i, d) {
+    var j = i + d, t = st.orderItems[i];
+    st.orderItems[i] = st.orderItems[j]; st.orderItems[j] = t;
+    st.perm = [];
+    var n = st.orderItems.length;
+    var want = d < 0 ? 'up' : 'down';
+    if ((want === 'up' && j === 0) || (want === 'down' && j === n - 1)) want = want === 'up' ? 'down' : 'up';
+    pendingFocus = '[data-move="' + want + '-' + j + '"]';
+    buildForm(); update();
+  }
+  function itemsEditor() {
+    var wrap = listWrap('items', 'Enter the items in the correct order, first to last. The kit shuffles them for players.');
+    wrap.insertBefore(h('span', { class: 'label', text: 'Items (' + L.itemsMin + '–' + L.itemsMax + ')' }), wrap.firstChild);
+    var n = st.orderItems.length;
+    st.orderItems.forEach(function (val, i) {
+      var input = h('input', { class: 'input', type: 'text', value: val, 'aria-label': 'Item ' + (i + 1) + ' text', placeholder: 'Item ' + (i + 1),
+        on: { input: function (e) { st.orderItems[i] = e.target.value; update(); } } });
+      wrap.appendChild(h('div', { class: 'kit-row kit-row--item' }, [
+        h('span', { class: 'kit-num', 'aria-hidden': 'true', text: String(i + 1) }),
+        h('div', { class: 'kit-col' }, [input, counter(input, L.item)]),
+        h('div', { class: 'kit-ctl' }, [
+          iconBtn('↑', 'Move item ' + (i + 1) + ' up', function () { moveItem(i, -1); }, i === 0, { 'data-move': 'up-' + i }),
+          iconBtn('↓', 'Move item ' + (i + 1) + ' down', function () { moveItem(i, 1); }, i === n - 1, { 'data-move': 'down-' + i }),
+          iconBtn('✕', 'Remove item ' + (i + 1), function () { st.orderItems.splice(i, 1); st.perm = []; pendingFocus = '[data-add="item"]'; buildForm(); update(); }, n <= L.itemsMin)
+        ])
       ]));
-    } else {
-      f.appendChild(field('Question', areaInput('q', 'Type the question', 2), L.q));
-      if (st.type === 'single' || st.type === 'multi') {
-        var multi = st.type === 'multi';
-        var n = st.choices.length;
-        f.appendChild(h('div', { class: 'stack' }, [
-          h('span', { class: 'label', text: 'Choices (' + L.choicesMin + '–' + L.choicesMax + ') — mark ' + (multi ? 'all correct ones' : 'the correct one') }),
-          listEditor(st.choices, { min: L.choicesMin, max: L.choicesMax, noun: 'Choice', maxLen: L.choice, addLabel: 'Add choice',
-            rowExtra: function (i) {
-              if (multi) return h('input', { type: 'checkbox', 'aria-label': 'Choice ' + (i + 1) + ' is correct', checked: st.multi.indexOf(i) !== -1,
-                on: { change: function (e) { var k = st.multi.indexOf(i); if (e.target.checked && k === -1) st.multi.push(i); if (!e.target.checked && k !== -1) st.multi.splice(k, 1); update(); } } });
-              return h('input', { type: 'radio', name: 'correct', 'aria-label': 'Choice ' + (i + 1) + ' is correct', checked: st.single === i,
-                on: { change: function () { st.single = i; update(); } } });
-            },
-            add: function () { st.choices.push(''); buildForm(); update(); },
-            remove: function (i) {
-              st.choices.splice(i, 1);
-              if (st.single === i) st.single = 0; else if (st.single > i) st.single--;
-              st.multi = st.multi.filter(function (x) { return x !== i; }).map(function (x) { return x > i ? x - 1 : x; });
-              buildForm(); update();
-            } })
+    });
+    var add = addBtn('+ Add item', function () { st.orderItems.push(''); st.perm = []; buildForm(); update(); var ins = $('fields-a').querySelectorAll('.kit-row .input'); if (ins.length) ins[ins.length - 1].focus(); }, n >= L.itemsMax);
+    add.setAttribute('data-add', 'item');
+    wrap.appendChild(add);
+    wrap.appendChild(errSlot('items'));
+    wrap.appendChild(errSlot('answer'));
+    wrap.appendChild(h('div', { class: 'kit-shuffle stack' }, [
+      h('span', { class: 'label', text: 'What players will see (shuffled)' }),
+      h('ol', { id: 'order-preview', class: 'kit-meta' }),
+      h('button', { type: 'button', class: 'btn btn--ghost kit-add', text: '↻ Reshuffle', on: { click: function () { st.perm = shufflePerm(st.orderItems.length); update(); } } })
+    ]));
+    return wrap;
+  }
+
+  function chipsEditor() {
+    var wrap = listWrap('accept');
+    wrap.insertBefore(h('span', { class: 'label', text: 'Accepted alternate spellings (optional, up to ' + L.acceptMax + ')' }), wrap.firstChild);
+    var chips = h('ul', { class: 'kit-chips', 'aria-label': 'Alternate spellings' });
+    var input = h('input', { class: 'input', type: 'text', placeholder: 'Add an alternate spelling', 'aria-label': 'New alternate spelling',
+      autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', enterkeyhint: 'done', on: {
+        keydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); commitPending(); } },
+        input: function () { refreshCounters(); }
+      } });
+    pendingAcceptInput = input;
+    var addB = h('button', { type: 'button', class: 'btn kit-add-inline', text: 'Add', on: { click: function () { commitPending(); input.focus(); } } });
+    function renderChips() {
+      clear(chips);
+      st.accept.forEach(function (a, i) {
+        chips.appendChild(h('li', { class: 'kit-chip' }, [
+          h('span', { text: a }),
+          h('button', { type: 'button', class: 'kit-chip__x', text: '✕', 'aria-label': 'Remove ' + a, on: { click: function () { st.accept.splice(i, 1); renderChips(); update(); } } })
         ]));
-        void n;
-      } else if (st.type === 'truefalse') {
-        var group = h('div', { class: 'cluster', role: 'radiogroup', 'aria-label': 'Correct answer' });
+      });
+      var full = st.accept.length >= L.acceptMax;
+      input.disabled = full; addB.disabled = full;
+      if (full) input.setAttribute('placeholder', 'Maximum reached');
+    }
+    wrap._render = renderChips;
+    wrap.appendChild(chips);
+    wrap.appendChild(h('div', { class: 'kit-row' }, [h('div', { class: 'kit-col' }, [input, counter(input, L.accept)]), addB]));
+    wrap.appendChild(errSlot('accept'));
+    renderChips();
+    wrap._commit = function () {
+      var v = S.normalizeText(input.value);
+      if (!v || st.accept.length >= L.acceptMax) return false;
+      st.accept.push(v); input.value = ''; renderChips(); update(); return true;
+    };
+    return wrap;
+  }
+  var acceptEditor = null;
+  function commitPending() { return acceptEditor && acceptEditor._commit ? acceptEditor._commit() : false; }
+
+  function buildForm() {
+    var fq = $('fields-q'), fa = $('fields-a'), fx = $('fields-x');
+    clear(fq); clear(fa); clear(fx);
+    counters = []; errSlots = {}; acceptEditor = null; pendingAcceptInput = null;
+
+    if (st.type === 'spell') {
+      fq.appendChild(field('clue', 'Clue (shown on the big screen)', areaInput('clue', 'A short clue for the word', 3), L.clue));
+      fa.appendChild(field('word', 'Word', h('input', { class: 'input', type: 'text', value: st.word, placeholder: 'e.g. chrysanthemum',
+        autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', on: { input: function (e) { st.word = e.target.value; update(); } } }),
+        L.word, 'Letters, spaces, hyphens and apostrophes. Accents are optional for players but earn a bonus.'));
+      acceptEditor = chipsEditor();
+      fa.appendChild(acceptEditor);
+    } else {
+      fq.appendChild(field('q', 'Question', areaInput('q', 'Type the question', 3), L.q));
+      if (st.type === 'single' || st.type === 'multi') fa.appendChild(choicesEditor(st.type === 'multi'));
+      else if (st.type === 'truefalse') {
+        var group = h('div', { class: 'kit-tf', role: 'radiogroup', 'aria-label': 'Correct answer' });
         [[true, 'True'], [false, 'False']].forEach(function (p) {
           var id = nextId('tf');
-          group.appendChild(h('label', { class: 'kit-inline', for: id }, [
-            h('input', { type: 'radio', name: 'tf', id: id, checked: st.tf === p[0], on: { change: function () { st.tf = p[0]; update(); } } }), p[1]]));
+          group.appendChild(h('label', { class: 'kit-tf__opt', for: id }, [
+            h('input', { type: 'radio', name: 'tf', id: id, class: 'visually-hidden', checked: st.tf === p[0], on: { change: function () { st.tf = p[0]; update(); } } }),
+            h('span', { class: 'kit-tf__box' }, [h('span', { class: 'kit-tf__mark', 'aria-hidden': 'true' }), h('span', { text: p[1] })])
+          ]));
         });
-        f.appendChild(h('div', { class: 'stack' }, [h('span', { class: 'label', text: 'The statement is…' }), group]));
-      } else if (st.type === 'order') {
-        f.appendChild(h('div', { class: 'stack' }, [
-          h('span', { class: 'label', text: 'Items — enter them IN THE CORRECT ORDER (' + L.itemsMin + '–' + L.itemsMax + ')' }),
-          listEditor(st.orderItems, { min: L.itemsMin, max: L.itemsMax, noun: 'Item', maxLen: L.item, addLabel: 'Add item',
-            add: function () { st.orderItems.push(''); st.perm = []; buildForm(); update(); },
-            remove: function (i) { st.orderItems.splice(i, 1); st.perm = []; buildForm(); update(); } }),
-          h('div', { class: 'stack' }, [
-            h('span', { class: 'label', text: 'Shuffled display order (what players will see)' }),
-            h('ol', { id: 'order-preview', class: 'kit-meta' }),
-            h('button', { type: 'button', class: 'btn btn--sm', text: 'Reshuffle', on: { click: function () { st.perm = shufflePerm(st.orderItems.length); update(); } } })
-          ])
-        ]));
-      }
+        fa.appendChild(h('div', { class: 'stack' }, [h('span', { class: 'label', text: 'The statement is…' }), group]));
+      } else fa.appendChild(itemsEditor());
     }
+
     var time = h('input', { class: 'input', type: 'number', min: L.timeMin, max: L.timeMax, step: 1, inputmode: 'numeric', value: st.time,
       placeholder: String(st.type === 'spell' ? L.spellTimeDefault : L.timeDefault),
       on: { input: function (e) { st.time = e.target.value; update(); } } });
@@ -223,19 +349,48 @@
         return h('option', { value: p[0], text: p[1], selected: st.difficulty === p[0] });
       }));
     diff.value = st.difficulty;
-    f.appendChild(field('Explanation shown after reveal (optional)', areaInput('explanation', '', 2), L.explanation));
-    f.appendChild(field('Source (optional)', textInput('source', 'e.g. book and page'), L.source));
-    f.appendChild(h('div', { class: 'kit-two' }, [
-      field('Time in seconds (' + L.timeMin + '–' + L.timeMax + ', optional)', time),
-      field('Difficulty (optional)', diff)
+    fx.appendChild(field('explanation', 'Explanation shown after the reveal', areaInput('explanation', '', 3), L.explanation));
+    fx.appendChild(field('source', 'Source', textInput('source', 'e.g. book and page'), L.source));
+    fx.appendChild(h('div', { class: 'kit-two' }, [
+      field('time', 'Seconds (' + L.timeMin + '–' + L.timeMax + ')', time),
+      field('difficulty', 'Difficulty', diff)
     ]));
+
+    updateStepTitles();
+    if (pendingFocus) {
+      var t = document.querySelector(pendingFocus);
+      pendingFocus = null;
+      if (t && !t.disabled) t.focus();
+    }
   }
 
+  function updateStepTitles() {
+    var spell = st.type === 'spell';
+    $('t2').textContent = spell ? 'Write the clue' : 'Write the question';
+    $('t3').textContent = spell ? 'Set the word' : (st.type === 'order' ? 'Put the items in order' : 'Set the answers');
+  }
+  var STEP_TITLES = [null, 'Choose a type', 'Write the question', 'Set the answers', 'Extras (optional)', 'Preview and copy'];
+  function stepTitle(n) {
+    if (n === 2 && st.type === 'spell') return 'Write the clue';
+    if (n === 3) return st.type === 'spell' ? 'Set the word' : (st.type === 'order' ? 'Put the items in order' : 'Set the answers');
+    return STEP_TITLES[n];
+  }
+
+  // ---------- type picker ----------
   function buildTypePicker() {
     var box = $('type-picker'); clear(box);
     S.TYPES.forEach(function (t) {
-      box.appendChild(h('button', { type: 'button', class: 'btn kit-type-btn', 'data-type': t, 'aria-pressed': String(st.type === t), text: TYPE_INFO[t][0],
-        on: { click: function () { st.type = t; if (t === 'order') ensurePerm(); buildTypePicker(); buildForm(); update(); } } }));
+      box.appendChild(h('button', { type: 'button', class: 'btn kit-type-btn', 'data-type': t, 'aria-pressed': String(st.type === t),
+        on: { click: function () {
+          if (st.type !== t) { st.type = t; if (t === 'order') ensurePerm(); touched = {}; attempted = false; maxStep = Math.max(1, step); }
+          buildTypePicker(); buildForm(); update();
+        } } }, [
+        h('span', { class: 'kit-type-btn__check', 'aria-hidden': 'true' }),
+        h('span', { class: 'kit-type-btn__body' }, [
+          h('span', { class: 'kit-type-btn__title', text: TYPE_INFO[t][0] }),
+          h('span', { class: 'kit-type-btn__desc', text: TYPE_INFO[t][1] })
+        ])
+      ]));
     });
     $('type-desc').textContent = TYPE_INFO[st.type][1];
   }
@@ -296,28 +451,137 @@
     }
   }
 
+  // ---------- errors display ----------
+  function showErrors() {
+    var errs = lastResult.ok ? [] : lastResult.errors;
+    var byKey = {};
+    errs.forEach(function (m) { var k = errKey(m); (byKey[k] = byKey[k] || []).push(friendly(m)); });
+    Object.keys(errSlots).forEach(function (k) {
+      var show = touched[k] || attempted;
+      errSlots[k].forEach(function (slot) {
+        clear(slot);
+        var msgs = show && byKey[k] ? byKey[k] : [];
+        msgs.forEach(function (m) { slot.appendChild(h('span', { text: m })); });
+        if (slot._input) { if (msgs.length) slot._input.setAttribute('aria-invalid', 'true'); else slot._input.removeAttribute('aria-invalid'); }
+        slot.closest('.kit-field, .kit-list-edit') && slot.closest('.kit-field, .kit-list-edit').classList.toggle('has-error', msgs.length > 0);
+      });
+    });
+    var box = $('errors'); clear(box);
+    if (lastResult.ok) box.appendChild(h('p', { class: 'kit-valid', text: '✓ Looks good. Ready to copy.' }));
+    else {
+      box.appendChild(h('p', { class: 'kit-todo', text: 'Still to fix:' }));
+      box.appendChild(h('ul', null, errs.map(function (e) { return h('li', { text: friendly(e) }); })));
+    }
+  }
+  function focusFirstError() {
+    var slots = document.querySelectorAll('.kit-step .kit-error');
+    for (var i = 0; i < slots.length; i++) {
+      var s = slots[i];
+      if (s.firstChild && s.offsetParent !== null) {
+        var wrap = s.closest('.kit-field, .kit-list-edit');
+        var inp = s._input || (wrap && wrap.querySelector('input:not(.visually-hidden), textarea, select'));
+        if (inp) { inp.focus(); if (inp.scrollIntoView) inp.scrollIntoView({ block: 'center' }); }
+        return;
+      }
+    }
+  }
+
   // ---------- update ----------
   function update() {
     refreshCounters();
-    var obj = buildObject();
-    var res = S.validateQuestion(obj);
-    var errs = $('errors'); clear(errs);
-    if (res.ok) {
-      lastLine = JSON.stringify(res.value);
-      $('out-line').value = lastLine;
-      errs.appendChild(h('p', { class: 'kit-valid', text: 'Valid question.' }));
-    } else {
-      lastLine = null;
-      $('out-line').value = '';
-      errs.appendChild(h('ul', null, res.errors.map(function (e) { return h('li', { text: e }); })));
-    }
+    var res = S.validateQuestion(buildObject());
+    lastResult = res;
+    if (res.ok) { lastLine = JSON.stringify(res.value); $('out-line').value = lastLine; }
+    else { lastLine = null; $('out-line').value = ''; }
     $('btn-copy').disabled = !res.ok;
     $('btn-add').disabled = !res.ok;
+    showErrors();
     renderPreview(res.ok ? res.value : null);
+    updateBar();
+    updateStepper();
+  }
+
+  // ---------- steps ----------
+  function stepErrors(n) {
+    if (lastResult.ok) return [];
+    var keys = STEP_KEYS[n] || [];
+    return lastResult.errors.filter(function (m) { return keys.indexOf(errKey(m)) !== -1; });
+  }
+  function setStep(n, userNav) {
+    step = Math.max(1, Math.min(STEP_COUNT, n));
+    maxStep = Math.max(maxStep, step);
+    document.body.setAttribute('data-step', String(step));
+    if (userNav) { if (statusTimer) clearTimeout(statusTimer); $('status').textContent = ''; }
+    updateBar(); updateStepper();
+    if (userNav && isPhone()) {
+      window.scrollTo(0, 0);
+      var head = step === 5 ? $('h-preview') : $('t' + step);
+      if (head) head.focus({ preventScroll: true });
+    }
+  }
+  function goNext() {
+    if (step >= STEP_COUNT) return;
+    if (step === 3) commitPending();
+    var errs = stepErrors(step);
+    if (errs.length) {
+      attempted = true;
+      if (step === 4) $('extras').open = true;
+      showErrors();
+      focusFirstError();
+      say('Please fix the highlighted field.');
+      return;
+    }
+    if (step === 1) attempted = false;
+    setStep(step + 1, true);
+  }
+  function goBack() { if (step > 1) setStep(step - 1, true); }
+
+  function buildStepper() {
+    var ol = $('step-dots'); clear(ol);
+    for (var n = 1; n <= STEP_COUNT; n++) {
+      (function (k) {
+        ol.appendChild(h('li', null, [h('button', { type: 'button', class: 'kit-dot', 'data-n': k, on: { click: function () {
+          if (k <= maxStep) { if (step === 3) commitPending(); setStep(k, true); }
+        } } }, [h('span', { class: 'kit-dot__pip', 'aria-hidden': 'true' })])]));
+      })(n);
+    }
+  }
+  function updateStepper() {
+    $('step-label').textContent = 'Step ' + step + ' of ' + STEP_COUNT;
+    Array.prototype.forEach.call($('step-dots').querySelectorAll('.kit-dot'), function (b) {
+      var k = Number(b.getAttribute('data-n'));
+      b.setAttribute('aria-label', 'Step ' + k + ': ' + stepTitle(k));
+      if (k === step) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+      b.disabled = k > maxStep;
+      b.classList.toggle('is-done', k < step || (k <= maxStep && k !== step));
+    });
+  }
+  function updateBar() {
+    $('bar-back').disabled = step === 1;
+    var next = $('bar-next');
+    if (step === STEP_COUNT) { next.textContent = 'Copy line'; next.disabled = !lastLine; }
+    else { next.textContent = step === 4 ? 'Preview ›' : 'Next ›'; next.disabled = false; }
+    $('bar-list').textContent = 'List (' + lines.length + ')';
+  }
+
+  // ---------- preview tabs ----------
+  function setTab(name) {
+    var phoneOn = name === 'phone';
+    $('tab-phone').setAttribute('aria-selected', String(phoneOn));
+    $('tab-screen').setAttribute('aria-selected', String(!phoneOn));
+    $('tab-phone').tabIndex = phoneOn ? 0 : -1;
+    $('tab-screen').tabIndex = phoneOn ? -1 : 0;
+    $('panel-phone').classList.toggle('is-off', !phoneOn);
+    $('panel-screen').classList.toggle('is-off', phoneOn);
   }
 
   // ---------- clipboard / download ----------
-  function say(msg) { $('status').textContent = msg; }
+  function say(msg) {
+    var el = $('status');
+    el.textContent = msg;
+    if (statusTimer) clearTimeout(statusTimer);
+    statusTimer = setTimeout(function () { el.textContent = ''; }, 3500);
+  }
   function copyText(text, okMsg) {
     function fallback() {
       var ta = h('textarea', { 'aria-hidden': 'true', readonly: '', class: 'visually-hidden' });
@@ -325,7 +589,7 @@
       var done = false;
       try { done = document.execCommand('copy'); } catch (e) { done = false; }
       document.body.removeChild(ta);
-      say(done ? okMsg : 'Copy failed — select the text and copy it manually.');
+      say(done ? okMsg : 'Copy failed. Select the text and copy it manually.');
     }
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(text).then(function () { say(okMsg); }, fallback);
@@ -341,28 +605,26 @@
 
   // ---------- session list ----------
   function summarize(line) {
-    try {
-      var o = JSON.parse(line);
-      return '[' + o.type + '] ' + (o.q || o.clue || '');
-    } catch (e) { return line; }
+    try { var o = JSON.parse(line); return '[' + o.type + '] ' + (o.q || o.clue || ''); } catch (e) { return line; }
   }
   function renderList() {
     var ol = $('session-list'); clear(ol);
     $('list-count').textContent = '(' + lines.length + ')';
+    if (!lines.length) ol.appendChild(h('li', { class: 'muted kit-empty', text: 'Nothing saved yet. Use “Add to my list” on the last step.' }));
     lines.forEach(function (ln, i) {
       ol.appendChild(h('li', null, [
         h('span', { class: 'kit-list-text', text: summarize(ln) }),
-        h('button', { type: 'button', class: 'btn btn--ghost btn--sm', text: '↑', 'aria-label': 'Move up', disabled: i === 0 ? true : false,
-          on: { click: function () { move(i, -1); } } }),
-        h('button', { type: 'button', class: 'btn btn--ghost btn--sm', text: '↓', 'aria-label': 'Move down', disabled: i === lines.length - 1 ? true : false,
-          on: { click: function () { move(i, 1); } } }),
-        h('button', { type: 'button', class: 'btn btn--ghost btn--sm', text: 'Remove', 'aria-label': 'Remove question ' + (i + 1),
-          on: { click: function () { lines.splice(i, 1); saveLines(); renderList(); } } })
+        h('span', { class: 'kit-ctl' }, [
+          iconBtn('↑', 'Move question ' + (i + 1) + ' up', function () { move(i, -1); }, i === 0),
+          iconBtn('↓', 'Move question ' + (i + 1) + ' down', function () { move(i, 1); }, i === lines.length - 1),
+          iconBtn('✕', 'Remove question ' + (i + 1), function () { lines.splice(i, 1); saveLines(); renderList(); updateBar(); })
+        ])
       ]));
     });
     $('btn-copy-all').disabled = !lines.length;
     $('btn-download').disabled = !lines.length;
     $('btn-clear').disabled = !lines.length;
+    updateBar();
   }
   function move(i, d) {
     var j = i + d; if (j < 0 || j >= lines.length) return;
@@ -370,16 +632,30 @@
   }
   function allText() { return lines.join('\n') + '\n'; }
 
+  function openSheet() {
+    document.body.classList.add('sheet-open');
+    $('bar-list').setAttribute('aria-expanded', 'true');
+    $('sheet').setAttribute('role', 'dialog'); $('sheet').setAttribute('aria-modal', 'true');
+    $('sheet').scrollTop = 0;
+    $('h-list').focus({ preventScroll: true });
+  }
+  function closeSheet() {
+    document.body.classList.remove('sheet-open');
+    $('bar-list').setAttribute('aria-expanded', 'false');
+    $('sheet').removeAttribute('role'); $('sheet').removeAttribute('aria-modal');
+    $('bar-list').focus({ preventScroll: true });
+  }
+
   // ---------- pack helper ----------
   var pk = { id: '', title: '', theme: 'default', reverent: false, description: '', oText: '', oSource: '', cText: '', cSource: '' };
   var packJson = null;
   function packField(label, key, max, area) {
-    var input = h(area ? 'textarea' : 'input', { class: 'input', type: area ? null : 'text', rows: area ? 2 : null,
+    var input = h(area ? 'textarea' : 'input', { class: 'input', type: area ? null : 'text', rows: area ? 3 : null,
       on: { input: function (e) { pk[key] = e.target.value; updatePack(); } } });
     var id = nextId('p'); input.id = id;
-    var kids = [h('label', { class: 'label', for: id, text: label }), input];
-    if (max) { var c = h('span', { class: 'kit-counter', 'aria-hidden': 'true' }); packCounters.push({ el: c, input: input, max: max }); kids.push(c); }
-    return h('div', { class: 'kit-field' }, kids);
+    var below = [];
+    if (max) { var c = h('span', { class: 'kit-counter', 'aria-hidden': 'true', hidden: '' }); packCounters.push({ el: c, input: input, max: max }); below.push(c); }
+    return h('div', { class: 'kit-field' }, [h('label', { class: 'label', for: id, text: label }), input, below.length ? h('div', { class: 'kit-below' }, below) : null]);
   }
   function buildPackForm() {
     var f = $('pack-form'); clear(f);
@@ -392,7 +668,7 @@
     var rid = nextId('p');
     f.appendChild(h('label', { class: 'kit-inline', for: rid }, [
       h('input', { type: 'checkbox', id: rid, on: { change: function (e) { pk.reverent = e.target.checked; updatePack(); } } }),
-      'Reverent (muted visuals, no confetti, spelling questions off by default)']));
+      'Reverent (muted visuals, no confetti, spelling off by default)']));
     f.appendChild(packField('Description (optional)', 'description', L.description, true));
     f.appendChild(packField('Opening text (optional)', 'oText', L.introText, true));
     f.appendChild(packField('Opening source', 'oSource', L.introSource));
@@ -410,20 +686,25 @@
     if (r.ok) {
       packJson = JSON.stringify(r.value, null, 2) + '\n';
       $('pack-out').value = packJson;
-      box.appendChild(h('p', { class: 'kit-valid', text: 'Valid pack.json.' }));
+      box.appendChild(h('p', { class: 'kit-valid', text: '✓ Valid pack.json.' }));
     } else {
       packJson = null; $('pack-out').value = '';
-      box.appendChild(h('ul', null, r.errors.map(function (e) { return h('li', { text: e }); })));
+      box.appendChild(h('ul', null, r.errors.map(function (e) { return h('li', { text: friendly(e) }); })));
     }
     $('btn-pack-copy').disabled = !r.ok;
     $('btn-pack-download').disabled = !r.ok;
   }
 
   // ---------- wire up ----------
+  $('q-form').addEventListener('submit', function (e) { e.preventDefault(); });
+  $('q-form').addEventListener('focusout', function (e) {
+    var w = e.target.closest ? e.target.closest('[data-key]') : null;
+    if (w) { touched[w.getAttribute('data-key')] = true; showErrors(); }
+  });
   $('btn-copy').addEventListener('click', function () { if (lastLine) copyText(lastLine, 'Line copied.'); });
   $('btn-add').addEventListener('click', function () {
     if (!lastLine) return;
-    lines.push(lastLine); saveLines(); renderList(); say('Added to session list (' + lines.length + ').');
+    lines.push(lastLine); saveLines(); renderList(); say('Added to your list (' + lines.length + ').');
   });
   $('btn-copy-all').addEventListener('click', function () { if (lines.length) copyText(allText(), 'All ' + lines.length + ' lines copied.'); });
   $('btn-download').addEventListener('click', function () { if (lines.length) download('questions.jsonl', allText()); });
@@ -433,12 +714,31 @@
   $('btn-pack-copy').addEventListener('click', function () { if (packJson) copyText(packJson, 'pack.json copied.'); });
   $('btn-pack-download').addEventListener('click', function () { if (packJson) download('pack.json', packJson); });
   $('show-answers').addEventListener('change', update);
+  $('bar-back').addEventListener('click', goBack);
+  $('bar-next').addEventListener('click', function () {
+    if (step === STEP_COUNT) { if (lastLine) copyText(lastLine, 'Line copied.'); } else goNext();
+  });
+  $('bar-list').addEventListener('click', function () { if (document.body.classList.contains('sheet-open')) closeSheet(); else openSheet(); });
+  $('sheet-close').addEventListener('click', closeSheet);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && document.body.classList.contains('sheet-open')) closeSheet(); });
+  $('tab-phone').addEventListener('click', function () { setTab('phone'); });
+  $('tab-screen').addEventListener('click', function () { setTab('screen'); });
+  [$('tab-phone'), $('tab-screen')].forEach(function (b) {
+    b.addEventListener('keydown', function (e) {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') { var to = b === $('tab-phone') ? 'screen' : 'phone'; setTab(to); $('tab-' + to).focus(); }
+    });
+  });
 
   ensurePerm();
+  $('extras').open = !isPhone();
+  $('packbox').open = !isPhone();
+  $('howto').open = !isPhone();
+  buildStepper();
   buildTypePicker();
   buildForm();
   buildPackForm();
   renderList();
   update();
   updatePack();
+  setStep(1, false);
 })();
