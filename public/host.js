@@ -13,6 +13,10 @@
     offset: 0, closingUntil: 0, closed: null, notice: '',
   };
   var cleanups = [];
+  // Anything with a timer must register through onMount(): show() runs the previous view's cleanups first,
+  // then mounts the new DOM, then runs these callbacks (which may push their own cleanups).
+  var pendingMount = [];
+  function onMount(fn) { pendingMount.push(fn); }
   var timerHandle = null;
 
   function h(tag, props) {
@@ -93,6 +97,8 @@
     var screen = h('div', { class: 'screen ' + (opts && opts.stage ? 'stage-screen' : 'host-screen' + (opts && opts.center ? ' host-screen--center' : '')) }, children);
     app.replaceChildren(screen);
     if (window.Flower && Flower.decorate) { try { Flower.decorate(opts && opts.stage ? screen.querySelector('.stage') : screen); } catch (e) { /* ignore */ } }
+    var mount = pendingMount; pendingMount = [];
+    mount.forEach(function (fn) { try { fn(screen); } catch (e) { /* ignore */ } });
     return screen;
   }
 
@@ -417,8 +423,10 @@
         notice.classList.toggle('closing-notice--warn', sec <= 60);
       };
       tick();
-      var iv = setInterval(tick, 500);
-      cleanups.push(function () { clearInterval(iv); });
+      onMount(function () {
+        var iv = setInterval(tick, 500);
+        cleanups.push(function () { clearInterval(iv); });
+      });
     }
     var left = [
       hero,
@@ -443,13 +451,13 @@
 
   function timerBlock(endsLocal, totalMs) {
     var box = h('div', { class: 'timer' });
-    var handle = null;
-    setTimeout(function () {
+    onMount(function () {
+      var handle = null;
       if (window.Flower && Flower.petalTimer && box.isConnected) {
         try { handle = Flower.petalTimer(box, { durationMs: totalMs, endsAt: endsLocal }); } catch (e) { handle = null; }
       }
-    }, 0);
-    cleanups.push(function () { if (handle && handle.stop) handle.stop(); });
+      cleanups.push(function () { if (handle && handle.stop) handle.stop(); });
+    });
     return box;
   }
 
