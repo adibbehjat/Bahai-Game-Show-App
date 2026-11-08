@@ -70,3 +70,83 @@ test('normalize and fold', () => {
   assert.strictEqual(S.foldForCompare('Bahá’í'), S.foldForCompare("BAHA'I"));
   assert.strictEqual(S.foldForCompare("Baʻa"), "ba'a");
 });
+
+// ---- examples, docs and JSON Schema ----
+const fs = require('node:fs');
+const path = require('node:path');
+const FG = require('../public/shared/format-guide.js');
+const DOCS = path.join(__dirname, '..', 'docs');
+
+test('EXAMPLES all validate and cover every type at least twice', () => {
+  assert.ok(Array.isArray(S.EXAMPLES));
+  S.EXAMPLES.forEach((e) => ok(e));
+  S.TYPES.forEach((t) => assert.ok(S.EXAMPLES.filter((e) => e.type === t).length >= 2, 'examples for ' + t));
+  S.EXAMPLES.forEach((e) => assert.strictEqual(e.source, 'TEMPLATE — replace'));
+  assert.ok(S.validatePack(S.PACK_EXAMPLE).ok);
+  const tpl = S.templateJsonl().split('\n').filter(Boolean);
+  assert.ok(tpl[0].startsWith('//'));
+  assert.strictEqual(tpl.filter((l) => !l.startsWith('//')).length, S.EXAMPLES.length);
+});
+
+test('QUESTION-FORMAT.md limits match LIMITS and doc is up to date', () => {
+  const md = fs.readFileSync(path.join(DOCS, 'QUESTION-FORMAT.md'), 'utf8');
+  Object.keys(S.LIMITS).forEach((k) => {
+    const m = md.match(new RegExp('\\|\\s*`' + k + '`\\s*\\|\\s*(\\d+)\\s*\\|'));
+    assert.ok(m, 'doc row for limit ' + k);
+    assert.strictEqual(Number(m[1]), S.LIMITS[k], 'doc value for ' + k);
+  });
+  assert.strictEqual(md, FG.toMarkdown(), 'run: node scripts/build-format-doc.js');
+  S.EXAMPLES.forEach((e) => assert.ok(md.includes(JSON.stringify(e))));
+});
+
+// minimal JSON Schema subset validator (no dependencies)
+function jv(schema, v) {
+  if (schema.oneOf) return schema.oneOf.filter((s) => jv(s, v)).length === 1;
+  if ('const' in schema && v !== schema.const) return false;
+  if (schema.enum && !schema.enum.includes(v)) return false;
+  if (schema.type) {
+    const t = schema.type;
+    const okType = t === 'object' ? (v !== null && typeof v === 'object' && !Array.isArray(v))
+      : t === 'array' ? Array.isArray(v) : t === 'integer' ? Number.isInteger(v) : typeof v === t;
+    if (!okType) return false;
+  }
+  if (typeof v === 'string') {
+    if (schema.minLength !== undefined && v.length < schema.minLength) return false;
+    if (schema.maxLength !== undefined && v.length > schema.maxLength) return false;
+    if (schema.pattern && !new RegExp(schema.pattern, 'u').test(v)) return false;
+  }
+  if (typeof v === 'number') {
+    if (schema.minimum !== undefined && v < schema.minimum) return false;
+    if (schema.maximum !== undefined && v > schema.maximum) return false;
+  }
+  if (Array.isArray(v)) {
+    if (schema.minItems !== undefined && v.length < schema.minItems) return false;
+    if (schema.maxItems !== undefined && v.length > schema.maxItems) return false;
+    if (schema.uniqueItems && new Set(v.map((x) => JSON.stringify(x))).size !== v.length) return false;
+    if (schema.items && !v.every((x) => jv(schema.items, x))) return false;
+  }
+  if (v !== null && typeof v === 'object' && !Array.isArray(v)) {
+    if (schema.required && !schema.required.every((k) => k in v)) return false;
+    const props = schema.properties || {};
+    if (schema.additionalProperties === false && !Object.keys(v).every((k) => k in props)) return false;
+    if (!Object.keys(props).every((k) => !(k in v) || jv(props[k], v[k]))) return false;
+  }
+  return true;
+}
+
+test('question.schema.json accepts examples, rejects bad lines, and matches the generator', () => {
+  const file = JSON.parse(fs.readFileSync(path.join(DOCS, 'question.schema.json'), 'utf8'));
+  assert.deepStrictEqual(file, FG.jsonSchema());
+  assert.strictEqual(file.$schema, 'https://json-schema.org/draft/2020-12/schema');
+  S.EXAMPLES.forEach((e) => assert.ok(jv(file, e), JSON.stringify(e)));
+  [
+    { type: 'single', q: 'Q', choices: ['a', 'b'], answer: 6 },
+    { type: 'single', q: 'Q', choices: ['a'], answer: 0 },
+    { type: 'multi', q: 'Q', choices: ['a', 'b'], answer: [] },
+    { type: 'truefalse', q: 'Q', answer: 'true' },
+    { type: 'order', q: 'Q', items: ['a', 'b'], answer: [0, 1] },
+    { type: 'spell', clue: 'c', word: 'abc123' },
+    { type: 'spell', clue: 'c', word: 'abc', extra: 1 },
+    { type: 'nope' }, { q: 'no type' }
+  ].forEach((bad) => assert.ok(!jv(file, bad), JSON.stringify(bad)));
+});

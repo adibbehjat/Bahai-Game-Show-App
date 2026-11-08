@@ -15,109 +15,128 @@
     <ol id="step-dots" class="kit-dots"></ol>
   </nav>
 
-  <main class="kit stack">
-    <header class="card stack kit-header kit-step" data-s="1">
+  <header class="kit-top kit-step" data-s="1">
+    <div class="kit-top__id">
       <h1>Question Kit</h1>
-      <p class="muted">Write questions for the game and get ready-to-paste lines. Nothing you do on this page is sent anywhere; it makes no network requests.</p>
-      <details id="howto" class="kit-howto">
-        <summary>How it works</summary>
-        <ol class="kit-steps">
-          <li>Copy the line(s).</li>
-          <li>On the server, paste into <code>questions/&lt;pack-id&gt;/questions.jsonl</code> (one per line).</li>
-          <li>Run <code>npm run validate-questions</code>.</li>
-          <li>Restart the server (<code>sudo systemctl restart game_show</code>).</li>
-        </ol>
-      </details>
-    </header>
-
-    <div class="kit-grid">
-      <form id="q-form" class="card stack kit-editor" autocomplete="off" novalidate>
-        <h2 id="h-editor" class="kit-desk-title">1. Write a question</h2>
-
-        <section class="kit-step stack" data-s="1" aria-labelledby="t1">
-          <h3 id="t1" class="kit-step-title" tabindex="-1">Choose a type</h3>
-          <div id="type-picker" class="kit-types" role="group" aria-label="Question type"></div>
-          <p id="type-desc" class="muted kit-type-desc" aria-live="polite"></p>
-        </section>
-
-        <section class="kit-step stack" data-s="2" aria-labelledby="t2">
-          <h3 id="t2" class="kit-step-title" tabindex="-1">Write the question</h3>
-          <div id="fields-q" class="stack"></div>
-        </section>
-
-        <section class="kit-step stack" data-s="3" aria-labelledby="t3">
-          <h3 id="t3" class="kit-step-title" tabindex="-1">Set the answers</h3>
-          <div id="fields-a" class="stack"></div>
-        </section>
-
-        <section class="kit-step stack" data-s="4" aria-labelledby="t4">
-          <h3 id="t4" class="kit-step-title" tabindex="-1">Extras (optional)</h3>
-          <details id="extras" class="kit-extras">
-            <summary>Explanation, source, time, difficulty</summary>
-            <div id="fields-x" class="stack"></div>
-          </details>
-        </section>
-      </form>
-
-      <section class="stack kit-side kit-step" data-s="5" aria-labelledby="h-preview">
-        <div class="card stack">
-          <h2 id="h-preview" class="kit-step-title" tabindex="-1">Preview and copy</h2>
-          <label class="kit-inline"><input type="checkbox" id="show-answers" checked> Show correct answers</label>
-          <div class="kit-tabs" role="tablist" aria-label="Preview">
-            <button type="button" role="tab" id="tab-phone" class="btn btn--ghost" aria-selected="true" aria-controls="panel-phone">Phone</button>
-            <button type="button" role="tab" id="tab-screen" class="btn btn--ghost" aria-selected="false" aria-controls="panel-screen" tabindex="-1">Big screen</button>
-          </div>
-          <div id="panel-phone" class="kit-panel" role="tabpanel" aria-labelledby="tab-phone">
-            <h3 class="kit-desk-title">Phone</h3>
-            <div id="preview-phone" class="kit-phone"></div>
-          </div>
-          <div id="panel-screen" class="kit-panel is-off" role="tabpanel" aria-labelledby="tab-screen">
-            <h3 class="kit-desk-title">Big screen</h3>
-            <div id="preview-screen" class="kit-screen"></div>
-          </div>
-        </div>
-
-        <div class="card stack">
-          <h2 class="kit-desk-title">3. Output</h2>
-          <div id="errors" class="kit-errors" aria-live="polite"></div>
-          <label class="label" for="out-line">JSONL line</label>
-          <textarea id="out-line" class="input kit-out" rows="3" readonly></textarea>
-          <div class="cluster kit-actions">
-            <button type="button" id="btn-copy" class="btn btn--primary" disabled>Copy line</button>
-            <button type="button" id="btn-add" class="btn" disabled>Add to my list</button>
-          </div>
-        </div>
-      </section>
+      <p class="kit-reassure">Nothing leaves your browser.</p>
     </div>
-
-    <section id="sheet" class="card stack kit-sheet" aria-labelledby="h-list">
-      <div class="kit-sheet-head">
-        <h2 id="h-list" tabindex="-1">Your questions <span id="list-count" class="muted"></span></h2>
-        <button type="button" id="sheet-close" class="btn btn--ghost kit-sheet-close">Close</button>
-      </div>
-      <p class="muted">Saved in this browser only (localStorage).</p>
-      <ol id="session-list" class="kit-list"></ol>
-      <div class="cluster kit-actions">
-        <button type="button" id="btn-copy-all" class="btn btn--primary">Copy all</button>
-        <button type="button" id="btn-download" class="btn">Download questions.jsonl</button>
-        <button type="button" id="btn-clear" class="btn btn--ghost">Clear list</button>
-      </div>
-
-      <details id="packbox" class="kit-extras">
-        <summary id="h-pack">pack.json helper</summary>
-        <div class="stack">
-          <form id="pack-form" class="stack" autocomplete="off" novalidate></form>
-          <div id="pack-errors" class="kit-errors" aria-live="polite"></div>
-          <label class="label" for="pack-out">pack.json</label>
-          <textarea id="pack-out" class="input kit-out" rows="7" readonly></textarea>
-          <div class="cluster kit-actions">
-            <button type="button" id="btn-pack-copy" class="btn btn--primary" disabled>Copy pack.json</button>
-            <button type="button" id="btn-pack-download" class="btn" disabled>Download pack.json</button>
-          </div>
+    <div class="kit-top__actions">
+      <button type="button" id="btn-download" class="btn">Download questions.jsonl</button>
+      <details id="tmpl-menu" class="kit-menu">
+        <summary class="btn">Download template</summary>
+        <div class="kit-menu__list">
+          <button type="button" id="mi-template" class="kit-menu__item">questions-template.jsonl (examples of every type)</button>
+          <button type="button" id="mi-packtemplate" class="kit-menu__item">pack.json template</button>
+          <button type="button" id="mi-load" class="kit-menu__item">Load examples into my list</button>
+          <button type="button" id="mi-packhelper" class="kit-menu__item">pack.json helper…</button>
         </div>
       </details>
+      <button type="button" id="btn-guide" class="btn">Format guide</button>
+    </div>
+  </header>
+
+  <main class="kit">
+    <aside class="kit-rail" aria-label="Question types and your list">
+      <section class="kit-step kit-types-sec" data-s="1" aria-labelledby="t1">
+        <h3 id="t1" class="kit-step-title" tabindex="-1">Question type</h3>
+        <div id="type-picker" class="kit-types" role="group" aria-label="Question type"></div>
+      </section>
+
+      <section id="sheet" class="kit-sheet" aria-labelledby="h-list">
+        <div class="kit-sheet-head">
+          <h2 id="h-list" tabindex="-1">Your questions <span id="list-count" class="muted"></span></h2>
+          <button type="button" id="sheet-close" class="btn btn--ghost kit-sheet-close">Close</button>
+        </div>
+        <ol id="session-list" class="kit-list"></ol>
+        <div class="kit-sheet-actions">
+          <button type="button" id="btn-new" class="btn btn--ghost">+ New question</button>
+          <button type="button" id="btn-copy-all" class="btn btn--ghost">Copy all</button>
+          <button type="button" id="btn-load-examples" class="btn btn--ghost">Load examples into my list</button>
+          <button type="button" id="btn-clear" class="btn btn--ghost">Clear list</button>
+        </div>
+        <p class="kit-hint">Saved in this browser only.</p>
+      </section>
+    </aside>
+
+    <form id="q-form" class="kit-editor" autocomplete="off" novalidate>
+      <section class="kit-step kit-sec" data-s="2" aria-labelledby="t2">
+        <h3 id="t2" class="kit-step-title" tabindex="-1"><span class="kit-t-phone"></span><span class="kit-t-desk"></span></h3>
+        <div id="fields-q" class="stack"></div>
+      </section>
+
+      <section class="kit-step kit-sec" data-s="3" aria-labelledby="t3">
+        <h3 id="t3" class="kit-step-title" tabindex="-1"><span class="kit-t-phone"></span><span class="kit-t-desk"></span></h3>
+        <div id="fields-a" class="stack"></div>
+      </section>
+
+      <section class="kit-step kit-sec" data-s="4" aria-labelledby="t4">
+        <h3 id="t4" class="kit-step-title" tabindex="-1"><span class="kit-t-phone">Extras (optional)</span><span class="kit-t-desk">Explanation and source</span></h3>
+        <details id="extras-e" class="kit-extras kit-extras--plain">
+          <summary>Explanation and source</summary>
+          <div id="fields-e" class="stack"></div>
+        </details>
+        <details id="extras" class="kit-extras">
+          <summary>Details: time and difficulty</summary>
+          <div id="fields-x" class="stack"></div>
+        </details>
+      </section>
+    </form>
+
+    <section class="kit-side kit-step" data-s="5" aria-labelledby="h-preview">
+      <div class="kit-zone stack">
+        <h2 id="h-preview" class="kit-step-title kit-zone-title" tabindex="-1">Preview</h2>
+        <label class="kit-inline"><input type="checkbox" id="show-answers" checked> Show correct answers</label>
+        <div class="kit-tabs" role="tablist" aria-label="Preview">
+          <button type="button" role="tab" id="tab-phone" class="btn btn--ghost" aria-selected="true" aria-controls="panel-phone">Phone</button>
+          <button type="button" role="tab" id="tab-screen" class="btn btn--ghost" aria-selected="false" aria-controls="panel-screen" tabindex="-1">Big screen</button>
+        </div>
+        <div id="panel-phone" class="kit-panel" role="tabpanel" aria-labelledby="tab-phone">
+          <div id="preview-phone" class="kit-phone"></div>
+        </div>
+        <div id="panel-screen" class="kit-panel is-off" role="tabpanel" aria-labelledby="tab-screen">
+          <div id="preview-screen" class="kit-screen"></div>
+        </div>
+      </div>
+
+      <div class="kit-zone stack">
+        <h2 class="kit-zone-title kit-desk-title">Output</h2>
+        <div id="errors" class="kit-errors" aria-live="polite"></div>
+        <label class="label" for="out-line">JSONL line</label>
+        <textarea id="out-line" class="input kit-out" rows="4" readonly></textarea>
+        <div class="kit-actions">
+          <button type="button" id="btn-copy" class="btn" aria-disabled="true">Copy line <kbd class="kit-kbd kit-kbd--copy"></kbd></button>
+          <button type="button" id="btn-add" class="btn btn--primary" aria-disabled="true"><span id="btn-add-label">Add to my questions</span> <kbd class="kit-kbd kit-kbd--add"></kbd></button>
+        </div>
+        <p class="kit-hint kit-paste">Paste into <code>questions/&lt;pack-id&gt;/questions.jsonl</code>, run <code>npm run validate-questions</code>, then <code>sudo systemctl restart game_show</code>.</p>
+      </div>
     </section>
   </main>
+
+  <aside id="drawer" class="kit-drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>
+    <div class="kit-drawer__head">
+      <h2 id="drawer-title" tabindex="-1">Format guide</h2>
+      <button type="button" id="drawer-close" class="btn btn--ghost">Close</button>
+    </div>
+    <div class="kit-tabs kit-drawer__tabs" role="tablist" aria-label="Panels">
+      <button type="button" role="tab" id="dtab-guide" class="btn btn--ghost" aria-selected="true" aria-controls="dpanel-guide">Format guide</button>
+      <button type="button" role="tab" id="dtab-pack" class="btn btn--ghost" aria-selected="false" aria-controls="dpanel-pack" tabindex="-1">pack.json helper</button>
+    </div>
+    <div id="dpanel-guide" class="kit-drawer__body" role="tabpanel" aria-labelledby="dtab-guide">
+      <div class="kit-actions"><button type="button" id="btn-guide-md" class="btn">Download format guide (.md)</button></div>
+      <div id="guide-body" class="kit-guide"></div>
+    </div>
+    <div id="dpanel-pack" class="kit-drawer__body is-off" role="tabpanel" aria-labelledby="dtab-pack">
+      <form id="pack-form" class="stack" autocomplete="off" novalidate></form>
+      <div id="pack-errors" class="kit-errors" aria-live="polite"></div>
+      <label class="label" for="pack-out">pack.json</label>
+      <textarea id="pack-out" class="input kit-out" rows="9" readonly></textarea>
+      <div class="kit-actions">
+        <button type="button" id="btn-pack-copy" class="btn btn--primary" disabled>Copy pack.json</button>
+        <button type="button" id="btn-pack-download" class="btn" disabled>Download pack.json</button>
+      </div>
+    </div>
+  </aside>
+  <div id="drawer-scrim" class="kit-scrim" hidden></div>
 
   <p id="status" class="kit-toast" role="status" aria-live="polite"></p>
 
@@ -128,6 +147,7 @@
   </nav>
 
   <script src="/shared/schema.js"></script>
+  <script src="/shared/format-guide.js"></script>
   <script src="/theme/flower.js"></script>
   <script src="/kit.js"></script>
 </body>

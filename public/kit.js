@@ -54,11 +54,13 @@
     tf: true, orderItems: ['', '', ''], perm: [], clue: '', word: '', accept: [],
     explanation: '', source: '', time: '', difficulty: ''
   };
-  var step = 1, maxStep = 1, attempted = false, touched = {};
+  var step = 1, maxStep = 1, attempted = false, touched = {}, editingIndex = null, drawerOpener = null;
   var counters = [], packCounters = [], errSlots = {};
   var lastLine = null, lastResult = { ok: false, errors: [] };
   var pendingFocus = null, pendingAcceptInput = null, statusTimer = null;
   var lines = loadLines();
+  var IS_MAC = /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+  var MOD = IS_MAC ? '⌘' : 'Ctrl';
 
   function loadLines() {
     try {
@@ -67,6 +69,31 @@
     } catch (e) { return []; }
   }
   function saveLines() { try { localStorage.setItem(STORE_KEY, JSON.stringify(lines)); } catch (e) { /* ignore */ } }
+
+  function freshState(type) {
+    return { type: type || 'single', q: '', choices: ['', '', '', ''], single: 0, multi: [], tf: true, orderItems: ['', '', ''], perm: [],
+      clue: '', word: '', accept: [], explanation: '', source: '', time: '', difficulty: '' };
+  }
+  function stateFromObject(o) {
+    var n = freshState(o.type);
+    n.explanation = o.explanation || ''; n.source = o.source || '';
+    n.time = o.time !== undefined ? String(o.time) : ''; n.difficulty = o.difficulty || '';
+    if (o.type === 'spell') { n.clue = o.clue || ''; n.word = o.word || ''; n.accept = (o.accept || []).slice(); }
+    else {
+      n.q = o.q || '';
+      if (o.type === 'single') { n.choices = o.choices.slice(); n.single = o.answer; }
+      else if (o.type === 'multi') { n.choices = o.choices.slice(); n.multi = o.answer.slice(); }
+      else if (o.type === 'truefalse') n.tf = o.answer;
+      else if (o.type === 'order') {
+        // answer[k] = index in items of the item that belongs at position k
+        n.orderItems = o.answer.map(function (idx) { return o.items[idx]; });
+        n.perm = new Array(o.items.length);
+        o.answer.forEach(function (idx, k) { n.perm[idx] = k; });
+      }
+    }
+    return n;
+  }
+  function replaceState(n) { Object.keys(st).forEach(function (k) { delete st[k]; }); Object.keys(n).forEach(function (k) { st[k] = n[k]; }); }
 
   // ---------- order shuffle ----------
   function shufflePerm(n) {
@@ -314,8 +341,8 @@
   function commitPending() { return acceptEditor && acceptEditor._commit ? acceptEditor._commit() : false; }
 
   function buildForm() {
-    var fq = $('fields-q'), fa = $('fields-a'), fx = $('fields-x');
-    clear(fq); clear(fa); clear(fx);
+    var fq = $('fields-q'), fa = $('fields-a'), fx = $('fields-x'), fe = $('fields-e');
+    clear(fq); clear(fa); clear(fx); clear(fe);
     counters = []; errSlots = {}; acceptEditor = null; pendingAcceptInput = null;
 
     if (st.type === 'spell') {
@@ -349,8 +376,8 @@
         return h('option', { value: p[0], text: p[1], selected: st.difficulty === p[0] });
       }));
     diff.value = st.difficulty;
-    fx.appendChild(field('explanation', 'Explanation shown after the reveal', areaInput('explanation', '', 3), L.explanation));
-    fx.appendChild(field('source', 'Source', textInput('source', 'e.g. book and page'), L.source));
+    fe.appendChild(field('explanation', 'Explanation shown after the reveal', areaInput('explanation', '', 3), L.explanation));
+    fe.appendChild(field('source', 'Source', textInput('source', 'e.g. book and page'), L.source));
     fx.appendChild(h('div', { class: 'kit-two' }, [
       field('time', 'Seconds (' + L.timeMin + '–' + L.timeMax + ')', time),
       field('difficulty', 'Difficulty', diff)
@@ -364,10 +391,15 @@
     }
   }
 
+  function setTitle(id, phone, desk) {
+    var el = $(id);
+    el.querySelector('.kit-t-phone').textContent = phone;
+    el.querySelector('.kit-t-desk').textContent = desk;
+  }
   function updateStepTitles() {
     var spell = st.type === 'spell';
-    $('t2').textContent = spell ? 'Write the clue' : 'Write the question';
-    $('t3').textContent = spell ? 'Set the word' : (st.type === 'order' ? 'Put the items in order' : 'Set the answers');
+    setTitle('t2', spell ? 'Write the clue' : 'Write the question', spell ? 'Clue' : 'Question');
+    setTitle('t3', spell ? 'Set the word' : (st.type === 'order' ? 'Put the items in order' : 'Set the answers'), spell ? 'Word' : 'Answers');
   }
   var STEP_TITLES = [null, 'Choose a type', 'Write the question', 'Set the answers', 'Extras (optional)', 'Preview and copy'];
   function stepTitle(n) {
@@ -392,25 +424,32 @@
         ])
       ]));
     });
-    $('type-desc').textContent = TYPE_INFO[st.type][1];
   }
 
   // ---------- preview ----------
+  function isBlank(t) { return !S.normalizeText(t || ''); }
+  function letter(i) { return String.fromCharCode(65 + i); }
   function choiceNode(text, i, correct) {
-    var cls = 'choice' + (correct ? ' is-correct' : '');
-    return h('div', { class: cls, 'data-i': i }, [h('span', { class: 'choice__glyph', 'aria-hidden': 'true', text: GLYPHS[i] }), h('span', { class: 'choice__text', text: text || '…' })]);
+    var blank = isBlank(text);
+    var cls = 'choice' + (correct ? ' is-correct' : '') + (blank ? ' is-placeholder' : '');
+    return h('div', { class: cls, 'data-i': i }, [h('span', { class: 'choice__glyph', 'aria-hidden': 'true' }), h('span', { class: 'choice__text', text: blank ? 'Choice ' + letter(i) : text })]);
   }
-  function renderPreview(v) {
+  function itemNode(text, pos, i) {
+    var blank = isBlank(text);
+    return h('li', { class: 'order-item' + (blank ? ' is-placeholder' : ''), 'data-pos': pos, text: blank ? 'Item ' + letter(i) : text });
+  }
+  function renderPreview() {
     var show = $('show-answers').checked;
-    var q = v || buildObject();
+    var q = buildObject();
     var screen = $('preview-screen'), phone = $('preview-phone');
     clear(screen); clear(phone);
     var isSpell = q.type === 'spell';
-    var prompt = isSpell ? (q.clue || 'Clue…') : (q.q || 'Question…');
-    var secs = q.time || (isSpell ? L.spellTimeDefault : L.timeDefault);
+    var rawPrompt = isSpell ? q.clue : q.q;
+    var promptBlank = isBlank(rawPrompt);
+    var secs = (q.time >= L.timeMin && q.time <= L.timeMax) ? q.time : (isSpell ? L.spellTimeDefault : L.timeDefault);
     screen.appendChild(h('p', { class: 'kit-meta', text: TYPE_INFO[q.type][0] + ' · ' + secs + 's' + (q.difficulty ? ' · ' + q.difficulty : '') }));
-    screen.appendChild(h('p', { class: 'big-question', text: prompt }));
-    phone.appendChild(h('p', { class: 'kit-meta', text: 'Your device' }));
+    screen.appendChild(h('p', { class: 'big-question' + (promptBlank ? ' is-placeholder' : ''), text: promptBlank ? (isSpell ? 'Your clue appears here' : 'Your question appears here') : rawPrompt }));
+    phone.appendChild(h('p', { class: 'kit-meta', text: 'Question 1 · ' + secs + 's' }));
     var chs = Array.isArray(q.choices) ? q.choices : null;
     function isCorrect(i) { return show && (q.type === 'single' ? q.answer === i : Array.isArray(q.answer) && q.answer.indexOf(i) !== -1); }
     if (chs) {
@@ -423,31 +462,31 @@
         var g = h('div', { class: 'tf-grid' });
         [true, false].forEach(function (b, i) {
           g.appendChild(h('div', { class: 'choice' + (k === 0 && show && q.answer === b ? ' is-correct' : ''), 'data-i': i }, [
-            h('span', { class: 'choice__glyph', 'aria-hidden': 'true', text: GLYPHS[i] }), h('span', { class: 'choice__text', text: b ? 'True' : 'False' })]));
+            h('span', { class: 'choice__glyph', 'aria-hidden': 'true' }), h('span', { class: 'choice__text', text: b ? 'True' : 'False' })]));
         });
         box.appendChild(g);
       });
     } else if (q.type === 'order') {
-      var r = Array.isArray(q.items) ? q : orderResult();
-      var items = r.items, ans = r.answer;
+      var r = orderResult();
       var ol = h('ol', { class: 'order-list' });
-      if (show) ans.forEach(function (idx, pos) { ol.appendChild(h('li', { class: 'order-item', 'data-pos': pos, text: items[idx] || '…' })); });
-      else items.forEach(function (it, pos) { ol.appendChild(h('li', { class: 'order-item', 'data-pos': pos, text: it || '…' })); });
-      screen.appendChild(h('p', { class: 'kit-meta', text: show ? 'Correct order:' : 'Shown shuffled:' }));
+      if (show) r.answer.forEach(function (idx, pos) { ol.appendChild(itemNode(r.items[idx], pos, idx)); });
+      else r.items.forEach(function (it, pos) { ol.appendChild(itemNode(it, pos, pos)); });
+      screen.appendChild(h('p', { class: 'kit-meta', text: show ? 'Correct order' : 'Shown shuffled' }));
       screen.appendChild(ol);
       var ol2 = h('ol', { class: 'order-list' });
-      items.forEach(function (it, pos) { ol2.appendChild(h('li', { class: 'order-item', 'data-pos': pos, text: it || '…' })); });
+      r.items.forEach(function (it, pos) { ol2.appendChild(itemNode(it, pos, pos)); });
+      phone.appendChild(h('p', { class: 'kit-meta', text: 'Arrange in order' }));
       phone.appendChild(ol2);
     } else if (isSpell) {
-      if (show) screen.appendChild(h('p', { class: 'kit-meta', text: 'Word: ' + (q.word || '…') + (q.accept ? ' (also accepts: ' + q.accept.join(', ') + ')' : '') }));
-      phone.appendChild(h('input', { class: 'input spell-input', type: 'text', placeholder: 'Type the word', 'aria-label': 'Spelling answer (preview)', disabled: '' }));
+      if (show) screen.appendChild(h('p', { class: 'kit-meta', text: 'Word: ' + (isBlank(q.word) ? 'your word' : q.word) + (q.accept ? ' (also accepts: ' + q.accept.join(', ') + ')' : '') }));
+      phone.appendChild(h('input', { class: 'input spell-input', type: 'text', placeholder: 'Type your answer', 'aria-label': 'Spelling answer (preview)', disabled: '' }));
     }
     if (show && q.explanation) screen.appendChild(h('p', { class: 'kit-meta', text: 'Explanation: ' + q.explanation }));
     if (show && q.source) screen.appendChild(h('p', { class: 'kit-meta', text: 'Source: ' + q.source }));
     var op = $('order-preview');
     if (op) {
       clear(op);
-      orderResult().items.forEach(function (it) { op.appendChild(h('li', { text: it || '…' })); });
+      orderResult().items.forEach(function (it, i) { op.appendChild(h('li', { text: isBlank(it) ? 'Item ' + letter(i) : it })); });
     }
   }
 
@@ -468,7 +507,7 @@
     });
     var box = $('errors'); clear(box);
     if (lastResult.ok) box.appendChild(h('p', { class: 'kit-valid', text: '✓ Looks good. Ready to copy.' }));
-    else {
+    else if (attempted || Object.keys(touched).length) {
       box.appendChild(h('p', { class: 'kit-todo', text: 'Still to fix:' }));
       box.appendChild(h('ul', null, errs.map(function (e) { return h('li', { text: friendly(e) }); })));
     }
@@ -493,10 +532,10 @@
     lastResult = res;
     if (res.ok) { lastLine = JSON.stringify(res.value); $('out-line').value = lastLine; }
     else { lastLine = null; $('out-line').value = ''; }
-    $('btn-copy').disabled = !res.ok;
-    $('btn-add').disabled = !res.ok;
+    $('btn-copy').setAttribute('aria-disabled', String(!res.ok));
+    $('btn-add').setAttribute('aria-disabled', String(!res.ok));
     showErrors();
-    renderPreview(res.ok ? res.value : null);
+    renderPreview();
     updateBar();
     updateStepper();
   }
@@ -559,7 +598,7 @@
   function updateBar() {
     $('bar-back').disabled = step === 1;
     var next = $('bar-next');
-    if (step === STEP_COUNT) { next.textContent = 'Copy line'; next.disabled = !lastLine; }
+    if (step === STEP_COUNT) { next.textContent = 'Copy line'; next.disabled = false; }
     else { next.textContent = step === 4 ? 'Preview ›' : 'Next ›'; next.disabled = false; }
     $('bar-list').textContent = 'List (' + lines.length + ')';
   }
@@ -604,20 +643,28 @@
   }
 
   // ---------- session list ----------
+  var TAGS = { single: 'one', multi: 'multi', truefalse: 't/f', order: 'order', spell: 'spell' };
+  function lineType(line) { try { return JSON.parse(line).type; } catch (e) { return ''; } }
   function summarize(line) {
-    try { var o = JSON.parse(line); return '[' + o.type + '] ' + (o.q || o.clue || ''); } catch (e) { return line; }
+    try { var o = JSON.parse(line); return o.q || o.clue || ''; } catch (e) { return line; }
   }
   function renderList() {
     var ol = $('session-list'); clear(ol);
     $('list-count').textContent = '(' + lines.length + ')';
-    if (!lines.length) ol.appendChild(h('li', { class: 'muted kit-empty', text: 'Nothing saved yet. Use “Add to my list” on the last step.' }));
+    if (!lines.length) ol.appendChild(h('li', { class: 'muted kit-empty', text: 'Nothing saved yet. Build a question and choose “Add to my questions”.' }));
     lines.forEach(function (ln, i) {
-      ol.appendChild(h('li', null, [
-        h('span', { class: 'kit-list-text', text: summarize(ln) }),
-        h('span', { class: 'kit-ctl' }, [
+      var active = editingIndex === i;
+      ol.appendChild(h('li', { class: 'kit-list-item' + (active ? ' is-active' : '') }, [
+        h('button', { type: 'button', class: 'kit-list-pick', 'aria-current': active ? 'true' : null, 'aria-label': 'Edit question ' + (i + 1) + ' (' + lineType(ln) + '): ' + summarize(ln),
+          on: { click: function () { editLine(i); } } }, [h('span', { class: 'kit-list-n', text: String(i + 1) }), h('span', { class: 'kit-list-tag', text: TAGS[lineType(ln)] || '?' }), h('span', { class: 'kit-list-text', text: summarize(ln) })]),
+        h('span', { class: 'kit-ctl kit-ctl--sm' }, [
           iconBtn('↑', 'Move question ' + (i + 1) + ' up', function () { move(i, -1); }, i === 0),
           iconBtn('↓', 'Move question ' + (i + 1) + ' down', function () { move(i, 1); }, i === lines.length - 1),
-          iconBtn('✕', 'Remove question ' + (i + 1), function () { lines.splice(i, 1); saveLines(); renderList(); updateBar(); })
+          iconBtn('✕', 'Remove question ' + (i + 1), function () {
+            lines.splice(i, 1);
+            if (editingIndex === i) editingIndex = null; else if (editingIndex !== null && editingIndex > i) editingIndex--;
+            saveLines(); renderList(); updateAddLabel();
+          })
         ])
       ]));
     });
@@ -628,9 +675,57 @@
   }
   function move(i, d) {
     var j = i + d; if (j < 0 || j >= lines.length) return;
-    var t = lines[i]; lines[i] = lines[j]; lines[j] = t; saveLines(); renderList();
+    var t = lines[i]; lines[i] = lines[j]; lines[j] = t;
+    if (editingIndex === i) editingIndex = j; else if (editingIndex === j) editingIndex = i;
+    saveLines(); renderList();
   }
   function allText() { return lines.join('\n') + '\n'; }
+  function updateAddLabel() { $('btn-add-label').textContent = editingIndex !== null ? 'Update question ' + (editingIndex + 1) : 'Add to my questions'; }
+
+  function resetForm(keepType) {
+    replaceState(freshState(keepType ? st.type : 'single'));
+    touched = {}; attempted = false; maxStep = 1; editingIndex = null;
+    if (st.type === 'order') ensurePerm();
+    buildTypePicker(); buildForm(); update(); renderList(); updateAddLabel();
+  }
+  function editLine(i) {
+    var o;
+    try { o = JSON.parse(lines[i]); } catch (e) { return; }
+    var v = S.validateQuestion(o);
+    if (!v.ok) return;
+    replaceState(stateFromObject(v.value));
+    touched = {}; attempted = false; editingIndex = i;
+    if (st.type === 'order') ensurePerm();
+    buildTypePicker(); buildForm(); update(); renderList(); updateAddLabel();
+    if (isPhone()) { closeSheet(); maxStep = 5; setStep(2, true); }
+    else { var first = document.querySelector('#fields-q .input'); if (first) first.focus(); }
+    say('Editing question ' + (i + 1) + '.');
+  }
+  function loadExamples() {
+    S.EXAMPLES.forEach(function (e) { var v = S.validateQuestion(e); if (v.ok) lines.push(JSON.stringify(v.value)); });
+    saveLines(); renderList();
+    say('Added ' + S.EXAMPLES.length + ' example questions to your list.');
+  }
+
+  // ---------- actions ----------
+  function requireValid() {
+    if (lastLine) return true;
+    attempted = true; showErrors(); focusFirstError();
+    say('Please fix the highlighted fields first.');
+    return false;
+  }
+  function doCopy() { if (requireValid()) copyText(lastLine, 'Line copied.'); }
+  function doAdd() {
+    if (!requireValid()) return;
+    var msg;
+    if (editingIndex !== null) { lines[editingIndex] = lastLine; msg = 'Updated question ' + (editingIndex + 1) + '.'; }
+    else { lines.push(lastLine); msg = 'Added to your questions (' + lines.length + ').'; }
+    saveLines();
+    resetForm(true);
+    say(msg);
+    if (isPhone()) setStep(1, true);
+    else { var first = document.querySelector('#fields-q .input'); if (first) first.focus(); }
+  }
 
   function openSheet() {
     document.body.classList.add('sheet-open');
@@ -701,22 +796,19 @@
     var w = e.target.closest ? e.target.closest('[data-key]') : null;
     if (w) { touched[w.getAttribute('data-key')] = true; showErrors(); }
   });
-  $('btn-copy').addEventListener('click', function () { if (lastLine) copyText(lastLine, 'Line copied.'); });
-  $('btn-add').addEventListener('click', function () {
-    if (!lastLine) return;
-    lines.push(lastLine); saveLines(); renderList(); say('Added to your list (' + lines.length + ').');
-  });
+  $('btn-copy').addEventListener('click', doCopy);
+  $('btn-add').addEventListener('click', doAdd);
   $('btn-copy-all').addEventListener('click', function () { if (lines.length) copyText(allText(), 'All ' + lines.length + ' lines copied.'); });
   $('btn-download').addEventListener('click', function () { if (lines.length) download('questions.jsonl', allText()); });
   $('btn-clear').addEventListener('click', function () {
-    if (lines.length && window.confirm('Remove all ' + lines.length + ' saved lines from this browser?')) { lines = []; saveLines(); renderList(); }
+    if (lines.length && window.confirm('Remove all ' + lines.length + ' saved lines from this browser?')) { lines = []; editingIndex = null; saveLines(); renderList(); updateAddLabel(); }
   });
   $('btn-pack-copy').addEventListener('click', function () { if (packJson) copyText(packJson, 'pack.json copied.'); });
   $('btn-pack-download').addEventListener('click', function () { if (packJson) download('pack.json', packJson); });
   $('show-answers').addEventListener('change', update);
   $('bar-back').addEventListener('click', goBack);
   $('bar-next').addEventListener('click', function () {
-    if (step === STEP_COUNT) { if (lastLine) copyText(lastLine, 'Line copied.'); } else goNext();
+    if (step === STEP_COUNT) doCopy(); else goNext();
   });
   $('bar-list').addEventListener('click', function () { if (document.body.classList.contains('sheet-open')) closeSheet(); else openSheet(); });
   $('sheet-close').addEventListener('click', closeSheet);
@@ -729,16 +821,92 @@
     });
   });
 
+  // ---------- menu, drawer, guide ----------
+  var menu = $('tmpl-menu');
+  function closeMenu() { menu.open = false; }
+  function menuItem(id, fn) { $(id).addEventListener('click', function () { closeMenu(); fn(); }); }
+  menuItem('mi-template', function () { download('questions-template.jsonl', S.templateJsonl()); say('Downloaded questions-template.jsonl.'); });
+  menuItem('mi-packtemplate', function () { download('pack.json', S.packTemplateJson()); say('Downloaded pack.json template.'); });
+  menuItem('mi-load', loadExamples);
+  menuItem('mi-packhelper', function () { openDrawer('pack'); });
+  document.addEventListener('click', function (e) { if (menu.open && !menu.contains(e.target)) closeMenu(); });
+  $('btn-load-examples').addEventListener('click', loadExamples);
+  $('btn-new').addEventListener('click', function () { resetForm(true); if (isPhone()) { closeSheet(); setStep(1, true); } });
+
+  function inlineCode(parent, text) {
+    text.split('`').forEach(function (seg, i) {
+      if (!seg) return;
+      parent.appendChild(i % 2 ? h('code', { text: seg }) : document.createTextNode(seg));
+    });
+    return parent;
+  }
+  function renderGuide() {
+    var body = $('guide-body'); clear(body);
+    if (!window.FormatGuide) { body.appendChild(h('p', { text: 'Format guide unavailable.' })); return; }
+    window.FormatGuide.blocks().forEach(function (b) {
+      if (b.k === 'h1') return;
+      if (b.k === 'h2' || b.k === 'h3') body.appendChild(h(b.k === 'h2' ? 'h3' : 'h4', { text: b.t }));
+      else if (b.k === 'p') body.appendChild(inlineCode(h('p'), b.t));
+      else if (b.k === 'ul' || b.k === 'ol') body.appendChild(h(b.k, null, b.items.map(function (i) { return inlineCode(h('li'), i); })));
+      else if (b.k === 'code') body.appendChild(h('pre', null, [h('code', { text: b.t })]));
+      else if (b.k === 'table') {
+        body.appendChild(h('div', { class: 'kit-table-wrap' }, [h('table', null, [
+          h('thead', null, [h('tr', null, b.head.map(function (x) { return h('th', { text: x }); }))]),
+          h('tbody', null, b.rows.map(function (r) { return h('tr', null, r.map(function (c) { return inlineCode(h('td'), c); })); }))
+        ])]));
+      }
+    });
+  }
+  function setDTab(name) {
+    var guide = name === 'guide';
+    $('dtab-guide').setAttribute('aria-selected', String(guide)); $('dtab-pack').setAttribute('aria-selected', String(!guide));
+    $('dtab-guide').tabIndex = guide ? 0 : -1; $('dtab-pack').tabIndex = guide ? -1 : 0;
+    $('dpanel-guide').classList.toggle('is-off', !guide); $('dpanel-pack').classList.toggle('is-off', guide);
+    $('drawer-title').textContent = guide ? 'Format guide' : 'pack.json helper';
+  }
+  function openDrawer(tab) {
+    drawerOpener = document.activeElement;
+    setDTab(tab);
+    $('drawer').hidden = false; $('drawer-scrim').hidden = false;
+    document.body.classList.add('drawer-open');
+    $('drawer-title').focus({ preventScroll: true });
+  }
+  function closeDrawer() {
+    $('drawer').hidden = true; $('drawer-scrim').hidden = true;
+    document.body.classList.remove('drawer-open');
+    if (drawerOpener && drawerOpener.focus) drawerOpener.focus({ preventScroll: true });
+  }
+  $('btn-guide').addEventListener('click', function () { openDrawer('guide'); });
+  $('drawer-close').addEventListener('click', closeDrawer);
+  $('drawer-scrim').addEventListener('click', closeDrawer);
+  $('dtab-guide').addEventListener('click', function () { setDTab('guide'); });
+  $('dtab-pack').addEventListener('click', function () { setDTab('pack'); });
+  $('btn-guide-md').addEventListener('click', function () {
+    if (window.FormatGuide) { download('QUESTION-FORMAT.md', window.FormatGuide.toMarkdown()); say('Downloaded QUESTION-FORMAT.md.'); }
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { if (!$('drawer').hidden) closeDrawer(); else if (menu.open) closeMenu(); }
+    var mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key === 'Enter') { e.preventDefault(); doAdd(); }
+    else if (mod && e.shiftKey && (e.key === 'C' || e.key === 'c')) { e.preventDefault(); doCopy(); }
+  });
+
+  function syncExtras() { if (!isPhone()) $('extras-e').open = true; }
+  if (mq.addEventListener) mq.addEventListener('change', syncExtras);
+  document.querySelector('.kit-kbd--add').textContent = MOD + '+↵';
+  document.querySelector('.kit-kbd--copy').textContent = MOD + '+⇧+C';
+
   ensurePerm();
-  $('extras').open = !isPhone();
-  $('packbox').open = !isPhone();
-  $('howto').open = !isPhone();
+  $('extras-e').open = !isPhone();
+  $('extras').open = false;
   buildStepper();
   buildTypePicker();
   buildForm();
   buildPackForm();
+  renderGuide();
   renderList();
   update();
   updatePack();
+  updateAddLabel();
   setStep(1, false);
 })();

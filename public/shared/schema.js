@@ -238,7 +238,40 @@
     return { ok: true, value: v };
   }
 
+
+  var SRC = 'TEMPLATE — replace';
+  // Generic placeholder examples shared by the kit, the docs and the tests. No real content.
+  var EXAMPLES = [
+    { type: 'single', q: 'Template example: which of these is a color?', choices: ['Red', 'Table', 'Run', 'Seven'], answer: 0, explanation: 'Template explanation: red is a color.', source: SRC, difficulty: 'easy' },
+    { type: 'single', q: 'Template example: which of these is a season?', choices: ['Autumn', 'Monday', 'Pencil'], answer: 0, explanation: 'Template explanation: autumn is a season.', source: SRC, time: 15 },
+    { type: 'multi', q: 'Template example: which of these are fruits? (select all)', choices: ['Apple', 'Carrot', 'Pear', 'Rock'], answer: [0, 2], explanation: 'Template explanation: apple and pear are fruits.', source: SRC, difficulty: 'medium' },
+    { type: 'multi', q: 'Template example: which of these are even numbers? (select all)', choices: ['2', '3', '4', '6', '9'], answer: [0, 2, 3], explanation: 'Template explanation: 2, 4 and 6 are even.', source: SRC },
+    { type: 'truefalse', q: 'Template example: true or false, a week has ten days.', answer: false, explanation: 'Template explanation: a week has seven days.', source: SRC, difficulty: 'easy' },
+    { type: 'truefalse', q: 'Template example: true or false, the sun is a star.', answer: true, explanation: 'Template explanation: the sun is a star.', source: SRC, time: 15 },
+    { type: 'order', q: 'Template example: put these days of the week in order.', items: ['Wednesday', 'Monday', 'Tuesday'], answer: [1, 2, 0], explanation: 'Template explanation: Monday, Tuesday, Wednesday.', source: SRC },
+    { type: 'order', q: 'Template example: put these numbers in ascending order.', items: ['Three', 'One', 'Four', 'Two'], answer: [1, 3, 0, 2], explanation: 'Template explanation: one, two, three, four.', source: SRC, time: 30 },
+    { type: 'spell', clue: 'Template example: a flower with many petals, often grown in autumn.', word: 'chrysanthemum', accept: ['chrysanthemums'], explanation: 'Template explanation: chrysanthemum.', source: SRC, difficulty: 'hard' },
+    { type: 'spell', clue: 'Template example: a flowering shrub with large clusters of blossoms.', word: 'rhododendron', explanation: 'Template explanation: rhododendron.', source: SRC },
+    { type: 'spell', clue: 'Template example: an informal eatery serving coffee (tests accent folding).', word: 'café', explanation: 'Template explanation: café, with an accent.', source: SRC, time: 40 }
+  ];
+  var PACK_EXAMPLE = {
+    id: 'my-pack', title: 'My Pack', theme: 'default', reverent: false,
+    description: 'Optional short description of the pack.',
+    opening: { text: 'TEMPLATE opening text: replace with a short welcome or quotation.', source: SRC },
+    closing: { text: 'TEMPLATE closing text: replace with a short closing thought.', source: SRC }
+  };
+  var TEMPLATE_HEADER = [
+    '// questions-template.jsonl: one JSON object per line. Blank lines and lines starting with // are ignored.',
+    '// Types: single, multi, truefalse, order, spell. Unknown fields are rejected. Replace these examples with your own.',
+    '// Paste into questions/<pack-id>/questions.jsonl, then run: npm run validate-questions'
+  ];
+  function templateJsonl() {
+    return TEMPLATE_HEADER.concat(EXAMPLES.map(function (e) { return JSON.stringify(e); })).join('\n') + '\n';
+  }
+  function packTemplateJson() { return JSON.stringify(PACK_EXAMPLE, null, 2) + '\n'; }
+
   return {
+    EXAMPLES: EXAMPLES, PACK_EXAMPLE: PACK_EXAMPLE, TEMPLATE_HEADER: TEMPLATE_HEADER, templateJsonl: templateJsonl, packTemplateJson: packTemplateJson,
     THEMES: THEMES, TYPES: TYPES, LIMITS: LIMITS, DIFFICULTIES: DIFFICULTIES,
     validateQuestion: validateQuestion, validatePack: validatePack,
     normalizeText: normalizeText, foldForCompare: foldForCompare
