@@ -90,6 +90,23 @@
           <button type="button" role="tab" id="tab-phone" class="btn btn--ghost" aria-selected="true" aria-controls="panel-phone">Phone</button>
           <button type="button" role="tab" id="tab-screen" class="btn btn--ghost" aria-selected="false" aria-controls="panel-screen" tabindex="-1">Big screen</button>
         </div>
+        <div class="kit-try">
+          <div class="kit-try__row">
+            <button type="button" id="btn-try" class="btn" aria-pressed="false" aria-disabled="true" title="Fix the highlighted fields to try it">Try it ▸</button>
+            <button type="button" id="btn-try-again" class="btn btn--ghost" hidden>Try again</button>
+            <span id="try-hint" class="kit-hint" role="status" aria-live="polite"></span>
+          </div>
+          <div id="try-opts" class="kit-try__opts" hidden>
+            <label class="kit-inline" for="try-speed">Answer speed
+              <select id="try-speed" class="input">
+                <option value="instant">Instant</option>
+                <option value="half">Halfway</option>
+                <option value="last">Last second</option>
+              </select>
+            </label>
+            <label class="kit-inline"><input type="checkbox" id="try-gentle"> Gentle scoring</label>
+          </div>
+        </div>
         <div id="panel-phone" class="kit-panel" role="tabpanel" aria-labelledby="tab-phone">
           <div id="preview-phone" class="kit-phone"></div>
         </div>
@@ -148,6 +165,7 @@
 
   <script src="/shared/schema.js"></script>
   <script src="/shared/format-guide.js"></script>
+  <script src="/shared/scoring.js"></script>
   <script src="/theme/flower.js"></script>
   <script src="/kit.js"></script>
 </body>

@@ -54,6 +54,7 @@
     tf: true, orderItems: ['', '', ''], perm: [], clue: '', word: '', accept: [],
     explanation: '', source: '', time: '', difficulty: ''
   };
+  var tr = { on: false, sig: null, answered: false, value: null, multi: [], order: [] };
   var step = 1, maxStep = 1, attempted = false, touched = {}, editingIndex = null, drawerOpener = null;
   var counters = [], packCounters = [], errSlots = {};
   var lastLine = null, lastResult = { ok: false, errors: [] };
@@ -436,9 +437,11 @@
   }
   function itemNode(text, pos, i) {
     var blank = isBlank(text);
-    return h('li', { class: 'order-item' + (blank ? ' is-placeholder' : ''), 'data-pos': pos, text: blank ? 'Item ' + letter(i) : text });
+    return h('li', { class: 'order-item' + (blank ? ' is-placeholder' : ''), 'data-pos': pos + 1, text: blank ? 'Item ' + letter(i) : text });
   }
   function renderPreview() {
+    updateOrderPreview();
+    if (tr.on && lastResult.ok && window.GameScoring) { renderTry(); return; }
     var show = $('show-answers').checked;
     var q = buildObject();
     var screen = $('preview-screen'), phone = $('preview-phone');
@@ -483,11 +486,165 @@
     }
     if (show && q.explanation) screen.appendChild(h('p', { class: 'kit-meta', text: 'Explanation: ' + q.explanation }));
     if (show && q.source) screen.appendChild(h('p', { class: 'kit-meta', text: 'Source: ' + q.source }));
+  }
+  function updateOrderPreview() {
     var op = $('order-preview');
     if (op) {
       clear(op);
       orderResult().items.forEach(function (it, i) { op.appendChild(h('li', { text: isBlank(it) ? 'Item ' + letter(i) : it })); });
     }
+  }
+
+  // ---------- Try it: interactive phone and big-screen reveal ----------
+  function trySecs(q) { return (q.time >= L.timeMin && q.time <= L.timeMax) ? q.time : (q.type === 'spell' ? L.spellTimeDefault : L.timeDefault); }
+  function tryOpts(q) {
+    var total = trySecs(q) * 1000, m = $('try-speed').value;
+    return { remainingMs: m === 'instant' ? total : (m === 'half' ? total / 2 : 1000), totalMs: total, gentle: $('try-gentle').checked };
+  }
+  function tryScore() { return window.GameScoring.scoreAnswer(lastResult.value, tr.value, tryOpts(lastResult.value)); }
+  function tryReset() { tr.answered = false; tr.value = null; tr.multi = []; tr.order = []; }
+  function setTry(on) {
+    tr.on = on; tr.sig = on ? lastLine : null; tryReset();
+    $('btn-try').setAttribute('aria-pressed', String(on));
+    $('btn-try').textContent = on ? 'Exit try it ✕' : 'Try it ▸';
+    $('try-opts').hidden = !on; $('btn-try-again').hidden = true;
+    $('try-hint').textContent = on ? 'Answer like a player. Edit the question to stop.' : '';
+    document.body.classList.toggle('kit-trying', on);
+    if (on) setTab('phone');
+    renderPreview();
+  }
+  function exitTry(changed) {
+    setTry(false);
+    $('try-hint').textContent = changed ? 'Question changed, try again.' : '';
+  }
+  function tryAnswer(value) {
+    if (tr.answered) return;
+    tr.value = value; tr.answered = true; tr.multi = []; tr.order = [];
+    $('btn-try-again').hidden = false;
+    $('try-hint').textContent = 'See the Big screen for the reveal.';
+    renderTry();
+    var r = document.querySelector('#preview-phone .kit-result__title');
+    if (r) r.focus({ preventScroll: true });
+  }
+  function tryAgain() {
+    tryReset(); $('btn-try-again').hidden = true;
+    $('try-hint').textContent = 'Answer like a player. Edit the question to stop.';
+    renderTry();
+    var f = document.querySelector('#preview-phone .choice, #preview-phone .order-item, #preview-phone .spell-input');
+    if (f) f.focus({ preventScroll: true });
+  }
+  function tcChoice(i, text, onclick) {
+    return h('button', { class: 'choice', type: 'button', 'data-i': i, on: { click: onclick } }, [h('span', { class: 'choice__glyph', 'aria-hidden': 'true' }), h('span', { class: 'choice__text', text: text })]);
+  }
+  function buildPhoneTry(q, phone) {
+    phone.appendChild(h('p', { class: 'kit-meta', text: 'Question 1 · ' + trySecs(q) + 's' }));
+    if (tr.answered) {
+      var r = tryScore();
+      var title;
+      if (q.type === 'spell') title = r.matchPct === 100 ? 'Perfect!' : 'Nice try';
+      else title = r.correct ? 'Correct!' : (r.partial ? 'Partly right' : 'Not this time');
+      phone.appendChild(h('div', { class: 'kit-result' }, [
+        h('h3', { class: 'kit-result__title', tabindex: '-1', text: title }),
+        q.type === 'spell' ? h('p', { class: 'result-line', text: 'You matched ' + r.matchPct + '%' }) : null,
+        h('p', { class: 'kit-points' }, [h('span', { class: 'kit-points__n', text: '+' + r.points }), h('span', { class: 'kit-points__u', text: ' points' })]),
+        h('p', { class: 'kit-meta', text: opts_note() }),
+        h('p', { class: 'muted', text: 'Take a breath, the next question is coming.' })
+      ]));
+      return;
+    }
+    phone.appendChild(h('p', { class: 'prompt', text: q.type === 'spell' ? 'Spell the word from the big screen' : q.q }));
+    if (q.type === 'single') {
+      phone.appendChild(h('div', { class: 'choice-grid' }, q.choices.map(function (c, i) { return tcChoice(i, c, function () { tryAnswer(i); }); })));
+    } else if (q.type === 'truefalse') {
+      phone.appendChild(h('div', { class: 'tf-grid' }, [
+        tcChoice(0, 'True', function () { tryAnswer(true); }), tcChoice(1, 'False', function () { tryAnswer(false); })]));
+    } else if (q.type === 'multi') {
+      var sub = h('button', { class: 'btn btn--primary', type: 'button', text: 'Submit', on: { click: function () { tryAnswer(tr.multi.slice()); } } });
+      sub.disabled = tr.multi.length === 0;
+      var grid = h('div', { class: 'choice-grid' }, q.choices.map(function (c, i) {
+        var b = tcChoice(i, c, function () {
+          var at = tr.multi.indexOf(i);
+          if (at >= 0) tr.multi.splice(at, 1); else tr.multi.push(i);
+          b.classList.toggle('is-selected', at < 0); b.setAttribute('aria-pressed', String(at < 0));
+          sub.disabled = tr.multi.length === 0;
+        });
+        b.setAttribute('aria-pressed', 'false');
+        return b;
+      }));
+      phone.appendChild(h('p', { class: 'muted', text: 'Select all that apply.' })); phone.appendChild(grid); phone.appendChild(sub);
+    } else if (q.type === 'order') {
+      var undo = h('button', { class: 'btn btn--ghost', type: 'button', text: 'Undo' });
+      var osub = h('button', { class: 'btn btn--primary', type: 'button', text: 'Submit', on: { click: function () { tryAnswer(tr.order.slice()); } } });
+      var list = h('ol', { class: 'order-list' });
+      var els = q.items.map(function (t, i) {
+        var pick = function () { if (tr.order.indexOf(i) < 0) { tr.order.push(i); paint(); } };
+        var li = h('li', { class: 'order-item', role: 'button', tabindex: '0', on: { click: pick } }, [h('span', { class: 'order-item__text', text: t })]);
+        li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
+        return li;
+      });
+      function paint() {
+        els.forEach(function (li, i) {
+          var pos = tr.order.indexOf(i);
+          if (pos >= 0) { li.setAttribute('data-pos', String(pos + 1)); li.classList.add('is-selected'); }
+          else { li.removeAttribute('data-pos'); li.classList.remove('is-selected'); }
+        });
+        undo.disabled = tr.order.length === 0; osub.disabled = tr.order.length !== q.items.length;
+      }
+      undo.addEventListener('click', function () { tr.order.pop(); paint(); });
+      els.forEach(function (li) { list.appendChild(li); });
+      paint();
+      phone.appendChild(h('p', { class: 'muted', text: 'Tap the items in the correct order.' })); phone.appendChild(list);
+      phone.appendChild(h('div', { class: 'cluster kit-try-btns' }, [undo, osub]));
+    } else if (q.type === 'spell') {
+      var input = h('input', { class: 'input spell-input', type: 'text', maxlength: '40', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Type the word' });
+      var go = function () { var v = input.value; input.value = ''; if (v.trim()) tryAnswer(v); };
+      input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+      phone.appendChild(input);
+      phone.appendChild(h('button', { class: 'btn btn--primary', type: 'button', text: 'Submit', on: { click: go } }));
+    }
+  }
+  function opts_note() {
+    var m = $('try-speed').options[$('try-speed').selectedIndex].text;
+    return $('try-gentle').checked ? 'Gentle scoring: speed does not matter.' : 'Answer speed: ' + m;
+  }
+  function buildBigTry(q, screen) {
+    var revealed = tr.answered;
+    var isSpell = q.type === 'spell';
+    screen.appendChild(h('p', { class: 'kit-meta', text: (revealed ? 'Reveal' : TYPE_INFO[q.type][0]) + ' · ' + trySecs(q) + 's' }));
+    screen.appendChild(h('p', { class: 'big-question', text: isSpell ? q.clue : q.q }));
+    function tile(txt, i, correct) {
+      return h('div', { class: 'choice' + (revealed ? (correct ? ' is-correct' : ' is-locked') : ''), 'data-i': i }, [h('span', { class: 'choice__glyph', 'aria-hidden': 'true' }), h('span', { class: 'choice__text', text: txt })]);
+    }
+    if (q.choices) {
+      screen.appendChild(h('div', { class: 'choice-grid' }, q.choices.map(function (c, i) {
+        return tile(c, i, q.type === 'single' ? q.answer === i : q.answer.indexOf(i) !== -1);
+      })));
+    } else if (q.type === 'truefalse') {
+      screen.appendChild(h('div', { class: 'tf-grid' }, [tile('True', 0, q.answer === true), tile('False', 1, q.answer === false)]));
+    } else if (q.type === 'order') {
+      var ol = h('ol', { class: 'order-list' });
+      if (revealed) q.answer.forEach(function (idx, pos) { ol.appendChild(h('li', { class: 'order-item is-correct', 'data-pos': pos + 1, text: q.items[idx] })); });
+      else q.items.forEach(function (it, pos) { ol.appendChild(h('li', { class: 'order-item', 'data-pos': pos + 1, text: it })); });
+      screen.appendChild(h('p', { class: 'kit-meta', text: revealed ? 'Correct order' : 'Shown shuffled' }));
+      screen.appendChild(ol);
+    } else if (isSpell && revealed) {
+      var r = tryScore();
+      screen.appendChild(h('p', { class: 'kit-word', text: q.word }));
+      if (q.accept) screen.appendChild(h('p', { class: 'kit-meta', text: 'Also accepted: ' + q.accept.join(', ') }));
+      screen.appendChild(h('p', { class: 'kit-meta', text: '1 submitted · average match ' + r.matchPct + '%' }));
+    }
+    if (revealed) {
+      var hasEx = !isBlank(q.explanation);
+      screen.appendChild(h('p', { class: 'kit-reveal-note' + (hasEx ? '' : ' is-placeholder'), text: hasEx ? q.explanation : 'Your explanation appears here' }));
+      if (!isBlank(q.source)) screen.appendChild(h('p', { class: 'kit-meta', text: 'Source: ' + q.source }));
+    }
+  }
+  function renderTry() {
+    var q = lastResult.value;
+    var screen = $('preview-screen'), phone = $('preview-phone');
+    clear(screen); clear(phone);
+    buildPhoneTry(q, phone);
+    buildBigTry(q, screen);
   }
 
   // ---------- errors display ----------
@@ -535,6 +692,11 @@
     $('btn-copy').setAttribute('aria-disabled', String(!res.ok));
     $('btn-add').setAttribute('aria-disabled', String(!res.ok));
     showErrors();
+    var tb = $('btn-try');
+    var canTry = res.ok && !!window.GameScoring;
+    tb.setAttribute('aria-disabled', String(!canTry));
+    if (canTry) tb.removeAttribute('title'); else tb.setAttribute('title', res.ok ? 'Scoring is unavailable' : 'Fix the highlighted fields to try it');
+    if (tr.on && lastLine !== tr.sig) exitTry(true);
     renderPreview();
     updateBar();
     updateStepper();
@@ -806,6 +968,14 @@
   $('btn-pack-copy').addEventListener('click', function () { if (packJson) copyText(packJson, 'pack.json copied.'); });
   $('btn-pack-download').addEventListener('click', function () { if (packJson) download('pack.json', packJson); });
   $('show-answers').addEventListener('change', update);
+  $('btn-try').addEventListener('click', function () {
+    if (tr.on) { exitTry(false); return; }
+    if (!lastResult.ok || !window.GameScoring) { attempted = true; showErrors(); focusFirstError(); say('Fix the highlighted fields to try it.'); return; }
+    setTry(true);
+  });
+  $('btn-try-again').addEventListener('click', tryAgain);
+  $('try-speed').addEventListener('change', function () { if (tr.on && tr.answered) renderTry(); });
+  $('try-gentle').addEventListener('change', function () { if (tr.on && tr.answered) renderTry(); });
   $('bar-back').addEventListener('click', goBack);
   $('bar-next').addEventListener('click', function () {
     if (step === STEP_COUNT) doCopy(); else goNext();
