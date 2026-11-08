@@ -169,7 +169,7 @@ function createServer(config, opts = {}) {
       const room = manager.getRoomByHid(p.hid);
       if (!room) return ack({ ok: true });
       bindHost(socket, room);
-      manager.touch(room);
+      // No touch(): a refresh is not activity and must not extend the lobby timer.
       const info = roomInfo(room);
       if (!room.qr) room.qr = await makeQr(info.joinUrl);
       ack({ ok: true, room: { code: room.code, joinUrl: info.joinUrl, qrSvg: room.qr } });
@@ -203,7 +203,13 @@ function createServer(config, opts = {}) {
     hostAction('host:next', (r) => manager.next(r));
     hostAction('host:skip', (r) => manager.skip(r));
     hostAction('host:extend', (r) => manager.extend(r));
-    hostAction('host:end', (r) => manager.end(r));
+    on('host:end', 'empty', (_d, ack) => {
+      const room = hostRoom();
+      if (!room) return;
+      const closed = manager.end(room) === 'closed';
+      if (closed) socket.data.room = null; // unbind; the host token stays valid for host:create
+      ack({ ok: true, closed });
+    });
     hostAction('host:kick', (r, d) => {
       const ok = manager.kick(r, d.playerId);
       if (ok) io.in(`p:${r.code}:${d.playerId}`).disconnectSockets(true);

@@ -146,8 +146,8 @@
   --motion-drift: 1;     /* 0 hides drifting petals */
 
   /* paper texture + vignette */
-  --paper-texture: url("/theme/art/paper.png?v=4cba391e");
-  --wash: url("/theme/art/wash-default.png?v=4cba391e");
+  --paper-texture: url("/theme/art/paper.png?v=68f17acd");
+  --wash: url("/theme/art/wash-default.png?v=68f17acd");
   --vignette: rgba(59, 42, 30, 0.07);
   --flourish-opacity: 0.9;
 }
@@ -809,15 +809,15 @@ img, svg { max-width: 100%; }
    Only tokens change. Every text pairing stays >= 4.5:1.
    ================================================================ */
 [data-theme="default"] { /* uses :root */ }
-[data-theme="naw-ruz"] { --wash: url("/theme/art/wash-naw-ruz.png?v=4cba391e"); }
-[data-theme="ridvan"] { --wash: url("/theme/art/wash-ridvan.png?v=4cba391e"); }
-[data-theme="birth-bab"] { --wash: url("/theme/art/wash-birth-bab.png?v=4cba391e"); }
-[data-theme="birth-bahaullah"] { --wash: url("/theme/art/wash-birth-bahaullah.png?v=4cba391e"); }
-[data-theme="declaration-bab"] { --wash: url("/theme/art/wash-declaration-bab.png?v=4cba391e"); }
-[data-theme="covenant"] { --wash: url("/theme/art/wash-covenant.png?v=4cba391e"); }
-[data-theme="martyrdom-bab"] { --wash: url("/theme/art/wash-martyrdom-bab.png?v=4cba391e"); }
-[data-theme="ascension-bahaullah"] { --wash: url("/theme/art/wash-ascension-bahaullah.png?v=4cba391e"); }
-[data-theme="ascension-abdulbaha"] { --wash: url("/theme/art/wash-ascension-abdulbaha.png?v=4cba391e"); }
+[data-theme="naw-ruz"] { --wash: url("/theme/art/wash-naw-ruz.png?v=68f17acd"); }
+[data-theme="ridvan"] { --wash: url("/theme/art/wash-ridvan.png?v=68f17acd"); }
+[data-theme="birth-bab"] { --wash: url("/theme/art/wash-birth-bab.png?v=68f17acd"); }
+[data-theme="birth-bahaullah"] { --wash: url("/theme/art/wash-birth-bahaullah.png?v=68f17acd"); }
+[data-theme="declaration-bab"] { --wash: url("/theme/art/wash-declaration-bab.png?v=68f17acd"); }
+[data-theme="covenant"] { --wash: url("/theme/art/wash-covenant.png?v=68f17acd"); }
+[data-theme="martyrdom-bab"] { --wash: url("/theme/art/wash-martyrdom-bab.png?v=68f17acd"); }
+[data-theme="ascension-bahaullah"] { --wash: url("/theme/art/wash-ascension-bahaullah.png?v=68f17acd"); }
+[data-theme="ascension-abdulbaha"] { --wash: url("/theme/art/wash-ascension-abdulbaha.png?v=68f17acd"); }
 
 /* Naw-Ruz: spring green */
 [data-theme="naw-ruz"] {
@@ -1122,10 +1122,10 @@ img, svg { max-width: 100%; }
   --card-stock: #FFFDF8;
   --halftone: radial-gradient(rgba(94, 58, 14, 0.05) 0.7px, transparent 0.9px);
   --emboss: inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(74, 46, 26, 0.12);
-  --orn-tl: url(/theme/art/ornament-corner.svg?v=4cba391e);      /* owner art, tinted with --gilt through mask-image */
-  --orn-br: url(/theme/art/ornament-corner-br.svg?v=4cba391e);   /* same corner turned 180deg (masks cannot rotate) */
-  --orn-rule: url(/theme/art/ornament-rule.svg?v=4cba391e);
-  --orn-flourish: url(/theme/art/ornament-flourish.svg?v=4cba391e);
+  --orn-tl: url(/theme/art/ornament-corner.svg?v=68f17acd);      /* owner art, tinted with --gilt through mask-image */
+  --orn-br: url(/theme/art/ornament-corner-br.svg?v=68f17acd);   /* same corner turned 180deg (masks cannot rotate) */
+  --orn-rule: url(/theme/art/ornament-rule.svg?v=68f17acd);
+  --orn-flourish: url(/theme/art/ornament-flourish.svg?v=68f17acd);
 }
 [data-reverent="true"], [data-theme="martyrdom-bab"], [data-theme="ascension-bahaullah"], [data-theme="ascension-abdulbaha"] {
   --gilt: #8F7A5C; --gilt-soft: #BBAA8E; --card-stock: #F1EEE7;

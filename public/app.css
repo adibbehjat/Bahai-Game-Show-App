@@ -291,3 +291,14 @@ body { margin: 0; min-height: 100vh; }
 @keyframes closed-in { from { opacity: 0; } to { opacity: 1; } }
 .closing-notice--warn { border-color: var(--color-accent); background: color-mix(in srgb, var(--color-accent) 22%, var(--color-surface)); color: var(--color-ink); }
 .closing-notice--warn .closing-notice__lead::before { content: "\2022  "; }
+
+/* ===== Confirm dialog and notices (Revision 8) ===== */
+.dialog-veil { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 1rem; background: color-mix(in srgb, var(--color-ink) 38%, transparent); }
+.dialog { width: min(28rem, 100%); padding: 1.6rem 1.8rem; text-align: center; background: var(--card-stock, var(--color-surface)); color: var(--color-ink); border: 1px solid var(--gilt); border-radius: 0.9rem; box-shadow: 0 0 0 5px var(--card-stock, var(--color-surface)), 0 0 0 6px var(--gilt-soft), var(--shadow-soft); }
+.dialog__title { font: 700 1.6rem/1.2 var(--font-display); margin: 0 0 0.5rem; }
+.dialog__body { margin: 0 0 1.3rem; color: var(--color-ink-soft); font-size: 1.1rem; }
+.dialog__actions { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+.toast--note { background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--gilt); }
+.toast--note { pointer-events: none; bottom: auto; top: var(--space-5); }
+@media (prefers-reduced-motion: no-preference) { .toast--note { animation: toast-in var(--dur-med) var(--ease) both, toast-away 600ms ease 7s forwards; } }
+@keyframes toast-away { to { opacity: 0; } }

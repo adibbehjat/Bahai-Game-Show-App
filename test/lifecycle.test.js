@@ -78,8 +78,11 @@ test('over rooms close at 10 minutes with reason ended', () => {
   const { clock, m, named, mk, join } = setup();
   try {
     const room = mk();
-    join(room, 1);
-    m.end(room);
+    const p = join(room, 1).player;
+    m.setConnected(room, p.id, +1);
+    m.start(room);
+    m.end(room); // mid-game: finishes to the podium
+    assert.equal(room.phase, 'over');
     clock.t += OVER_TTL_MS - 1000; m.sweep();
     assert.ok(m.getRoom(room.code));
     clock.t += 2000; m.sweep();

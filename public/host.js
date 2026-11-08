@@ -10,7 +10,7 @@
     packs: null, selectedPack: null,
     room: null, code: null, joinUrl: null, qr: null,
     q: null, progress: { answered: 0, total: 0 }, reveal: null, lb: null, burstFor: -1, extendsUsed: 0, podium: null,
-    offset: 0, closingUntil: 0, closed: null,
+    offset: 0, closingUntil: 0, closed: null, notice: '',
   };
   var cleanups = [];
   var timerHandle = null;
@@ -97,7 +97,8 @@
   }
 
   function toast() {
-    return S.error ? h('div', { class: 'toast toast--error', role: 'alert', text: S.error }) : null;
+    if (S.error) return h('div', { class: 'toast toast--error', role: 'alert', text: S.error });
+    return S.notice ? h('div', { class: 'toast toast--note', role: 'status', text: S.notice }) : null;
   }
 
   function quote(q, cls) {
@@ -342,10 +343,60 @@
     return h('section', { class: 'howto', 'aria-label': 'How to play' }, h('h2', { class: 'howto__title', text: 'How to play' }), list);
   }
 
+  // ---------- ending a room ----------
+  var ROOM_FLAG = 'hostHasRoom';
+  var dialogClose = null;
+  function closeDialog() { if (dialogClose) { dialogClose(); dialogClose = null; } }
+  function leaveToPacks(notice) {
+    closeDialog();
+    S.closed = null; S.closingUntil = 0; S.room = null; S.code = null; S.q = null; S.reveal = null; S.podium = null; S.lb = null; S.error = '';
+    S.notice = notice || '';
+    try { sessionStorage.removeItem(ROOM_FLAG); } catch (e) { /* ignore */ }
+    LB.rows = {}; if (LB.list) LB.list.replaceChildren(); if (LB.foot) LB.foot.textContent = '';
+    goPacks();
+  }
+  function confirmEnd(label) {
+    var opener = document.activeElement;
+    var cancel = h('button', { class: 'btn', type: 'button', text: 'Cancel' });
+    var ok = h('button', { class: 'btn btn--primary', type: 'button', text: label });
+    var dlg = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-title', 'aria-describedby': 'dlg-body' },
+      h('h2', { class: 'dialog__title', id: 'dlg-title', text: 'End this room?' }),
+      h('p', { class: 'dialog__body', id: 'dlg-body', text: 'Players will be returned to the join screen.' }),
+      h('div', { class: 'dialog__actions' }, cancel, ok));
+    var veil = h('div', { class: 'dialog-veil' }, dlg);
+    function close() {
+      document.removeEventListener('keydown', onKey, true);
+      if (veil.parentNode) veil.parentNode.removeChild(veil);
+      if (opener && opener.focus && opener.isConnected) { try { opener.focus(); } catch (e) { /* ignore */ } }
+    }
+    function onKey(e) {
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); return; }
+      if (e.key !== 'Tab') return;
+      var first = cancel, last = ok;
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      else if (document.activeElement !== first && document.activeElement !== last) { e.preventDefault(); first.focus(); }
+    }
+    cancel.addEventListener('click', close);
+    veil.addEventListener('click', function (e) { if (e.target === veil) close(); });
+    ok.addEventListener('click', function () {
+      ok.disabled = true; cancel.disabled = true;
+      emitAck('host:end', {}).then(function (res) {
+        close();
+        if (res && res.closed) leaveToPacks("Room closed. Create a new one when you're ready.");
+      });
+    });
+    document.addEventListener('keydown', onKey, true);
+    document.body.appendChild(veil);
+    cancel.focus();
+    dialogClose = close;
+  }
+
   function viewLobby() {
     var r = S.room;
     var start = h('button', { class: 'btn btn--primary btn--lg', type: 'button', disabled: r.players.length < 1, text: 'Start game',
       onclick: function () { emitAck('host:start', {}); } });
+    var endRoom = h('button', { class: 'btn btn--ghost', type: 'button', text: 'End room', onclick: function () { confirmEnd('End room'); } });
     var hero = h('div', { class: 'lobby-hero' },
       h('div', { class: 'lobby-hero__label', text: 'Join with code' }),
       h('div', { class: 'ornament-rule', 'aria-hidden': 'true' }),
@@ -377,7 +428,7 @@
       n ? playerChips(r) : h('p', { class: 'players-empty', text: r.reverent ? 'Welcome. We will begin when everyone has arrived.' : 'Waiting for players to join…' })
     ];
     var main = h('div', { class: 'lobby-grid' }, h('div', { class: 'stage__col' }, left), h('div', { class: 'stage__col lobby-side' }, qr, howToCard(r)));
-    show([stage(r, { cls: 'stage--lobby', pill: 'Lobby', soft: true, main: main, controls: [start] })], { stage: true });
+    show([stage(r, { cls: 'stage--lobby', pill: 'Lobby', soft: true, main: main, controls: [endRoom, start] })], { stage: true });
   }
 
   function totalMsFor(q) {
@@ -487,7 +538,7 @@
     main.push(h('div', { class: 'reveal-banner' }, blossomImg(100, q.index + 2), h('div', null, detail)));
     var last = r.qIndex + 1 >= r.qTotal;
     var next = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: last ? 'Finish' : 'Next question', onclick: function () { emitAck('host:next', {}); } });
-    var end = h('button', { class: 'btn btn--ghost', type: 'button', text: 'End game', onclick: function () { emitAck('host:end', {}); } });
+    var end = h('button', { class: 'btn btn--ghost', type: 'button', text: 'End game', onclick: function () { confirmEnd('End game'); } });
     var scr = show([stage(r, { cls: 'reveal-view', pill: 'Question ' + (q.index + 1) + ' of ' + q.total, main: main, lb: true, controls: [end, next], note: r.reverent ? 'A moment to reflect' : 'Take a breath, the next question is coming' })], { stage: true });
     if (S.burstFor !== q.index && rv.stats && rv.stats.correct > 0 && !r.reverent && window.Flower && Flower.burst) {
       S.burstFor = q.index;
@@ -506,7 +557,7 @@
         h('div', { class: 'podium__step podium__step--' + (i + 1) }, (function () { var b = badgeNode(pod[i].badge && pod[i].badge.text); if (b) b.className += ' podium__badge'; return b; })(), h('span', { class: 'podium__name', text: pod[i].name }), h('span', { class: 'podium__score', text: String(pod[i].score) }))));
     });
     var again = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'New game', onclick: function () {
-      S.room = null; S.code = null; S.q = null; S.reveal = null; S.podium = null; S.lb = null; LB.rows = {}; if (LB.list) LB.list.replaceChildren(); if (LB.foot) LB.foot.textContent = ''; goPacks();
+      emitAck('host:end', {}); leaveToPacks('');
     } });
     var main = [h('div', { class: 'over' },
       h('h1', { class: 'over__title', text: r.reverent ? 'Thank you for gathering with us' : 'Thank you all for playing' }),
@@ -520,9 +571,7 @@
   function viewClosed() {
     var idle = S.closed === 'idle';
     var again = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'Create a new room', onclick: function () {
-      S.closed = null; S.closingUntil = 0; S.room = null; S.code = null; S.q = null; S.reveal = null; S.podium = null; S.lb = null;
-      LB.rows = {}; if (LB.list) LB.list.replaceChildren(); if (LB.foot) LB.foot.textContent = '';
-      if (S.authed) goPacks(); else render();
+      if (S.authed) leaveToPacks(''); else { S.closed = null; render(); }
     } });
     show([h('div', { class: 'stack host-center host-center--narrow closed-card', role: 'status' },
       h('div', { class: 'hero-art' }, blossomImg(200, 5)),
@@ -552,7 +601,8 @@
 
   // ---------- socket ----------
   socket.on('room:state', function (st) {
-    S.room = st; S.code = st.code; S.view = 'room';
+    S.room = st; S.code = st.code; S.view = 'room'; S.notice = ''; S.closed = null;
+    try { sessionStorage.setItem(ROOM_FLAG, '1'); } catch (e) { /* ignore */ }
     S.closingUntil = st.phase === 'lobby' && st.closesAt ? Date.now() + (st.closesAt - (st.serverNow || Date.now())) : 0;
     if (st.phase === 'question' || st.phase === 'lobby') S.reveal = null;
     render();
@@ -580,7 +630,11 @@
     if (S.room && S.room.phase === 'lobby' && !S.closed) render();
   });
   socket.on('room:closed', function (d) {
-    S.closingUntil = 0; S.closed = d && d.reason === 'ended' ? 'ended' : 'idle'; render();
+    if (d && d.reason === 'ended') {
+      if (S.room && S.authed) leaveToPacks("Room closed. Create a new one when you're ready.");
+      return;
+    }
+    closeDialog(); S.closingUntil = 0; S.closed = 'idle'; render();
   });
   socket.on('game:over', function (g) { S.podium = g; render(); });
 
@@ -588,10 +642,14 @@
     var token = sessionStorage.getItem(TOKEN_KEY);
     if (!token) { S.authed = false; render(); return; }
     emitAck('host:resume', { hostToken: token }).then(function (res) {
-      if (!res || !res.ok) { sessionStorage.removeItem(TOKEN_KEY); S.authed = false; S.room = null; render(); return; }
-      S.authed = true;
+      if (!res || !res.ok) { sessionStorage.removeItem(TOKEN_KEY); S.authed = false; S.room = null; S.closed = null; render(); return; }
+      S.authed = true; S.closed = null; S.error = '';
       if (res.room) { S.code = res.room.code; S.joinUrl = res.room.joinUrl; S.qr = res.room.qrSvg; }
-      else if (!S.room) goPacks();
+      else {
+        var had = false;
+        try { had = !!sessionStorage.getItem(ROOM_FLAG); } catch (e) { /* ignore */ }
+        if (S.room || had) leaveToPacks('Your previous room has closed.'); else if (S.view !== 'packs') goPacks();
+      }
     });
   }
   socket.on('connect', resume);
