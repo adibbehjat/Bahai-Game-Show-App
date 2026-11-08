@@ -2,14 +2,62 @@
 
 What to generate for the botanical artwork, and how. Filenames, sizes and slots come from `public/theme/art/README.md` (the source of truth). Art direction comes from `docs/DESIGN-BRIEF.md`, where the Eggshell Edition addendum wins on palette.
 
+## Status (checked against `public/theme/art/OWNER-ART.json` and the art README)
+
+Legend: ✅ owner art, dense style / ⚠️ owner art, OLD feathery style, redo / ❌ placeholder, needed / ➖ optional or skipped.
+
+| Asset | Status |
+|---|---|
+| `blossom-coral`, `blossom-spring`, `blossom-plum` | ✅ |
+| `blossom-gold`, `blossom-ivory`, `blossom-rose` | ⚠️ redo |
+| `blossom-sage` | ❌ |
+| `spray-green`, `spray-plum` | ✅ |
+| `spray-warm` | ⚠️ redo (optional, lower priority) |
+| `branch-warm`, `branch-plum`, `branch-green` | ✅ |
+| `bud-gold`, `bud-rose`, `bud-coral`, `bud-plum` | ✅ |
+| `bud-sage` | ❌ new (not yet in the README contract; we will add the file mapping) |
+| `petal-rose`, `petal-coral`, `petal-spring`, `petal-plum`, `petal-sage` | ✅ |
+| `petal-gold`, `petal-ivory` | ⚠️ redo |
+| `leaf-a`, `leaf-b`, `leaf-c` | ✅ |
+| `paper` | ✅ |
+| `ornament-rule`, `ornament-flourish`, `ornament-corner` | ✅ (in the owner manifest; README still calls them placeholder) |
+| `wash-<theme>` (10) | ➖ generated in code, not needed |
+
+## Next batch (batch 5): consistency redo
+
+Goal: make the whole set match the dense `blossom-coral` look. In **every** prompt below, attach `public/theme/art/blossom-coral.png` as the **STYLE REFERENCE** image (dense, incurved, lithographic petals curling inward, fine walnut ink outlines, soft layered pigment). Reference URL for tools that take a link: https://raw.githubusercontent.com/adibbehjat/Bahai-Game-Show-App/main/public/theme/art/blossom-coral.png
+
+Naming does not matter, since an agent sorts the files, but exact names save time. Generate large (2x or more) with a flat pure-white or transparent background. **Upload:** `scp -P <ssh-port> batch.zip <user>@<server>:<app-dir>/art-inbox/` (the maintainer's own values live outside the repo).
+
+Colours: gold = warm golden-yellow. ivory = cream/champagne. rose = dusty rose. sage = soft grey-green (not olive, not yellow).
+
+Hero-bloom prompt (substitute COLOUR):
+
+> Match the attached style reference exactly: the same dense, incurved chrysanthemum with many cupped, overlapping lithographic petals curling inward, fine walnut-brown ink outlines, soft layered pigment. [STYLE] A single bloom seen from above, perfectly centred, filling about 88% of a square canvas with clear margin all round, no stem, no leaves. COLOUR. [Background line]
+
+Petal-sheet prompt (substitute COLOUR):
+
+> Match the attached style reference's pigment, ink outline and lithographic finish. [STYLE] A sheet of six single chrysanthemum petals of the same kind as in the reference bloom, each fully separate in a loose 3x2 grid with generous space. Every petal upright, base at bottom, tip pointing straight up, slightly cupped, a fine walnut-brown outline and soft pigment deepening toward the base. COLOUR. [Background line]
+
+| Priority | Target file(s) | Size (final) | Generate | COLOUR |
+|---|---|---|---|---|
+| 1 | `blossom-gold.png` | 768 (+384 @1x) | hero-bloom prompt | warm golden-yellow petals, amber heart, paler gold tips |
+| 2 | `blossom-ivory.png` | 768 (+384 @1x) | hero-bloom prompt | cream/champagne petals, faint warm gold heart, clear outline so it reads on eggshell |
+| 3 | `blossom-rose.png` | 768 (+384 @1x) | hero-bloom prompt | dusty rose petals, deeper rose heart, pale blush tips |
+| 4 | `blossom-sage.png` | 768 (+384 @1x) | hero-bloom prompt | soft grey-green petals (not olive, not yellow), slightly paler tips |
+| 5 | `petal-gold.png` | 128 (+256 @2x) | petal-sheet prompt | warm golden-yellow |
+| 6 | `petal-ivory.png` | 128 (+256 @2x) | petal-sheet prompt | cream/champagne with a clear outline |
+| 7 | `bud-sage.png` | 256 | bud prompt in section 3 (E), plus "match the attached style reference", one bud only or a 2x2 sheet | soft grey-green bud with serrated sepals |
+| 8 (optional) | `spray-warm.png` | 800 (+400 @1x) | spray prompt B1 in section 3, plus "match the attached style reference" | golden-yellow, dusty-rose and peach blooms, as before |
+
 ## 1. How to use this sheet
 
 - **Tools.** ChatGPT (image generation), Midjourney, Gemini, Firefly or Ideogram all work. Pick one tool and stay with it for the whole set. ChatGPT and Gemini follow layout instructions (grids, spacing, "one corner") best. Midjourney gives the richest painterly look but needs retries for layout.
 - **Size.** Generate at 2x the target size or larger. Square for blossoms, sprays, petals and buds. Wide for branches and rules. We downscale, never upscale.
 - **Background.** Ask for a transparent background. Most tools can't do real transparency, so use the "flat white" line in each prompt: **plain flat pure-white (#FFFFFF) background, no shadow, no gradient**. We remove it afterwards. Avoid cream, grey or textured backgrounds. They are hard to cut out cleanly.
-- **One consistent style.** Generate the first hero blossom (gold), pick the result you love, then use it as the reference image or style reference (Midjourney `--sref`, ChatGPT/Gemini "match the style of the attached image") for every later prompt. Keep the same tool, model and settings throughout. The set must look like one artist.
+- **One consistent style.** The approved style anchor is `public/theme/art/blossom-coral.png` (dense, incurved). Attach it as the reference image or style reference (Midjourney `--sref`, ChatGPT/Gemini "match the style of the attached image") for every later prompt. Keep the same tool, model and settings throughout. The set must look like one artist.
 - **Variants.** Where a prompt asks for several items on one sheet, ask for a loose grid with generous empty space between items so we can crop them. If the tool crowds them, ask for fewer per image and generate twice.
-- **Upload.** `scp *.png user@server:/var/www/game_show/art-inbox/`. The folder is gitignored. We resize, optimise and rename. Name files with the exact target filename where possible (e.g. `blossom-gold.png`), otherwise anything descriptive (`petals-rose-sheet.png`).
+- **Upload.** `scp -P <ssh-port> batch.zip <user>@<server>:<app-dir>/art-inbox/` (zip or loose PNGs; the maintainer's own host, port and user live outside the repo). The folder is gitignored. We resize, optimise and rename. Name files with the exact target filename where possible (e.g. `blossom-gold.png`), otherwise anything descriptive (`petals-rose-sheet.png`).
 - **Rights.** Generate original images only. Do not prompt "in the style of" any named living artist, and do not upload or copy existing artwork as a reference. Style references should be your own earlier generations.
 
 ## 2. Master style block and negative prompt
@@ -30,7 +78,9 @@ Edwardian botanical greeting-postcard illustration, circa 1900-1920, hand-painte
 photograph, photorealistic, 3D render, cartoon, anime, vector clip-art, neon, glossy, gradient background, drop shadow, vignette, border, frame, text, letters, watermark, signature, sepia, aged paper, stains, distressed, cropped subject, blurry
 ```
 
-## 3. Assets
+## 3. Assets (reference prompts)
+
+> **Reference section.** These are the original prompts, kept for the assets still to come and for variants. The hero-bloom template should now also say: **"Match the attached style reference."** (attach `blossom-coral.png`). Check the Status table first, since most of this is done.
 
 Colourways: `gold` golden yellow, `rose` dusty rose, `coral` soft peach-rose or terracotta, `plum` muted mauve, `sage` pale sage-green, `ivory` champagne, `spring` fresh sage-green (Naw-Ruz). Foliage is always sage or olive.
 
@@ -63,7 +113,7 @@ Shared template (substitute the COLOUR line):
 
 | ID | File | COLOUR line |
 |---|---|---|
-| A1 | `blossom-gold.png` | Golden yellow petals, warm buttery centre, deeper amber at the heart, paler gold at the tips. **Generate this first and use it as the style reference for everything else.** |
+| A1 | `blossom-gold.png` | Golden yellow petals, warm buttery centre, deeper amber at the heart, paler gold at the tips. (Redo: attach `blossom-coral.png` as the style reference, see Batch 5.) |
 | A2 | `blossom-rose.png` | Dusty rose petals, deeper rose toward the centre, pale blush tips. |
 | A3 | `blossom-coral.png` | Soft peach-rose to muted terracotta petals, warm and gentle, not orange. |
 | A4 | `blossom-plum.png` | Muted mauve petals, dusty plum at the heart, pale lilac-grey tips. Quiet, dignified. |
