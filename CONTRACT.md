@@ -232,3 +232,22 @@ Allowed themes: flowers and plants, gentle animals, birds, fruit, sky (sun, moon
 - **`host:end` works in every phase.** In the `lobby` it CLOSES the room: emit `room:closed {reason:'ended'}` to players, destroy the room, invalidate player tokens, and unbind the host's room (the host token stays valid, so the host can create a new room without the PIN). During `question`/`reveal` it keeps today's behaviour (finish → `over` podium). In `over` it closes the room the same way. The ack is `{ok:true, closed:true|false}`.
 - **Resume after refresh.** `host:resume` binds to the host's live room as today. The host UI always offers a way out: the lobby has an "End room" control and the in-game controls keep "End game". Both ask for confirmation. After a close, the host lands on the pack picker with a brief notice ("Room closed").
 - **Refreshing must not silently extend the lobby.** `host:resume` should NOT reset the lobby idle timer, because a refresh isn't activity.
+
+### Forgiving spelling (owner request, Revision 9)
+- **Comparison folding for spelling** (in scoring only; `GameSchema.foldForCompare` stays as is for duplicate detection): lower-case, strip diacritics, and REMOVE apostrophes/ʻ/’/hyphens/spaces/periods. So "bahaullah" matches "Bahá'u'lláh", and case never matters.
+- **Distance is a keyboard-aware weighted Damerau–Levenshtein (optimal string alignment):**
+  - substitution 1.0, or **0.5** if the two keys are adjacent on a QWERTY phone keyboard
+  - insertion/deletion 1.0, or **0.5** when it doubles or undoubles the neighbouring letter ("Bahaulah" ↔ "Bahaullah")
+  - adjacent transposition **0.5** ("Bbá" ↔ "Báb")
+  - `similarity = max(0, 1 − distance / max(len))`
+- **Points** = BASE × similarity^1.5 × speed (gentler than squared). **Accents are a bonus, not a requirement:** an exact match including diacritics gets +10%. `correct` = similarity 1 after folding. matchPct = round(similarity × 100).
+- **Copy:** never say accents are required. Host: "Type the word on your phone. Close spellings still earn points; accents earn a small bonus." Phone prompt: "Spell the word from the big screen. Close counts!"
+
+### Spelling hint, hangman style (owner request, Revision 9b)
+- **The server computes `hint`** for every spell question and includes it in `question:show` for BOTH host and players. It shows the first letter as written (with its accent), an underscore for every other letter, and keeps non-letters visible (apostrophes, hyphens, spaces) so the word's shape is clear, e.g. `Bahá'u'lláh` → `B _ _ _ ' _ ' _ _ _ _`, `Riḍván` → `R _ _ _ _ _`. It also sends `letters` (the count of letters only, e.g. 9). These are the ONLY parts of the word ever sent before the reveal; `word` and `accept` are never sent early.
+- **Display:** the host shows the hint large under the clue ("9 letters"). The phone shows the same hint above the input. The kit preview and Try-it show it too.
+
+### Ordering puzzle interaction (owner request, Revision 10)
+- **Tapping a numbered item un-assigns it.** The remaining picks close the gap and renumber (e.g. un-tapping #2 of 1-2-3 makes the old #3 become #2). Tapping an unnumbered item assigns the next number.
+- **The Undo button is replaced** by a small "Reset" control at the TOP of the list, which clears all numbers. Submit stays at the bottom and is enabled only when every item is numbered.
+- **All copy changes to match:** "Tap the items in order. Tap a numbered item to remove it." This applies to the phone how-to, the host how-to card, the kit preview and Try-it.

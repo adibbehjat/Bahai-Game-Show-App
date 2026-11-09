@@ -39,3 +39,9 @@
 .page-play { overflow-x: hidden; }
 .badge { min-width: 0; }
 .player-final { overflow-wrap: anywhere; }
+
+
+.order-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
+.order-head p { margin: 0; }
+.order-reset[hidden] { display: none; }
+.spell-hint-pattern__gap { display: inline-block; width: 1em; }

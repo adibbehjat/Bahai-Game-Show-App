@@ -34,5 +34,52 @@
     return String(raw == null ? '' : raw).toUpperCase().replace(/[^ABCDEFGHJKLMNPQRSTUVWXYZ23456789]/g, '').slice(0, 4);
   }
 
-  return { cleanCode: cleanCode, isUpdate: isUpdate, showLocked: showLocked, applyAnswerAck: applyAnswerAck, fromRejoin: fromRejoin };
+  // Ordering puzzle: picks is the sequence of item indices in the order tapped (picks[k] is at position k+1).
+  // Tapping an unnumbered item appends it; tapping a numbered item removes it and later picks shift down.
+  // Returns a new array.
+  function toggleOrderPick(picks, index) {
+    var at = picks.indexOf(index);
+    if (at < 0) return picks.concat(index);
+    return picks.slice(0, at).concat(picks.slice(at + 1));
+  }
+
+  // Splits a spellHint string into tokens: {kind:'blank'} for '_', {kind:'gap'} for a word gap, {kind:'ch', text}.
+  function hintTokens(hint) {
+    var out = [];
+    String(hint || '').split(' ').forEach(function (t) {
+      if (t === '') { if (out.length && out[out.length - 1].kind !== 'gap') out.push({ kind: 'gap' }); return; }
+      out.push(t === '_' ? { kind: 'blank' } : { kind: 'ch', text: t });
+    });
+    while (out.length && out[out.length - 1].kind === 'gap') out.pop();
+    return out;
+  }
+
+  // Builds <div.spell-hint-block> with the pattern and the letter count using DOM APIs only.
+  function buildSpellHint(doc, hint, letters) {
+    var tokens = hintTokens(hint);
+    var first = '';
+    tokens.forEach(function (t) { if (!first && t.kind === 'ch' && /\p{L}/u.test(t.text)) first = t.text; });
+    var pattern = doc.createElement('div');
+    pattern.className = 'spell-hint-pattern';
+    pattern.setAttribute('role', 'img');
+    pattern.setAttribute('aria-label', (first ? 'Starts with ' + first + ', ' : '') + letters + ' letters');
+    tokens.forEach(function (t) {
+      var span = doc.createElement('span');
+      if (t.kind === 'blank') { span.className = 'spell-hint-pattern__blank'; }
+      else if (t.kind === 'gap') { span.className = 'spell-hint-pattern__gap'; }
+      else { span.className = 'spell-hint-pattern__ch'; span.textContent = t.text; }
+      span.setAttribute('aria-hidden', 'true');
+      pattern.appendChild(span);
+    });
+    var count = doc.createElement('span');
+    count.className = 'spell-hint-count';
+    count.textContent = letters + ' letters';
+    var block = doc.createElement('div');
+    block.className = 'spell-hint-block';
+    block.appendChild(pattern);
+    block.appendChild(count);
+    return block;
+  }
+
+  return { hintTokens: hintTokens, buildSpellHint: buildSpellHint, toggleOrderPick: toggleOrderPick, cleanCode: cleanCode, isUpdate: isUpdate, showLocked: showLocked, applyAnswerAck: applyAnswerAck, fromRejoin: fromRejoin };
 }));

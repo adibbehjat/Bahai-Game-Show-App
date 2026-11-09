@@ -70,7 +70,7 @@
     multi: 'Players select every correct answer. Partial credit is given for correct picks minus wrong picks.',
     truefalse: 'A statement that is either true or false.',
     order: 'Players arrange the items into the correct order. Credit is given per item in the right position.',
-    spell: 'A clue is shown on the big screen and players type the word. Similar spellings earn partial credit.'
+    spell: 'A clue is shown on the big screen, with the first letter and letter count as a hint, and players type the word. Close spellings still earn points.'
   };
   var TYPE_NAMES = { single: 'Single choice', multi: 'Multiple select', truefalse: 'True / False', order: 'Put in order', spell: 'Spelling challenge' };
 
@@ -124,7 +124,8 @@
     add('h3', 'Multiple select');
     add('p', '`answer` is a list such as `[0, 2]`. Indexes must be unique and in range, and there must be at least one.');
     add('h3', 'Spelling: folding and accepted alternates');
-    add('p', 'Answers are compared after folding: lowercase, accents removed, and the apostrophe variants `\'`, `’` and `ʻ` treated as the same. So "cafe" matches "café". Typing the exact accented form earns a small bonus. Use `accept` for genuinely different spellings (for example "colour" and "color"); an entry that only differs by case or accents is rejected as a duplicate of `word`.');
+    add('p', 'Spelling is forgiving. Answers are compared after folding: lowercase, accents removed, and apostrophes, hyphens, spaces and periods ignored, so "bahaullah" matches "Bahá\'u\'lláh". Close spellings still score: a slip to a neighbouring key, a doubled or missing double letter, or two swapped letters costs only half a point of distance. Accents are a small bonus (typing the exact accented form earns +10%), never a requirement.');
+    add('p', 'Players see a hint before the reveal: the first letter and a blank for every other letter, with apostrophes, hyphens and spaces shown, plus the letter count (for example `B _ _ _ \' _ \' _ _ _ _`, 9 letters). The word itself is never sent early. Use `accept` for genuinely different spellings (for example "colour" and "color"); an entry that only differs by case or accents is rejected as a duplicate of `word`.');
 
     add('h2', 'Limits');
     add('p', 'These are the exact values enforced by the validator.');

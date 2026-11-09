@@ -350,7 +350,7 @@
       fq.appendChild(field('clue', 'Clue (shown on the big screen)', areaInput('clue', 'A short clue for the word', 3), L.clue));
       fa.appendChild(field('word', 'Word', h('input', { class: 'input', type: 'text', value: st.word, placeholder: 'e.g. chrysanthemum',
         autocapitalize: 'none', autocomplete: 'off', spellcheck: 'false', on: { input: function (e) { st.word = e.target.value; update(); } } }),
-        L.word, 'Letters, spaces, hyphens and apostrophes. Accents are optional for players but earn a bonus.'));
+        L.word, 'Letters, spaces, hyphens and apostrophes. Players see the first letter and the letter count. Close spellings still score; accents are a small bonus.'));
       acceptEditor = chipsEditor();
       fa.appendChild(acceptEditor);
     } else {
@@ -427,6 +427,23 @@
     });
   }
 
+  // ---------- spell hint (hangman style, from GameScoring.spellHint) ----------
+  function hintFor(word) {
+    var blank = isBlank(word);
+    var w = blank ? 'Example' : word;
+    if (!window.GameScoring || !window.GameScoring.spellHint || !window.PlayState || !window.PlayState.buildSpellHint) return null;
+    var r = window.GameScoring.spellHint(w);
+    return r && r.hint ? { hint: r.hint, letters: r.letters, placeholder: blank } : null;
+  }
+  // Same shared builder the game uses (public/shared/playstate.js), so the kit matches exactly.
+  function hintBlockNode(hi) {
+    var el = window.PlayState.buildSpellHint(document, hi.hint, hi.letters);
+    if (hi.placeholder) el.classList.add('is-placeholder');
+    return el;
+  }
+  function hintPatternNode(hi) { return hintBlockNode(hi); }
+  function hintPhoneNode(hi) { return hintBlockNode(hi); }
+
   // ---------- preview ----------
   function isBlank(t) { return !S.normalizeText(t || ''); }
   function letter(i) { return String.fromCharCode(65 + i); }
@@ -481,6 +498,8 @@
       phone.appendChild(h('p', { class: 'kit-meta', text: 'Arrange in order' }));
       phone.appendChild(ol2);
     } else if (isSpell) {
+      var hi0 = hintFor(q.word);
+      if (hi0) { screen.appendChild(hintPatternNode(hi0)); phone.appendChild(hintPhoneNode(hi0)); }
       if (show) screen.appendChild(h('p', { class: 'kit-meta', text: 'Word: ' + (isBlank(q.word) ? 'your word' : q.word) + (q.accept ? ' (also accepts: ' + q.accept.join(', ') + ')' : '') }));
       phone.appendChild(h('input', { class: 'input spell-input', type: 'text', placeholder: 'Type your answer', 'aria-label': 'Spelling answer (preview)', disabled: '' }));
     }
@@ -552,7 +571,7 @@
       ]));
       return;
     }
-    phone.appendChild(h('p', { class: 'prompt', text: q.type === 'spell' ? 'Spell the word from the big screen' : q.q }));
+    phone.appendChild(h('p', { class: 'prompt', text: q.type === 'spell' ? 'Spell the word from the big screen. Close counts!' : q.q }));
     if (q.type === 'single') {
       phone.appendChild(h('div', { class: 'choice-grid' }, q.choices.map(function (c, i) { return tcChoice(i, c, function () { tryAnswer(i); }); })));
     } else if (q.type === 'truefalse') {
@@ -573,11 +592,18 @@
       }));
       phone.appendChild(h('p', { class: 'muted', text: 'Select all that apply.' })); phone.appendChild(grid); phone.appendChild(sub);
     } else if (q.type === 'order') {
-      var undo = h('button', { class: 'btn btn--ghost', type: 'button', text: 'Undo' });
+      var reset = h('button', { class: 'btn btn--ghost kit-reset', type: 'button', text: 'Reset' });
       var osub = h('button', { class: 'btn btn--primary', type: 'button', text: 'Submit', on: { click: function () { tryAnswer(tr.order.slice()); } } });
       var list = h('ol', { class: 'order-list' });
+      // Tapping a numbered item removes it and the rest renumber; tapping an unnumbered item takes the next number.
+      function toggleOrderPick(picks, index) {
+        if (window.PlayState && window.PlayState.toggleOrderPick) return window.PlayState.toggleOrderPick(picks, index);
+        var at = picks.indexOf(index);
+        if (at >= 0) return picks.slice(0, at).concat(picks.slice(at + 1));
+        return picks.concat([index]);
+      }
       var els = q.items.map(function (t, i) {
-        var pick = function () { if (tr.order.indexOf(i) < 0) { tr.order.push(i); paint(); } };
+        var pick = function () { tr.order = toggleOrderPick(tr.order, i); paint(); };
         var li = h('li', { class: 'order-item', role: 'button', tabindex: '0', on: { click: pick } }, [h('span', { class: 'order-item__text', text: t })]);
         li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
         return li;
@@ -587,15 +613,20 @@
           var pos = tr.order.indexOf(i);
           if (pos >= 0) { li.setAttribute('data-pos', String(pos + 1)); li.classList.add('is-selected'); }
           else { li.removeAttribute('data-pos'); li.classList.remove('is-selected'); }
+          li.setAttribute('aria-label', t_label(q.items[i], pos));
         });
-        undo.disabled = tr.order.length === 0; osub.disabled = tr.order.length !== q.items.length;
+        reset.disabled = tr.order.length === 0; osub.disabled = tr.order.length !== q.items.length;
       }
-      undo.addEventListener('click', function () { tr.order.pop(); paint(); });
+      function t_label(text, pos) { return pos >= 0 ? text + ', number ' + (pos + 1) + '. Tap to remove.' : text; }
+      reset.addEventListener('click', function () { tr.order = []; paint(); });
       els.forEach(function (li) { list.appendChild(li); });
       paint();
-      phone.appendChild(h('p', { class: 'muted', text: 'Tap the items in the correct order.' })); phone.appendChild(list);
-      phone.appendChild(h('div', { class: 'cluster kit-try-btns' }, [undo, osub]));
+      phone.appendChild(h('div', { class: 'kit-order-head' }, [h('p', { class: 'muted', text: 'Tap the items in order. Tap a numbered item to remove it.' }), reset]));
+      phone.appendChild(list);
+      phone.appendChild(h('div', { class: 'cluster kit-try-btns' }, [osub]));
     } else if (q.type === 'spell') {
+      var hip = hintFor(q.word);
+      if (hip) phone.appendChild(hintPhoneNode(hip));
       var input = h('input', { class: 'input spell-input', type: 'text', maxlength: '40', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Type the word' });
       var go = function () { var v = input.value; input.value = ''; if (v.trim()) tryAnswer(v); };
       input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
@@ -627,6 +658,9 @@
       else q.items.forEach(function (it, pos) { ol.appendChild(h('li', { class: 'order-item', 'data-pos': pos + 1, text: it })); });
       screen.appendChild(h('p', { class: 'kit-meta', text: revealed ? 'Correct order' : 'Shown shuffled' }));
       screen.appendChild(ol);
+    } else if (isSpell && !revealed) {
+      var hib = hintFor(q.word);
+      if (hib) screen.appendChild(hintPatternNode(hib));
     } else if (isSpell && revealed) {
       var r = tryScore();
       screen.appendChild(h('p', { class: 'kit-word', text: q.word }));

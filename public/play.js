@@ -171,7 +171,7 @@
     var reverent = !!(P.room && P.room.reverent);
     var items = [
       'Tap an answer to lock it in.',
-      'For ordering, tap the items in sequence. Use Undo if you change your mind.',
+      'For ordering, tap the items in order. Tap a numbered item to remove it.',
       'For spelling, type the word and press Submit.',
       gentle ? 'Take your time. Scores depend only on getting it right.' : 'Faster answers earn a little more.',
     ];
@@ -256,11 +256,11 @@
       }));
       kids.push(h('p', { class: 'muted', text: 'Select all that apply.' }), grid, sub);
     } else if (q.type === 'order') {
-      var undo = h('button', { class: 'btn btn--ghost', type: 'button', text: 'Undo', onclick: function () { orderSel.pop(); paint(); } });
+      var reset = h('button', { class: 'order-reset', type: 'button', text: 'Reset', 'aria-label': 'Clear all numbers', onclick: function () { orderSel = []; paint(); } });
       var osub = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'Submit', onclick: function () { submit(orderSel.slice()); } });
       var list = h('ol', { class: 'order-list' });
       var itemEls = q.items.map(function (t, i) {
-        var pick = function () { if (orderSel.indexOf(i) < 0) { orderSel.push(i); paint(); } };
+        var pick = function () { orderSel = PlayState.toggleOrderPick(orderSel, i); paint(); };
         var li = h('li', { class: 'order-item', role: 'button', tabindex: '0', onclick: pick }, h('span', { class: 'order-item__text', text: t }));
         li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
         return li;
@@ -268,24 +268,26 @@
       itemEls.forEach(function (li) { list.append(li); });
       var paint = function () {
         itemEls.forEach(function (li, i) {
-          var b = li;
           var pos = orderSel.indexOf(i);
-          if (pos >= 0) { b.setAttribute('data-pos', String(pos + 1)); b.classList.add('is-selected'); }
-          else { b.removeAttribute('data-pos'); b.classList.remove('is-selected'); }
+          if (pos >= 0) { li.setAttribute('data-pos', String(pos + 1)); li.classList.add('is-selected'); }
+          else { li.removeAttribute('data-pos'); li.classList.remove('is-selected'); }
+          li.setAttribute('aria-pressed', String(pos >= 0));
+          li.setAttribute('aria-label', q.items[i] + (pos >= 0 ? ', position ' + (pos + 1) + ' of ' + q.items.length + '. Tap to remove.' : ', not numbered. Tap to add.'));
         });
-        undo.disabled = orderSel.length === 0;
+        reset.hidden = orderSel.length === 0;
         osub.disabled = orderSel.length !== q.items.length;
       };
       paint();
-      kids.push(h('p', { class: 'muted', text: 'Tap the items in the correct order.' }), list, h('div', { class: 'cluster' }, undo, osub));
+      kids.push(h('div', { class: 'order-head' }, h('p', { class: 'muted', text: 'Tap the items in order.' }), reset), list, osub);
     } else if (q.type === 'spell') {
-      var input = h('input', { class: 'input spell-input', type: 'text', maxlength: '40', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'off', spellcheck: 'false', 'aria-label': 'Type the word' });
+      var input = h('input', { class: 'input spell-input', type: 'text', maxlength: '40', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'none', spellcheck: 'false', 'aria-label': 'Type the word' });
       var go = function () {
         var v = input.value;
         input.value = '';
         if (v.trim()) submit(v);
       };
       input.addEventListener('keydown', function (e) { if (e.key === 'Enter') go(); });
+      if (q.hint) kids.push(PlayState.buildSpellHint(document, q.hint, q.letters));
       kids.push(input, h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'Submit', onclick: go }));
     }
     kids.push(toast());

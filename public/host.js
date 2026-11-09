@@ -65,7 +65,7 @@
     'covenant': 'Day of the Covenant', 'ascension-abdulbaha': 'Ascension of ‘Abdu’l-Bahá'
   };
   var MAX_EXTENDS = 3;
-  var TYPE_LABELS = { single: 'Choose one', multi: 'Select all that apply', truefalse: 'True or false?', order: 'Put in order', spell: 'Spell it' };
+  var TYPE_LABELS = { single: 'Choose one', multi: 'Select all that apply', truefalse: 'True or false?', order: 'Put in order', spell: 'Type the word' };
 
   function reducedMotion() { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); }
   function reverent() { return !!(S.room && S.room.reverent); }
@@ -340,8 +340,8 @@
     var items = [
       ['Join', 'Scan the QR code or enter the room code on your phone.'],
       ['Answer', 'Tap your answer. You can change it until time is up.'],
-      ['Ordering', 'Tap the items in sequence. Tap Undo to start again.'],
-      ['Spelling', 'Read the clue and type the word, then send it.'],
+      ['Ordering', 'Tap the items in order. Tap a numbered item to remove it.'],
+      ['Spelling', 'Type the word; close spellings still score.'],
       ['Scoring', gentle ? 'Take your time. Every correct answer counts the same.' : 'Faster answers earn a little more.']
     ];
     var list = h('ul', { class: 'howto__list' });
@@ -461,6 +461,17 @@
     return box;
   }
 
+  // Letter pattern such as "B _ _ _ ' _ ' _ _ _ _": underscores become hairline blanks (DOM only).
+  function spellPattern(q) {
+    if (!q.hint) return null;
+    var pat = h('div', { class: 'spell-hint-pattern', role: 'img', 'aria-label': 'Letter pattern: ' + String(q.hint).replace(/_/g, 'blank') });
+    String(q.hint).split(/\s+/).filter(Boolean).forEach(function (t) {
+      pat.append(h('span', { class: 'spell-hint-pattern__' + (t === '_' ? 'blank' : 'ch'), 'aria-hidden': 'true', text: t === '_' ? '' : t }));
+    });
+    var n = Number(q.letters);
+    return h('div', { class: 'spell-hint-block' }, pat, n > 0 ? h('div', { class: 'spell-hint-count', text: n + (n === 1 ? ' letter' : ' letters') }) : null);
+  }
+
   function choiceGrid(q, reveal) {
     var correct = reveal ? [].concat(reveal.answer) : [];
     if (q.type === 'truefalse') {
@@ -501,8 +512,9 @@
     if (q.type === 'spell') {
       main.push(h('div', { class: 'q-top' }, h('div', { class: 'big-question spell-clue', text: q.clue }), timerBlock(endsLocal, totalMsFor(q))));
       main.push(h('div', { class: 'q-body' },
+        spellPattern(q),
         h('p', { class: 'spell-hint', text: 'Type the word on your phone.' }),
-        h('div', { class: 'spell-hint spell-hint--soft', text: 'Spelling counts, and so do accents.' })));
+        h('div', { class: 'spell-hint spell-hint--soft', text: 'Close spellings still earn points; accents earn a small bonus.' })));
     } else {
       main.push(h('div', { class: 'q-top' }, h('div', { class: 'big-question', text: q.q }), timerBlock(endsLocal, totalMsFor(q))));
       main.push(h('div', { class: 'q-body' }, q.type === 'order' ? orderList(q, null) : choiceGrid(q, null)));
@@ -525,7 +537,7 @@
     var q = S.q, rv = S.reveal, r = S.room;
     var main = [];
     var stats = q.type === 'spell'
-      ? rv.stats.submitted + ' submitted · ' + rv.stats.perfect + ' perfect · avg match ' + rv.stats.avgMatch + '%'
+      ? rv.stats.submitted + ' answered · ' + rv.stats.perfect + ' spelled exactly · average closeness ' + rv.stats.avgMatch + '%'
       : rv.stats.correct + ' of ' + rv.stats.answered + ' correct';
     main.push(h('div', { class: 'q-meta' },
       h('span', { class: 'q-type', text: 'Answer' }),

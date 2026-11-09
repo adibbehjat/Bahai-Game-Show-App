@@ -6,6 +6,11 @@
      speedFactor(remainingMs, totalMs)      0.5 + 0.5 * remaining/total, clamped to [0.5, 1]
      levenshtein(a, b)                      edit distance over code points
      similarity(a, b)                       1 - levenshtein / max(len), in [0, 1]
+     foldForSpell(s)                        lower-case, accents and apostrophes/hyphens/spaces/periods removed
+     spellDistance(a, b)                    keyboard-aware weighted Damerau-Levenshtein (OSA): QWERTY-adjacent
+                                            substitution 0.5, doubled-letter insert/delete 0.5, transposition 0.5
+     spellHint(word)                        { hint: 'B _ _ _ \' _ ...', letters } hangman-style hint
+     spellSimilarity(a, b)                  max(0, 1 - spellDistance / max(len)); empty -> 0 (inputs pre-folded)
      scoreAnswer(q, value, {remainingMs, totalMs, gentle})
                                             -> { correct, partial, fraction, points, matchPct? }
                                             gentle=true sets the speed factor to 1. `value` is not retained. */
@@ -71,16 +76,116 @@
     return { correct: full, partial: !full && fraction > 0, fraction, points: Math.round(BASE * fraction * speed) };
   }
 
+  // ---- Spelling: forgiving, keyboard-aware comparison ----
+  const SEPARATORS = /['’ʻ‘`´\-‐-―\s.]/g;
+
+  // Lower-case, strip accents, drop apostrophes/hyphens/spaces/periods. (GameSchema.foldForCompare is untouched;
+  // it is used for duplicate detection.)
+  function foldForSpell(str) {
+    return GameSchema.normalizeText(String(str == null ? '' : str)).toLowerCase()
+      .normalize('NFD').replace(/\p{M}/gu, '').replace(SEPARATORS, '');
+  }
+
+  // Hangman-style hint: first letter as written (diacritic kept), '_' for every later letter, separators
+  // (apostrophes, hyphens, periods, spaces) kept, tokens joined by single spaces. Combining marks belong
+  // to the previous letter. Returns { hint, letters }.
+  function spellHint(word) {
+    const chars = Array.from(GameSchema.normalizeText(String(word == null ? '' : word)).normalize('NFC'));
+    const tokens = [];
+    let letters = 0;
+    let revealed = false;
+    for (let i = 0; i < chars.length; i++) {
+      const c = chars[i];
+      const isSep = c.replace(SEPARATORS, '') === '';
+      if (!isSep && /\p{L}/u.test(c)) {
+        let cluster = c;
+        while (i + 1 < chars.length && /\p{M}/u.test(chars[i + 1])) { cluster += chars[i + 1]; i++; }
+        letters++;
+        if (!revealed) { tokens.push(cluster); revealed = true; } else tokens.push('_');
+      } else if (/\p{M}/u.test(c) && tokens.length) {
+        tokens[tokens.length - 1] += c;
+      } else if (c === ' ') {
+        // spaces are shown as a gap between words
+        tokens.push(' ');
+      } else {
+        tokens.push(c);
+      }
+    }
+    return { hint: tokens.join(' ').replace(/ {2,}/g, '   ').trim(), letters: letters };
+  }
+
+  // QWERTY neighbours (same row +-1 and the diagonal neighbours on adjacent rows).
+  const ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+  const ADJ = (function () {
+    const m = {};
+    function link(a, b) { (m[a] = m[a] || {})[b] = true; (m[b] = m[b] || {})[a] = true; }
+    ROWS.forEach(function (row, r) {
+      for (let c = 0; c < row.length; c++) {
+        if (c + 1 < row.length) link(row[c], row[c + 1]);
+        if (r + 1 < ROWS.length) {
+          link(row[c], ROWS[r + 1][c] || row[c]);
+          if (ROWS[r + 1][c - 1]) link(row[c], ROWS[r + 1][c - 1]);
+        }
+      }
+    });
+    return m;
+  }());
+  // Note: ROWS[r+1][c] and [c-1] are the lower neighbours of row[c] (a stagger to the left); e.g. q:[w,a], m:[n,j,k].
+
+  function subCost(a, b) {
+    if (a === b) return 0;
+    return ADJ[a] && ADJ[a][b] ? 0.5 : 1;
+  }
+
+  // Weighted Damerau-Levenshtein (optimal string alignment) over code points.
+  function spellDistance(a, b) {
+    const x = Array.from(a);
+    const y = Array.from(b);
+    const n = x.length;
+    const m = y.length;
+    if (n === 0) return m;
+    if (m === 0) return n;
+    const delCost = (i) => ((i > 1 && x[i - 1] === x[i - 2]) || (i < n && x[i - 1] === x[i]) ? 0.5 : 1);
+    const insCost = (j) => ((j > 1 && y[j - 1] === y[j - 2]) || (j < m && y[j - 1] === y[j]) ? 0.5 : 1);
+    const d = [];
+    for (let i = 0; i <= n; i++) { d.push(new Array(m + 1).fill(0)); }
+    for (let i = 1; i <= n; i++) d[i][0] = d[i - 1][0] + delCost(i);
+    for (let j = 1; j <= m; j++) d[0][j] = d[0][j - 1] + insCost(j);
+    for (let i = 1; i <= n; i++) {
+      for (let j = 1; j <= m; j++) {
+        let best = Math.min(
+          d[i - 1][j] + delCost(i),
+          d[i][j - 1] + insCost(j),
+          d[i - 1][j - 1] + subCost(x[i - 1], y[j - 1])
+        );
+        if (i > 1 && j > 1 && x[i - 1] === y[j - 2] && x[i - 2] === y[j - 1] && x[i - 1] !== x[i - 2]) {
+          best = Math.min(best, d[i - 2][j - 2] + 0.5);
+        }
+        d[i][j] = best;
+      }
+    }
+    return d[n][m];
+  }
+
+  // Inputs should already be folded with foldForSpell. Empty attempt -> 0.
+  function spellSimilarity(a, b) {
+    const la = Array.from(a).length;
+    const lb = Array.from(b).length;
+    if (la === 0 || lb === 0) return a === b && la === 0 && lb === 0 ? 0 : 0;
+    if (a === b) return 1;
+    return Math.max(0, 1 - spellDistance(a, b) / Math.max(la, lb));
+  }
+
   function scoreSpell(q, attempt, speed) {
-    const fold = GameSchema.foldForCompare;
-    const a = fold(attempt);
+    const a = foldForSpell(attempt);
     let sim = 0;
     for (const target of [q.word, ...(q.accept || [])]) {
-      sim = Math.max(sim, similarity(a, fold(target)));
+      sim = Math.max(sim, spellSimilarity(a, foldForSpell(target)));
     }
-    const exactWithDiacritics =
-      GameSchema.normalizeText(attempt).toLowerCase() === GameSchema.normalizeText(q.word).toLowerCase();
-    let points = BASE * sim * sim * speed;
+    // Bonus: exact including accents (case, apostrophes, hyphens, spaces and periods do not matter).
+    const keepAccents = (str) => GameSchema.normalizeText(str).toLowerCase().replace(SEPARATORS, '');
+    const exactWithDiacritics = a.length > 0 && keepAccents(attempt) === keepAccents(q.word);
+    let points = BASE * Math.pow(sim, 1.5) * speed;
     if (exactWithDiacritics) points *= 1.1;
     const matchPct = Math.round(sim * 100);
     return { correct: sim === 1, partial: sim < 1 && sim > 0, fraction: sim, points: Math.round(points), matchPct };
@@ -99,5 +204,8 @@
     }
   }
 
-  return { BASE: BASE, speedFactor: speedFactor, levenshtein: levenshtein, similarity: similarity, scoreAnswer: scoreAnswer };
+  return {
+    BASE: BASE, speedFactor: speedFactor, levenshtein: levenshtein, similarity: similarity,
+    foldForSpell: foldForSpell, spellHint: spellHint, spellDistance: spellDistance, spellSimilarity: spellSimilarity, scoreAnswer: scoreAnswer
+  };
 }));

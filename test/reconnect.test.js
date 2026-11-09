@@ -67,3 +67,26 @@ test('PlayState helpers', () => {
   assert.match(PlayState.applyAnswerAck(q0, null, 0, null).error, /Too late/);
   assert.equal(PlayState.applyAnswerAck(q1, null, 0, { ok: true }), null); // stale ack ignored
 });
+
+test('PlayState.toggleOrderPick assigns, removes with renumbering, and resets', () => {
+  const t = PlayState.toggleOrderPick;
+  let p = [];
+  p = t(p, 2); p = t(p, 0); p = t(p, 3); p = t(p, 1);
+  assert.deepEqual(p, [2, 0, 3, 1]); // positions 1..4
+  const mid = t(p, 0); // remove the item at position 2: later picks shift down
+  assert.deepEqual(mid, [2, 3, 1]);
+  assert.equal(mid.indexOf(3), 1); // was position 3, now position 2
+  assert.deepEqual(t(p, 1), [2, 0, 3]); // remove the last
+  assert.deepEqual(t(mid, 0), [2, 3, 1, 0]); // re-adding goes to the end
+  assert.deepEqual(p, [2, 0, 3, 1]); // input is not mutated
+  assert.deepEqual([], []); // reset is just an empty array
+});
+
+test('PlayState.hintTokens', () => {
+  const k = (h) => PlayState.hintTokens(h).map((t) => (t.kind === 'ch' ? t.text : t.kind === 'blank' ? '_' : '|')).join('');
+  assert.equal(k("B _ _ _ ' _ ' _ _ _ _"), "B___'_'____");
+  assert.equal(k('H _ _ _   _ _ _'), 'H___|___');
+  assert.equal(k('N _ _ - _ _ _'), 'N__-___');
+  assert.equal(k(''), '');
+  assert.equal(k('R _ _ _ _ _ '), 'R_____');
+});

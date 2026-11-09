@@ -302,3 +302,8 @@ body { margin: 0; min-height: 100vh; }
 .toast--note { pointer-events: none; bottom: auto; top: var(--space-5); }
 @media (prefers-reduced-motion: no-preference) { .toast--note { animation: toast-in var(--dur-med) var(--ease) both, toast-away 600ms ease 7s forwards; } }
 @keyframes toast-away { to { opacity: 0; } }
+
+/* spell letter pattern on the stage (readable from the back of a room) */
+.stage .spell-hint-pattern { font-size: 6cqw; gap: 1.1cqw; margin: 1cqh auto; }
+.stage .spell-hint-pattern__blank { width: 4.4cqw; height: 6cqw; }
+.stage .spell-hint-count { font-size: 1.7cqw; }

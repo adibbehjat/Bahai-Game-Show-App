@@ -68,13 +68,55 @@ test('spell similarity, diacritics bonus, accept list', () => {
   assert.equal(noDia.points, 1000);
   assert.equal(noDia.matchPct, 100);
   assert.equal(S.scoreAnswer(q, 'RIDVAN', half).points, 750);
-  const near = S.scoreAnswer(q, 'ridvon', full);
+  const near = S.scoreAnswer(q, 'ridvon', full); // o is not next to a on the keyboard: cost 1 of 6
   assert.equal(near.matchPct, 83);
-  assert.equal(near.points, 694);
+  assert.equal(near.points, 761); // 1000 * (5/6)^1.5
   assert.equal(near.partial, true);
   assert.equal(S.scoreAnswer(q, 'rizvan', full).matchPct, 100);
-  assert.equal(S.scoreAnswer(q, 'qqqqqq', full).points, 0);
+  assert.equal(S.scoreAnswer(q, 'pppppp', full).points, 0);
   assert.equal(S.scoreAnswer(q, '', full).points, 0);
+  assert.equal(S.scoreAnswer(q, ' . ', full).matchPct, 0);
+});
+
+test('spell: apostrophes, hyphens, spaces and case are forgiven; only accents earn the bonus', () => {
+  const q = { type: 'spell', clue: 'c', word: "Bahá'u'lláh" };
+  const plain = S.scoreAnswer(q, 'bahaullah', full);
+  assert.equal(plain.correct, true);
+  assert.equal(plain.matchPct, 100);
+  assert.equal(plain.points, 1000); // no accent bonus
+  assert.equal(S.scoreAnswer(q, "Bahá'u'lláh", full).points, 1100);
+  assert.equal(S.scoreAnswer(q, 'baháulláh', full).points, 1100); // accents right, apostrophes omitted
+  assert.equal(S.scoreAnswer(q, 'BAHAULLAH', full).points, plain.points);
+  assert.equal(S.scoreAnswer(q, 'Baha u llah', full).matchPct, 100);
+  const hy = { type: 'spell', clue: 'c', word: 'Naw-Rúz' };
+  assert.equal(S.scoreAnswer(hy, 'nawruz', full).correct, true);
+  assert.equal(S.scoreAnswer(hy, 'Naw Rúz', full).points, 1100);
+});
+
+test('spell distance is keyboard-aware', () => {
+  const near = S.scoreAnswer({ type: 'spell', clue: 'c', word: 'Riḍván' }, 'Ridvsn', full); // a/s adjacent
+  const far = S.scoreAnswer({ type: 'spell', clue: 'c', word: 'Riḍván' }, 'Ridvpn', full); // a/p far apart
+  assert.ok(near.points > far.points);
+  assert.ok(near.matchPct > far.matchPct);
+  assert.equal(S.spellDistance('ridvan', 'ridvsn'), 0.5);
+  assert.equal(S.spellDistance('ridvan', 'ridvpn'), 1);
+  assert.equal(S.spellDistance('q', 'w'), 0.5); // q-w adjacent
+  assert.equal(S.spellDistance('m', 'k'), 0.5); // m-k diagonal
+  assert.equal(S.spellDistance('m', 'p'), 1);
+  assert.equal(S.spellDistance('1', '2'), 1); // non-letters cost 1
+});
+
+test('spell: transposition and doubled letters are cheap', () => {
+  assert.equal(S.spellDistance('bab', 'bba'), 0.5);
+  assert.ok(S.spellDistance('bab', 'bba') < 2 * S.spellDistance('b', 'p'));
+  assert.ok(S.spellDistance('bab', 'bba') < 2); // two plain substitutions
+  assert.equal(S.spellDistance('ridvan', 'ridvvan'), 0.5); // extra doubled letter
+  assert.equal(S.spellDistance('ridvvan', 'ridvan'), 0.5); // missing doubled letter
+  assert.equal(S.spellDistance('ridvan', 'ridxvan'), 1); // ordinary extra letter
+  const q = { type: 'spell', clue: 'c', word: 'Báb' };
+  assert.ok(S.scoreAnswer(q, 'Bbá', full).points > S.scoreAnswer(q, 'Bxx', full).points);
+  assert.equal(S.spellSimilarity('', 'abc'), 0);
+  assert.equal(S.foldForSpell("Bahá’u'lláh-X. y"), 'bahaullahxy');
 });
 
 test('spell folds apostrophe variants', () => {
@@ -107,4 +149,14 @@ test('browser build of scoring loads in a fake window and matches the Node build
   }
   assert.equal(ctx.GameScoring.levenshtein('kitten', 'sitting'), 3);
   assert.equal(ctx.GameScoring.speedFactor(5000, 10000), 0.75);
+});
+
+test('spellHint', () => {
+  assert.deepEqual(S.spellHint("Bahá'u'lláh"), { hint: "B _ _ _ ' _ ' _ _ _ _", letters: 9 });
+  assert.deepEqual(S.spellHint('Ridván'), { hint: 'R _ _ _ _ _', letters: 6 });
+  assert.deepEqual(S.spellHint('Naw-Rúz'), { hint: 'N _ _ - _ _ _', letters: 6 });
+  assert.deepEqual(S.spellHint('Holy Day'), { hint: 'H _ _ _   _ _ _', letters: 7 });
+  assert.deepEqual(S.spellHint('\u1E24aifa'), { hint: '\u1E24 _ _ _ _', letters: 5 }); // first letter keeps its mark
+  assert.deepEqual(S.spellHint("'Akk\u00E1"), { hint: "' A _ _ _", letters: 4 }); // leading non-letter, first letter revealed
+  assert.deepEqual(S.spellHint('A\u0301b'), { hint: '\u00C1 _', letters: 2 }); // combining marks stay with their letter (NFC)
 });

@@ -314,6 +314,33 @@ test('answers are absent from question:show payloads (player and host)', async (
   } finally { await s.shutdown(); }
 });
 
+test('spell question:show carries hint and letters but nothing else about the word', async () => {
+  const s = await startServer();
+  try {
+    const host = await hostLogin(s);
+    const room = await createRoom(host, 'fixture', 5);
+    const { sock } = await joinPlayer(s, room.code, 0);
+    await emitAck(host, 'host:start', {});
+    for (let i = 0; i < 5; i++) {
+      const pq = await sock.rec.wait('question:show', (x) => x.index === i);
+      const hq = await host.rec.wait('question:show', (x) => x.index === i);
+      if (pq.type === 'spell') {
+        for (const payload of [pq, hq]) {
+          assert.equal(payload.hint, 'R _ _ _ _ _');
+          assert.equal(payload.letters, 6);
+          assert.ok(!('word' in payload) && !('accept' in payload) && !('speakWord' in payload));
+          assert.ok(!JSON.stringify(payload).includes('Ridv'));
+          assert.ok(!/[a-zA-Z\u00C0-\u024F]/.test(payload.hint.slice(1)));
+        }
+      } else assert.ok(!('hint' in pq) && !('letters' in pq));
+      const v = pq.type === 'spell' ? 'qq' : pq.type === 'single' ? 0 : pq.type === 'truefalse' ? true : pq.type === 'multi' ? [0] : [0, 1, 2];
+      await emitAck(sock, 'player:answer', { value: v });
+      await host.rec.wait('question:reveal');
+      await emitAck(host, 'host:next', {});
+    }
+  } finally { await s.shutdown(); }
+});
+
 test('wrong PIN is rejected and rate limited per IP', async () => {
   const s = await startServer();
   try {

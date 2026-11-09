@@ -99,7 +99,7 @@ Players arrange the items into the correct order. Credit is given per item in th
 
 ### Spelling challenge (`spell`)
 
-A clue is shown on the big screen and players type the word. Similar spellings earn partial credit.
+A clue is shown on the big screen, with the first letter and letter count as a hint, and players type the word. Close spellings still earn points.
 
 | Field | Required | Description |
 |---|---|---|
@@ -134,7 +134,9 @@ For `order`, write `items` in the order players will see them (shuffled). Then `
 
 ### Spelling: folding and accepted alternates
 
-Answers are compared after folding: lowercase, accents removed, and the apostrophe variants `'`, `’` and `ʻ` treated as the same. So "cafe" matches "café". Typing the exact accented form earns a small bonus. Use `accept` for genuinely different spellings (for example "colour" and "color"); an entry that only differs by case or accents is rejected as a duplicate of `word`.
+Spelling is forgiving. Answers are compared after folding: lowercase, accents removed, and apostrophes, hyphens, spaces and periods ignored, so "bahaullah" matches "Bahá'u'lláh". Close spellings still score: a slip to a neighbouring key, a doubled or missing double letter, or two swapped letters costs only half a point of distance. Accents are a small bonus (typing the exact accented form earns +10%), never a requirement.
+
+Players see a hint before the reveal: the first letter and a blank for every other letter, with apostrophes, hyphens and spaces shown, plus the letter count (for example `B _ _ _ ' _ ' _ _ _ _`, 9 letters). The word itself is never sent early. Use `accept` for genuinely different spellings (for example "colour" and "color"); an entry that only differs by case or accents is rejected as a duplicate of `word`.
 
 ## Limits
 
