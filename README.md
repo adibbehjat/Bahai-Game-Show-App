@@ -37,7 +37,7 @@ The question kit (`/kit`) helps you write questions:
 2. Open the site on the computer connected to the big screen, choose **Host a game**, and enter the host PIN.
 3. Pick a question pack and how many questions. Reverent packs use muted visuals, no confetti, and spelling off by default.
 4. Show the room code (4 letters and numbers, such as `K7QM`) and the QR code. Everyone scans it or taps **Join a game**, and picks a name.
-5. Press **Start game** within 5 minutes of the last player joining, or the room closes and you create a new one. After each question you see the answer, an explanation and the source; at the end there is a podium.
+5. Press **Start game** within 5 minutes (a countdown shows in the lobby, and **End room** closes it early) of the last player joining, or the room closes and you create a new one. After each question you see the answer, an explanation and the source; at the end there is a podium.
 
 If the host page is reloaded it resumes the same game, and players who lose signal rejoin automatically.
 
@@ -45,8 +45,8 @@ If the host page is reloaded it resumes the same game, and players who lose sign
 
 - **Single choice** and **multiple choice** (select all that apply)
 - **True / false**
-- **Sequence puzzle**: "put the events of this Holy Day in order" by tapping items into place. A favourite.
-- **Spelling**: read the written clue and type the word. Close spellings earn partial points. There is no audio anywhere in the game.
+- **Sequence puzzle**: "put the events of this Holy Day in order" by tapping items in order (tap a numbered item to remove it, or Reset to clear all). A favourite.
+- **Spelling**: read the written clue and type the word. Players see a hint (first letter, blanks, and the letter count). Close spellings score: neighbouring-key typos and swapped or doubled letters cost little, case and apostrophes never matter, and correct accents earn a 10% bonus. There is no audio anywhere in the game.
 
 Faster correct answers score more, unless the host turns on **gentle scoring** on the create screen (on by default for reverent packs), where only correctness counts. The host can tap **Extend +15s** during a question, up to 3 times. Phones show a short "How to play" screen before the first question, and the host lobby has a how-to card.
 
@@ -63,7 +63,7 @@ npm ci
 npm run dev
 ```
 
-No secrets are needed in development: the server prints a random admin PIN once at startup and serves on http://127.0.0.1:3719. Run the tests with `npm test`.
+No secrets are needed in development (sample packs are visible there; in production set `SHOW_SAMPLE_PACKS=1` to try them): the server prints a random admin PIN once at startup and serves on http://127.0.0.1:3719. Run the tests with `npm test`.
 
 ## Deploying
 

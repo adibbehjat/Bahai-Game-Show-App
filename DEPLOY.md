@@ -232,6 +232,7 @@ Set these in `.env` (or the platform's environment). Only `lib/config.js` reads 
 | `TRUST_PROXY` | `loopback` | Which proxies to believe for client IPs: `loopback`, a hop count `1` to `3`, or a comma-separated list of IPs/CIDRs. Anything else (including `true`) fails at startup. |
 | `MAX_ROOMS` | `20` | Maximum simultaneous games. |
 | `MAX_PLAYERS_PER_ROOM` | `60` | Maximum players per game. |
+| `SHOW_SAMPLE_PACKS` | off | `1` or `true` shows sample packs (ids starting with `_`, such as `_template`) to hosts in production. They are always visible in development. A fresh production deploy with no real packs shows an empty list: add packs under `questions/` (see `/kit` and `docs/QUESTION-FORMAT.md`), or set this temporarily to try the game. |
 | `QUESTIONS_DIR` | `questions/` | Optional alternative folder of question packs. |
 
 In development (`NODE_ENV=development`) missing secrets are generated at startup and the PIN is printed once.
@@ -261,7 +262,7 @@ Wait until no game is running first. New or edited question packs also need the 
 
 ## Adding your community's questions
 
-Open `/kit` on your running site for a form that builds valid question lines, add them to `questions/<pack-id>/questions.jsonl` (see `questions/_template`), run `npm run validate-questions`, and restart. Cite an authoritative source in each question's `source` field.
+Fresh installs show no packs in production until you add your own (or set `SHOW_SAMPLE_PACKS=1` to try the sample ones). Open `/kit` on your running site for a form that builds valid question lines, add them to `questions/<pack-id>/questions.jsonl` (see `questions/_template`), run `npm run validate-questions`, and restart. Cite an authoritative source in each question's `source` field.
 
 ## Troubleshooting
 
