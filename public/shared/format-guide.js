@@ -56,7 +56,7 @@
     ],
     order: [
       ['q', 'yes', 'The question, up to ' + L.q + ' characters.'],
-      ['items', 'yes', L.itemsMin + ' to ' + L.itemsMax + ' items in the order players will SEE them (shuffled), each up to ' + L.item + ' characters.'],
+      ['items', 'yes', L.itemsMin + ' to ' + L.itemsMax + ' items, each up to ' + L.item + ' characters.'],
       ['answer', 'yes', 'A permutation of the item indexes: `answer[k]` is the index in `items` of the item that belongs in position k.']
     ],
     spell: [
@@ -69,7 +69,7 @@
     single: 'Players pick exactly one correct answer.',
     multi: 'Players select every correct answer. Partial credit is given for correct picks minus wrong picks.',
     truefalse: 'A statement that is either true or false.',
-    order: 'Players arrange the items into the correct order. Credit is given per item in the right position.',
+    order: 'Players drag the cards into the correct order (or use the arrows) and press Submit. The game shuffles the cards and never shows the correct order first. Credit is given per item in the right position.',
     spell: 'A clue is shown on the big screen, with the first letter and letter count as a hint, and players type the word. Close spellings still earn points.'
   };
   var TYPE_NAMES = { single: 'Single choice', multi: 'Multiple select', truefalse: 'True / False', order: 'Put in order', spell: 'Spelling challenge' };
@@ -113,7 +113,7 @@
 
     add('h2', 'Answer semantics');
     add('h3', 'Order answers: a worked example');
-    add('p', 'For `order`, write `items` in the order players will see them (shuffled). Then `answer` lists, for each correct position, where that item sits in `items`.');
+    add('p', 'For `order`, `answer` lists, for each correct position, where that item sits in `items`. The order you write `items` in does not matter for fairness: the game shuffles the cards itself and never starts players in the correct order.');
     add('code', '{"type":"order","q":"Put these days in order.","items":["Wednesday","Monday","Tuesday"],"answer":[1,2,0]}', { lang: 'json' });
     add('ul', undefined, { items: [
       'Position 0 (first) should be "Monday", which is `items[1]`, so `answer[0] = 1`.',
@@ -148,7 +148,7 @@
     add('ul', undefined, { items: [
       'Using a 1-based index. Indexes start at 0: the first choice is 0.',
       'Writing `"answer": "true"` instead of `true`.',
-      'Putting an order question\'s items in the correct order but forgetting that `answer` must then describe the shuffled order. Use the kit to avoid this.',
+      'Writing `items` in a different order than `answer` assumes. `answer[k]` is an index into `items` as written. Use the kit to avoid this.',
       'Duplicate choices that differ only by case or accents.',
       'Digits or punctuation in a spelling `word` (only letters, spaces, hyphens and apostrophes are allowed).',
       'Extra fields such as `hint` or `points`. Unknown fields reject the whole line.',

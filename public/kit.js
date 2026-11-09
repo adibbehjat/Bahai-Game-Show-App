@@ -54,7 +54,7 @@
     tf: true, orderItems: ['', '', ''], perm: [], clue: '', word: '', accept: [],
     explanation: '', source: '', time: '', difficulty: ''
   };
-  var tr = { on: false, sig: null, answered: false, value: null, multi: [], order: [] };
+  var tr = { on: false, sig: null, answered: false, value: null, multi: [], order: [], disp: null, arr: null };
   var step = 1, maxStep = 1, attempted = false, touched = {}, editingIndex = null, drawerOpener = null;
   var counters = [], packCounters = [], errSlots = {};
   var lastLine = null, lastResult = { ok: false, errors: [] };
@@ -494,8 +494,8 @@
       screen.appendChild(h('p', { class: 'kit-meta', text: show ? 'Correct order' : 'Shown shuffled' }));
       screen.appendChild(ol);
       var ol2 = h('ol', { class: 'order-list' });
-      r.items.forEach(function (it, pos) { ol2.appendChild(itemNode(it, pos, pos)); });
-      phone.appendChild(h('p', { class: 'kit-meta', text: 'Arrange in order' }));
+      r.items.forEach(function (it, pos) { var c = orderCard(isBlank(it) ? 'Item ' + letter(pos) : it, pos, false); c.setAttribute('data-pos', String(pos + 1)); ol2.appendChild(c); });
+      phone.appendChild(h('p', { class: 'kit-meta', text: 'Drag the cards into order (or use the arrows), then Submit.' }));
       phone.appendChild(ol2);
     } else if (isSpell) {
       var hi0 = hintFor(q.word);
@@ -515,13 +515,37 @@
   }
 
   // ---------- Try it: interactive phone and big-screen reveal ----------
+  // Order card shared by the static preview and Try-it: grip, text, up/down buttons.
+  function orderCard(text, id, live) {
+    var blank = isBlank(text);
+    var label = blank ? 'Item' : text;
+    var li = h('li', { class: 'order-item' + (blank ? ' is-placeholder' : ''), 'data-i': String(id), tabindex: live ? '0' : null,
+      'aria-label': live ? label + '. Alt plus arrow up or down to move.' : null }, [
+      h('span', { class: 'order-grip', 'aria-hidden': 'true', text: '⋮⋮' }),
+      h('span', { class: 'order-item__text', text: blank ? 'Item' : text }),
+      h('span', { class: 'order-item__controls' }, [
+        h('button', { class: 'order-move', type: 'button', 'data-dir': 'up', 'aria-label': 'Move ' + label + ' up', text: '↑', tabindex: live ? null : '-1' }),
+        h('button', { class: 'order-move', type: 'button', 'data-dir': 'down', 'aria-label': 'Move ' + label + ' down', text: '↓', tabindex: live ? null : '-1' })
+      ])
+    ]);
+    return li;
+  }
+  // Shuffle display positions until the shown sequence differs from the correct one; fall back to a rotation.
+  function tryDisplay(q) {
+    var n = q.items.length, correct = q.answer, p, tries = 0;
+    function same(a) { return a.every(function (v, k) { return v === correct[k]; }); }
+    do { p = shufflePerm(n); tries++; } while (same(p) && tries < 50);
+    if (same(p)) p = correct.map(function (_, k) { return correct[(k + 1) % n]; });
+    return p;
+  }
+
   function trySecs(q) { return (q.time >= L.timeMin && q.time <= L.timeMax) ? q.time : (q.type === 'spell' ? L.spellTimeDefault : L.timeDefault); }
   function tryOpts(q) {
     var total = trySecs(q) * 1000, m = $('try-speed').value;
     return { remainingMs: m === 'instant' ? total : (m === 'half' ? total / 2 : 1000), totalMs: total, gentle: $('try-gentle').checked };
   }
   function tryScore() { return window.GameScoring.scoreAnswer(lastResult.value, tr.value, tryOpts(lastResult.value)); }
-  function tryReset() { tr.answered = false; tr.value = null; tr.multi = []; tr.order = []; }
+  function tryReset() { tr.answered = false; tr.value = null; tr.multi = []; tr.order = []; tr.disp = null; tr.arr = null; }
   function setTry(on) {
     tr.on = on; tr.sig = on ? lastLine : null; tryReset();
     $('btn-try').setAttribute('aria-pressed', String(on));
@@ -592,36 +616,29 @@
       }));
       phone.appendChild(h('p', { class: 'muted', text: 'Select all that apply.' })); phone.appendChild(grid); phone.appendChild(sub);
     } else if (q.type === 'order') {
-      var reset = h('button', { class: 'btn btn--ghost kit-reset', type: 'button', text: 'Reset' });
-      var osub = h('button', { class: 'btn btn--primary', type: 'button', text: 'Submit', on: { click: function () { tryAnswer(tr.order.slice()); } } });
-      var list = h('ol', { class: 'order-list' });
-      // Tapping a numbered item removes it and the rest renumber; tapping an unnumbered item takes the next number.
-      function toggleOrderPick(picks, index) {
-        if (window.PlayState && window.PlayState.toggleOrderPick) return window.PlayState.toggleOrderPick(picks, index);
-        var at = picks.indexOf(index);
-        if (at >= 0) return picks.slice(0, at).concat(picks.slice(at + 1));
-        return picks.concat([index]);
-      }
-      var els = q.items.map(function (t, i) {
-        var pick = function () { tr.order = toggleOrderPick(tr.order, i); paint(); };
-        var li = h('li', { class: 'order-item', role: 'button', tabindex: '0', on: { click: pick } }, [h('span', { class: 'order-item__text', text: t })]);
-        li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
-        return li;
+      // Display order is shuffled per attempt and never the correct order (mirrors the server rule).
+      if (!tr.disp) tr.disp = tryDisplay(q);
+      var disp = tr.disp;                       // disp[j] = pack index shown at display position j
+      var initialIds = disp.map(function (_, j) { return j; });
+      var startIds = tr.arr && tr.arr.length === disp.length ? tr.arr : initialIds;
+      var list = h('ol', { class: 'order-list', 'aria-label': 'Cards to put in order' });
+      startIds.forEach(function (j) {
+        var text = q.items[disp[j]];
+        list.appendChild(orderCard(text, j, true));
       });
-      function paint() {
-        els.forEach(function (li, i) {
-          var pos = tr.order.indexOf(i);
-          if (pos >= 0) { li.setAttribute('data-pos', String(pos + 1)); li.classList.add('is-selected'); }
-          else { li.removeAttribute('data-pos'); li.classList.remove('is-selected'); }
-          li.setAttribute('aria-label', t_label(q.items[i], pos));
-        });
-        reset.disabled = tr.order.length === 0; osub.disabled = tr.order.length !== q.items.length;
-      }
-      function t_label(text, pos) { return pos >= 0 ? text + ', number ' + (pos + 1) + '. Tap to remove.' : text; }
-      reset.addEventListener('click', function () { tr.order = []; paint(); });
-      els.forEach(function (li) { list.appendChild(li); });
-      paint();
-      phone.appendChild(h('div', { class: 'kit-order-head' }, [h('p', { class: 'muted', text: 'Tap the items in order. Tap a numbered item to remove it.' }), reset]));
+      var sortable = window.DragOrder.makeSortable(list, {
+        itemSelector: '.order-item', handleSelector: '.order-grip',
+        reducedMotion: !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches),
+        onChange: function (arr) { tr.arr = arr; }
+      });
+      tr.arr = sortable.getOrder();
+      var reset = h('button', { class: 'order-reset', type: 'button', text: 'Reset', 'aria-label': 'Reset to the starting order',
+        on: { click: function () { sortable.setOrder(initialIds); tr.arr = sortable.getOrder(); } } });
+      var osub = h('button', { class: 'btn btn--primary', type: 'button', text: 'Submit', on: { click: function () {
+        var ids = sortable.getOrder();
+        tryAnswer(ids.map(function (j) { return disp[j]; }));
+      } } });
+      phone.appendChild(h('div', { class: 'order-head' }, [h('p', { class: 'muted', text: 'Drag the cards into order (or use the arrows), then Submit.' }), reset]));
       phone.appendChild(list);
       phone.appendChild(h('div', { class: 'cluster kit-try-btns' }, [osub]));
     } else if (q.type === 'spell') {

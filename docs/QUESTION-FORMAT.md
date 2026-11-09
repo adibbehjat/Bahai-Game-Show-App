@@ -84,12 +84,12 @@ A statement that is either true or false.
 
 ### Put in order (`order`)
 
-Players arrange the items into the correct order. Credit is given per item in the right position.
+Players drag the cards into the correct order (or use the arrows) and press Submit. The game shuffles the cards and never shows the correct order first. Credit is given per item in the right position.
 
 | Field | Required | Description |
 |---|---|---|
 | `q` | yes | The question, up to 280 characters. |
-| `items` | yes | 3 to 6 items in the order players will SEE them (shuffled), each up to 80 characters. |
+| `items` | yes | 3 to 6 items, each up to 80 characters. |
 | `answer` | yes | A permutation of the item indexes: `answer[k]` is the index in `items` of the item that belongs in position k. |
 
 ```json
@@ -117,7 +117,7 @@ A clue is shown on the big screen, with the first letter and letter count as a h
 
 ### Order answers: a worked example
 
-For `order`, write `items` in the order players will see them (shuffled). Then `answer` lists, for each correct position, where that item sits in `items`.
+For `order`, `answer` lists, for each correct position, where that item sits in `items`. The order you write `items` in does not matter for fairness: the game shuffles the cards itself and never starts players in the correct order.
 
 ```json
 {"type":"order","q":"Put these days in order.","items":["Wednesday","Monday","Tuesday"],"answer":[1,2,0]}
@@ -203,7 +203,7 @@ Themes: `default`, `naw-ruz`, `ridvan`, `declaration-bab`, `ascension-bahaullah`
 
 - Using a 1-based index. Indexes start at 0: the first choice is 0.
 - Writing `"answer": "true"` instead of `true`.
-- Putting an order question's items in the correct order but forgetting that `answer` must then describe the shuffled order. Use the kit to avoid this.
+- Writing `items` in a different order than `answer` assumes. `answer[k]` is an index into `items` as written. Use the kit to avoid this.
 - Duplicate choices that differ only by case or accents.
 - Digits or punctuation in a spelling `word` (only letters, spaces, hyphens and apostrophes are allowed).
 - Extra fields such as `hint` or `points`. Unknown fields reject the whole line.
