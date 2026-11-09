@@ -375,7 +375,7 @@
     var items = [
       ['Join', 'Scan the QR code or enter the room code on your phone.'],
       ['Answer', 'Tap your answer. You can change it until time is up.'],
-      ['Ordering', 'Tap the items in order. Tap a numbered item to remove it.'],
+      ['Ordering', 'Drag the cards into order (or use the arrows), then Submit.'],
       ['Spelling', 'Type the word; close spellings still score.'],
       ['Scoring', gentle ? 'Take your time. Every correct answer counts the same.' : 'Faster answers earn a little more.']
     ];

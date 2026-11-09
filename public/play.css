@@ -22,8 +22,6 @@
 .tf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
 .tf-grid .choice { min-height: 10rem; }
 .choice { display: flex; align-items: center; gap: var(--space-3); width: 100%; min-height: 4rem; text-align: left; cursor: pointer; font: inherit; }
-.order-list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--space-3); }
-.order-item { width: 100%; min-height: 3.5rem; text-align: left; cursor: pointer; }
 .prompt { font-size: 1.25rem; }
 .result-line { font-size: 1.5rem; }
 
@@ -44,3 +42,18 @@
 .order-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); }
 .order-head p { margin: 0; }
 .order-reset[hidden] { display: none; }
+
+/* Drag-to-reorder cards (card look and the position badge come from theme.css; data-pos is kept live) */
+.order-list { gap: var(--space-4); }
+.order-item { gap: var(--space-2); padding: var(--space-3); width: 100%; min-height: 4.5rem; text-align: left; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+.order-item:focus-visible { outline: 3px solid var(--color-ink); outline-offset: 2px; }
+.order-grip { flex: none; display: flex; align-items: center; justify-content: center; align-self: stretch; order: -1; min-width: 2rem; margin: calc(-1 * var(--space-3)) 0 calc(-1 * var(--space-3)) calc(-1 * var(--space-2)); font-size: 1.5rem; letter-spacing: -0.15em; cursor: grab; touch-action: none; opacity: 0.7; }
+.order-item__text { font-size: 1.15rem; }
+.order-item__controls { flex-direction: column; gap: var(--space-1); }
+.order-item::before { width: 2.25rem; height: 2.25rem; font-size: 1.05rem; }
+.order-move { width: 2.75rem; height: 2.75rem; padding: 0; font: inherit; font-size: 1.25rem; font-weight: 800; line-height: 1; cursor: pointer; border-radius: 50%; border: 2px solid var(--color-border-strong); background: transparent; color: inherit; }
+.order-move:disabled { opacity: 0.3; cursor: default; }
+.order-item.is-dragging { cursor: grabbing; box-shadow: 0 0.75rem 1.75rem rgba(0, 0, 0, 0.3); }
+.order-list.is-sorting { cursor: grabbing; }
+.order-reset { min-height: 2.75rem; padding: 0 var(--space-3); font: inherit; cursor: pointer; background: transparent; color: inherit; border: 2px solid var(--color-border-strong); border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) { .order-item, .order-item * { transition: none !important; } }

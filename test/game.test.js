@@ -7,11 +7,17 @@ const { loadPacks } = require('../lib/packs');
 const { FIXTURES, testConfig } = require('./helpers');
 
 const RIGHT = {
-  'Fixture single?': 1, 'Fixture multi?': [0, 2], 'Fixture truefalse?': true, 'Fixture order?': [2, 0, 1],
+  'Fixture single?': 1, 'Fixture multi?': [0, 2], 'Fixture truefalse?': true, 'Fixture order?': null,
 };
 const WRONG = {
-  'Fixture single?': 0, 'Fixture multi?': [1], 'Fixture truefalse?': false, 'Fixture order?': [0, 1, 2],
+  'Fixture single?': 0, 'Fixture multi?': [1], 'Fixture truefalse?': false, 'Fixture order?': null,
 };
+// Order answers are permutations of DISPLAYED item indices: derive them by matching item text (correct sequence is A, B, C).
+const ORDER_TEXTS = ['A', 'B', 'C'];
+function orderValue(items, wrong) {
+  const seq = wrong ? ORDER_TEXTS.slice().reverse() : ORDER_TEXTS;
+  return seq.map((t) => items.indexOf(t));
+}
 const SECRET_ATTEMPT = 'zzqxattempt';
 
 test('full happy-path game with every question type', async () => {
@@ -56,6 +62,10 @@ test('full happy-path game with every question type', async () => {
         assert.ok(!('speakWord' in hq) && !('word' in hq));
         assert.ok(!('clue' in pq) && !('speakWord' in pq));
         va = 'Ridván'; vb = SECRET_ATTEMPT;
+      } else if (hq.type === 'order') {
+        assert.deepEqual(pq.items, hq.items);
+        assert.notDeepEqual(pq.items, ORDER_TEXTS);
+        va = orderValue(pq.items, false); vb = orderValue(pq.items, true);
       } else { va = RIGHT[pq.prompt]; vb = WRONG[pq.prompt]; }
       assert.equal((await emitAck(a.sock, 'player:answer', { value: va })).ok, true);
       assert.equal((await emitAck(a.sock, 'player:answer', { value: va })).ok, false); // twice

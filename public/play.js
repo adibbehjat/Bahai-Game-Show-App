@@ -47,7 +47,6 @@
   }
 
   function show(children) {
-    runCleanups();
     var r = P.room;
     document.body.setAttribute('data-theme', r && r.theme ? r.theme : 'default');
     document.body.setAttribute('data-reverent', r && r.reverent ? 'true' : 'false');
@@ -171,7 +170,7 @@
     var reverent = !!(P.room && P.room.reverent);
     var items = [
       'Tap an answer to lock it in.',
-      'For ordering, tap the items in order. Tap a numbered item to remove it.',
+      'For ordering, drag the cards into order (or use the arrows), then Submit.',
       'For spelling, type the word and press Submit.',
       gentle ? 'Take your time. Scores depend only on getting it right.' : 'Faster answers earn a little more.',
     ];
@@ -256,29 +255,30 @@
       }));
       kids.push(h('p', { class: 'muted', text: 'Select all that apply.' }), grid, sub);
     } else if (q.type === 'order') {
-      var reset = h('button', { class: 'order-reset', type: 'button', text: 'Reset', 'aria-label': 'Clear all numbers', onclick: function () { orderSel = []; paint(); } });
-      var osub = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'Submit', onclick: function () { submit(orderSel.slice()); } });
-      var list = h('ol', { class: 'order-list' });
-      var itemEls = q.items.map(function (t, i) {
-        var pick = function () { orderSel = PlayState.toggleOrderPick(orderSel, i); paint(); };
-        var li = h('li', { class: 'order-item', role: 'button', tabindex: '0', onclick: pick }, h('span', { class: 'order-item__text', text: t }));
-        li.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(); } });
-        return li;
+      var reduceMotion = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+      var initialOrder = q.items.map(function (_, i) { return i; });
+      var list = h('ol', { class: 'order-list', 'aria-label': 'Cards to put in order' });
+      var sortable = null;
+      // Start from the arrangement kept for this question (survives a re-render), else the shuffled display order.
+      var startArr = orderSel && orderSel.length === q.items.length ? orderSel : initialOrder;
+      startArr.forEach(function (i) {
+        var text = q.items[i];
+        list.append(h('li', { class: 'order-item', 'data-i': String(i), tabindex: '0', 'aria-label': text + '. Alt plus arrow up or down to move.' },
+          h('span', { class: 'order-grip', 'aria-hidden': 'true', text: '\u22EE\u22EE' }),
+          h('span', { class: 'order-item__text', text: text }),
+          h('span', { class: 'order-item__controls' },
+            h('button', { class: 'order-move', type: 'button', 'data-dir': 'up', 'aria-label': 'Move ' + text + ' up', text: '\u2191' }),
+            h('button', { class: 'order-move', type: 'button', 'data-dir': 'down', 'aria-label': 'Move ' + text + ' down', text: '\u2193' }))));
       });
-      itemEls.forEach(function (li) { list.append(li); });
-      var paint = function () {
-        itemEls.forEach(function (li, i) {
-          var pos = orderSel.indexOf(i);
-          if (pos >= 0) { li.setAttribute('data-pos', String(pos + 1)); li.classList.add('is-selected'); }
-          else { li.removeAttribute('data-pos'); li.classList.remove('is-selected'); }
-          li.setAttribute('aria-pressed', String(pos >= 0));
-          li.setAttribute('aria-label', q.items[i] + (pos >= 0 ? ', position ' + (pos + 1) + ' of ' + q.items.length + '. Tap to remove.' : ', not numbered. Tap to add.'));
-        });
-        reset.hidden = orderSel.length === 0;
-        osub.disabled = orderSel.length !== q.items.length;
-      };
-      paint();
-      kids.push(h('div', { class: 'order-head' }, h('p', { class: 'muted', text: 'Tap the items in order.' }), reset), list, osub);
+      sortable = DragOrder.makeSortable(list, {
+        itemSelector: '.order-item', handleSelector: '.order-grip', reducedMotion: reduceMotion,
+        onChange: function (arr) { orderSel = arr; },
+      });
+      orderSel = sortable.getOrder();
+      var reset = h('button', { class: 'order-reset', type: 'button', text: 'Reset', 'aria-label': 'Reset to the starting order', onclick: function () { sortable.setOrder(initialOrder); orderSel = sortable.getOrder(); } });
+      var osub = h('button', { class: 'btn btn--primary btn--lg', type: 'button', text: 'Submit', onclick: function () { submit(sortable.getOrder()); } });
+      cleanups.push(function () { sortable.destroy(); });
+      kids.push(h('div', { class: 'order-head' }, h('p', { class: 'muted', text: 'Drag the cards into order (or use the arrows), then Submit.' }), reset), list, osub);
     } else if (q.type === 'spell') {
       var input = h('input', { class: 'input spell-input', type: 'text', maxlength: '40', autocomplete: 'off', autocorrect: 'off', autocapitalize: 'none', spellcheck: 'false', 'aria-label': 'Type the word' });
       var go = function () {
@@ -328,6 +328,7 @@
   }
 
   function render() {
+    runCleanups(); // views register cleanups while building, so clear the previous view's first
     if (!P.joined) { viewJoin(); return; }
     var r = P.room;
     if (!r) { viewWaiting('Joining...'); return; }
