@@ -1203,6 +1203,7 @@ body .badge--number { font-family: var(--font-display); font-weight: 800; font-s
 .spell-hint-pattern { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-end; gap: 0.35em; margin: 0.4em auto; font: 800 clamp(1.8rem, 9vw, 2.6rem)/1 var(--font-display); color: var(--color-ink); font-variant-numeric: lining-nums; }
 .spell-hint-pattern__ch { display: inline-block; min-width: 0.5em; text-align: center; }
 .spell-hint-pattern__blank { display: inline-block; width: 0.75em; height: 1em; border-bottom: 2px solid var(--gilt); }
+.spell-hint-pattern__gap { width: 1em; } /* word gap; the flex parent blockifies it */
 .spell-hint-count { font-variant-caps: all-small-caps; letter-spacing: 0.14em; font-weight: 800; color: var(--color-ink-soft); }
 
 /* Ordering puzzle: small quiet Reset text button, top right (markup and layout live in play.js / play.css) */

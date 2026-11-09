@@ -462,16 +462,9 @@
     return box;
   }
 
-  // Letter pattern such as "B _ _ _ ' _ ' _ _ _ _": underscores become hairline blanks, word gaps stay visible (DOM only).
+  // Letter pattern such as "B _ _ _ ' _ ' _ _ _ _": same shared renderer as the phone and kit.
   function spellPattern(q) {
-    if (!q.hint) return null;
-    var pat = h('div', { class: 'spell-hint-pattern', role: 'img', 'aria-label': 'Letter pattern: ' + String(q.hint).replace(/_/g, 'blank') });
-    // Shared tokenizer keeps the gap between words ("Mount Carmel"), same as the phone.
-    PlayState.hintTokens(q.hint).forEach(function (t) {
-      pat.append(h('span', { class: 'spell-hint-pattern__' + t.kind, 'aria-hidden': 'true', text: t.kind === 'ch' ? t.text : '' }));
-    });
-    var n = Number(q.letters);
-    return h('div', { class: 'spell-hint-block' }, pat, n > 0 ? h('div', { class: 'spell-hint-count', text: n + (n === 1 ? ' letter' : ' letters') }) : null);
+    return q.hint ? PlayState.buildSpellHint(document, q.hint, q.letters) : null;
   }
 
   function choiceGrid(q, reveal) {

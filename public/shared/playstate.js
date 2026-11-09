@@ -57,12 +57,14 @@
   // Builds <div.spell-hint-block> with the pattern and the letter count using DOM APIs only.
   function buildSpellHint(doc, hint, letters) {
     var tokens = hintTokens(hint);
+    var n = Number(letters);
+    var countText = n > 0 ? n + (n === 1 ? ' letter' : ' letters') : '';
     var first = '';
     tokens.forEach(function (t) { if (!first && t.kind === 'ch' && /\p{L}/u.test(t.text)) first = t.text; });
     var pattern = doc.createElement('div');
     pattern.className = 'spell-hint-pattern';
     pattern.setAttribute('role', 'img');
-    pattern.setAttribute('aria-label', (first ? 'Starts with ' + first + ', ' : '') + letters + ' letters');
+    pattern.setAttribute('aria-label', [first ? 'Starts with ' + first : '', countText].filter(Boolean).join(', ') || 'Letter pattern');
     tokens.forEach(function (t) {
       var span = doc.createElement('span');
       if (t.kind === 'blank') { span.className = 'spell-hint-pattern__blank'; }
@@ -71,13 +73,15 @@
       span.setAttribute('aria-hidden', 'true');
       pattern.appendChild(span);
     });
-    var count = doc.createElement('span');
-    count.className = 'spell-hint-count';
-    count.textContent = letters + ' letters';
     var block = doc.createElement('div');
     block.className = 'spell-hint-block';
     block.appendChild(pattern);
-    block.appendChild(count);
+    if (countText) {
+      var count = doc.createElement('span');
+      count.className = 'spell-hint-count';
+      count.textContent = countText;
+      block.appendChild(count);
+    }
     return block;
   }
 
