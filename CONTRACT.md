@@ -251,3 +251,7 @@ Allowed themes: flowers and plants, gentle animals, birds, fruit, sky (sun, moon
 - **Tapping a numbered item un-assigns it.** The remaining picks close the gap and renumber (e.g. un-tapping #2 of 1-2-3 makes the old #3 become #2). Tapping an unnumbered item assigns the next number.
 - **The Undo button is replaced** by a small "Reset" control at the TOP of the list, which clears all numbers. Submit stays at the bottom and is enabled only when every item is numbered.
 - **All copy changes to match:** "Tap the items in order. Tap a numbered item to remove it." This applies to the phone how-to, the host how-to card, the kit preview and Try-it.
+
+### Template packs hidden from hosts (owner request, Revision 11)
+- Packs whose id starts with `_` (`_template`, `_reverent-test`) are **sample/test packs**. In production (`NODE_ENV=production`) they're excluded from `host:packs`, and `host:create` rejects them. In development and test they stay visible for local work, screenshots and the test suite. An optional env `SHOW_SAMPLE_PACKS=1` forces them visible in production, for demos.
+- If no non-sample packs exist in production, the host pack picker shows a friendly empty state: "No question packs yet. Add one under questions/ (see /kit)".

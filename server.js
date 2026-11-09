@@ -40,6 +40,9 @@ function isLocalOrigin(origin) {
 function createServer(config, opts = {}) {
   const log = opts.logger || ((...a) => console.log(...a));
   const packs = opts.packs || (config.QUESTIONS_DIR ? loadPacks(config.QUESTIONS_DIR) : loadPacks());
+  // Sample packs (ids starting with "_") are hidden from hosts in production unless SHOW_SAMPLE_PACKS is set.
+  const showSamples = !config.isProd || config.SHOW_SAMPLE_PACKS;
+  const hostPacks = showSamples ? packs : new Map(Array.from(packs).filter(([id]) => !id.startsWith('_')));
   const limits = Object.assign({ authMax: 5, authWindowMs: 10 * 60 * 1000, joinMax: 20, joinWindowMs: 10 * 60 * 1000, joinSocketMax: 5, eventMax: 20 }, opts.limits);
 
   const app = express();
@@ -81,7 +84,7 @@ function createServer(config, opts = {}) {
   const joinLimiter = createLimiter({ windowMs: limits.joinWindowMs, max: limits.joinMax });
 
   const manager = createRoomManager({
-    config, packs,
+    config, packs: hostPacks,
     emit: {
       room: (code, ev, data) => io.to(`room:${code}`).emit(ev, data),
       host: (code, ev, data) => io.to(`host:${code}`).emit(ev, data),
@@ -178,7 +181,7 @@ function createServer(config, opts = {}) {
 
     on('host:packs', 'empty', (_d, ack) => {
       if (!socket.data.isHost) return;
-      ack({ ok: true, packs: listPacks(packs) });
+      ack({ ok: true, packs: listPacks(hostPacks) });
     });
 
     on('host:create', 'hostCreate', async (d, ack) => {

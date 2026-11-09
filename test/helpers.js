@@ -20,14 +20,14 @@ function testConfig(extra = {}) {
 
 async function startServer(opts = {}) {
   const config = opts.config || testConfig();
-  const packs = loadPacks(FIXTURES, { onError: () => {} });
+  const packs = loadPacks(opts.packsDir || FIXTURES, { onError: () => {} });
   const s = createServer(config, { packs, logger: () => {}, limits: opts.limits });
   const port = await s.listen(0, '127.0.0.1');
   s.url = `http://127.0.0.1:${port}`;
   s.config = config;
   const sockets = [];
   s.connect = async (extra = {}) => {
-    const sock = ioc(s.url, { transports: ['websocket'], forceNew: true, reconnection: false, ...extra });
+    const sock = ioc(s.url, { transports: ['websocket'], forceNew: true, reconnection: false, ...(opts.extraHeaders ? { extraHeaders: opts.extraHeaders } : {}), ...extra });
     await new Promise((res, rej) => { sock.once('connect', res); sock.once('connect_error', rej); });
     sock.rec = recorder(sock);
     sockets.push(sock);
