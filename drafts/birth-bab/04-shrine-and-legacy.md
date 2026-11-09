@@ -1,0 +1,48 @@
+# Birth of the Báb: Shrine and Legacy (draft 04)
+
+## Categories found
+- Journey of the Báb's remains (rescue, hiding, Baghdad/Damascus/Beirut, ʻAkká 1899)
+- Interment on Mount Carmel (1909, ʻAbdu'l-Bahá) and the six-room original building
+- Superstructure (Shoghi Effendi, Sutherland Maxwell, completed 1953, golden dome of about 12,000 tiles)
+- Terraces and gardens (19 terraces), UNESCO inscription (2008)
+- The Báb's life basics (Shiraz, 1819, Declaration 1844, Tabriz 1850)
+- The Báb as Forerunner of Bahá'u'lláh; they never met in person
+
+## Candidates
+- easy, single: On which mountain does the Shrine of the Báb stand? | Answer: Mount Carmel | Source: Wikipedia (Shrine); bahai.org | Fact-check: confirmed
+- easy, single: What colour is the dome of the Shrine of the Báb? | Answer: Golden | Source: Wikipedia; bahai.org | Fact-check: confirmed; about 12,000 fish-scale tiles
+- easy, single: In which city is the Shrine of the Báb located? | Answer: Haifa | Source: Wikipedia | Fact-check: confirmed
+- easy, truefalse: The Shrine of the Báb is surrounded by terraced gardens. | Answer: true | Source: Wikipedia (19 terraces); bahai.org | Fact-check: confirmed
+- easy, truefalse: The Báb was born in the city of Shiraz. | Answer: true | Source: Wikipedia (Báb); bahai.org | Fact-check: confirmed, 20 Oct 1819
+- easy, truefalse: ʻAbdu'l-Bahá laid the Báb's remains to rest on Mount Carmel. | Answer: true | Source: Bahaipedia; Wikipedia | Fact-check: confirmed, 1909
+- easy, truefalse: The Báb and Bahá'u'lláh met in person. | Answer: false | Source: Not in listed sources (none state it either way) | Fact-check: from well-known Bahá'í history; flagged unverified in these sources
+- easy, multi: Which of these describe the Shrine of the Báb? (select all) | Answer: It has a golden dome; It is set among terraced gardens; It stands on Mount Carmel | Source: bahai.org | Fact-check: confirmed; Sea of Galilee is the false option
+- easy, multi: Which of these describe the Báb's role? (select all) | Answer: Forerunner of Bahá'u'lláh; Herald of a new Manifestation of God; Bearer of a divine Revelation in His own right | Source: Wikipedia; bahai.org | Fact-check: confirmed; Successor to ʻAbdu'l-Bahá is false
+- easy, order: Put these moments in the Báb's story in order, earliest first. | Answer: The Báb is born in Shiraz > The Báb declares His mission to Mullá Husayn > The Báb is martyred in Tabriz > The Báb's remains are laid to rest on Mount Carmel | Source: Wikipedia (Báb) | Fact-check: confirmed 1819, 1844, 1850, 1909
+- easy, order: Put these steps in the journey of the Báb's remains in order, first to last. | Answer: Secretly rescued and hidden in Persia > Taken in secret through Baghdad and Damascus > Carried by sea to ʻAkká > Laid to rest on Mount Carmel | Source: Bahaipedia; Wikipedia | Fact-check: confirmed; stage order inferred from the cities listed
+- easy, spell: The mountain in Haifa where the Báb's Shrine stands | Answer: Carmel | Source: Bahaipedia | Fact-check: confirmed
+- medium, multi: Which of these places did the Báb's remains pass through on the way to the Holy Land? (select all) | Answer: Isfahán; Baghdad; Damascus | Source: Bahaipedia | Fact-check: confirmed; Cairo and Constantinople are not listed
+- medium, single: Who designed the golden-domed superstructure of the Shrine of the Báb, built under Shoghi Effendi? | Answer: William Sutherland Maxwell | Source: Wikipedia (Shrine) | Fact-check: confirmed; Wikipedia says Shoghi Effendi completed the design and ʻAbdu'l-Bahá planned the structure; 1953 completion; 1949 start date is flagged disputed so not used. Distractors are real Bahá'í-linked architects/designers not credited with this building
+- medium, spell: The Báb is called the ___ of Bahá'u'lláh, the One who came before and prepared the way | Answer: Forerunner | Source: Bahaipedia (Shoghi Effendi quote) | Fact-check: confirmed
+- hard, single: In which year did the Báb's remains arrive by sea at ʻAkká? | Answer: 1899 | Source: Wikipedia; Bahaipedia | Fact-check: confirmed
+
+## JSONL
+
+```jsonl
+{"type":"single","q":"On which mountain does the Shrine of the Báb stand?","choices":["Mount Sinai","Mount Hermon","Mount Carmel","Mount Ararat"],"answer":2,"explanation":"The Shrine of the Báb rests on the slope of Mount Carmel in Haifa, looking out over the Mediterranean.","source":"Wikipedia — Shrine of the Báb","difficulty":"easy"}
+{"type":"single","q":"What colour is the dome of the Shrine of the Báb?","choices":["Blue","Golden","White","Green"],"answer":1,"explanation":"The golden dome is made of about 12,000 fish-scale tiles and shines above the gardens of Haifa.","source":"Wikipedia — Shrine of the Báb; bahai.org","difficulty":"easy"}
+{"type":"single","q":"In which city is the Shrine of the Báb located?","choices":["Tehran","Shiraz","Jerusalem","Haifa"],"answer":3,"explanation":"The Shrine sits on Mount Carmel in Haifa, in the Holy Land.","source":"Wikipedia — Shrine of the Báb","difficulty":"easy"}
+{"type":"truefalse","q":"The Shrine of the Báb is surrounded by terraced gardens.","answer":true,"explanation":"Nineteen garden terraces stretch from the foot of Mount Carmel up to the Shrine, and they are lit up at night.","source":"Wikipedia — Shrine of the Báb; bahai.org","difficulty":"easy"}
+{"type":"truefalse","q":"The Báb was born in the city of Shiraz.","answer":true,"explanation":"ʻAlí-Muḥammad was born in Shiraz on 20 October 1819 and later took the title \"the Báb\".","source":"Wikipedia — Báb; bahai.org","difficulty":"easy"}
+{"type":"truefalse","q":"ʻAbdu'l-Bahá laid the Báb's remains to rest on Mount Carmel.","answer":true,"explanation":"ʻAbdu'l-Bahá had a tomb built on Mount Carmel, and the Báb's remains were placed there in 1909.","source":"Bahaipedia — The Báb; Wikipedia — Shrine of the Báb","difficulty":"easy"}
+{"type":"truefalse","q":"The Báb and Bahá'u'lláh met in person.","answer":false,"explanation":"They never met face to face, but they were close in spirit and exchanged letters. The Báb wrote to Bahá'u'lláh and honoured Him highly.","source":"Bahá'í history (not stated in the listed web sources)","difficulty":"easy"}
+{"type":"multi","q":"Which of these describe the Shrine of the Báb? (select all)","choices":["It has a golden dome","It is set among terraced gardens","It stands on Mount Carmel","It stands beside the Sea of Galilee"],"answer":[0,1,2],"explanation":"The golden-domed Shrine rests on Mount Carmel, surrounded by terraces and fountains.","source":"bahai.org — Life of the Báb","difficulty":"easy"}
+{"type":"multi","q":"Which of these describe the Báb's role? (select all)","choices":["Forerunner of Bahá'u'lláh","Herald of a new Manifestation of God","Successor to ʻAbdu'l-Bahá","Bearer of a divine Revelation in His own right"],"answer":[0,1,3],"explanation":"Bahá'ís see the Báb as a Manifestation of God who prepared the way for Bahá'u'lláh, \"Him Whom God shall make manifest\".","source":"Wikipedia — Báb; bahai.org","difficulty":"easy"}
+{"type":"order","q":"Put these moments in the Báb's story in order, earliest first.","items":["The Báb's remains are laid to rest on Mount Carmel","The Báb is born in Shiraz","The Báb declares His mission to Mullá Husayn","The Báb is martyred in Tabriz"],"answer":[1,2,3,0],"explanation":"Born in 1819, declared His mission in 1844, martyred in 1850, and laid to rest on Mount Carmel in 1909.","source":"Wikipedia — Báb","difficulty":"easy"}
+{"type":"order","q":"Put these steps in the journey of the Báb's remains in order, first to last.","items":["Carried by sea to ʻAkká","Laid to rest on Mount Carmel","Secretly rescued and hidden in Persia","Taken in secret through Baghdad and Damascus"],"answer":[2,3,0,1],"explanation":"The remains were rescued after 1850, hidden for decades, carried to ʻAkká in 1899 and interred on Mount Carmel in 1909.","source":"Bahaipedia — The Báb; Wikipedia — Báb","difficulty":"easy"}
+{"type":"spell","clue":"The mountain in Haifa where the Báb's Shrine stands","word":"Carmel","explanation":"Mount Carmel is also home to the Universal House of Justice, close to the Shrine.","source":"Bahaipedia — The Báb","difficulty":"easy"}
+{"type":"multi","q":"Which of these places did the Báb's remains pass through on the way to the Holy Land? (select all)","choices":["Isfahán","Baghdad","Damascus","Cairo","Constantinople"],"answer":[0,1,2],"explanation":"The remains were moved secretly through Isfahán, Kirmanshán, Baghdad, Damascus and Beirut before going by sea to ʻAkká.","source":"Bahaipedia — The Báb","difficulty":"medium"}
+{"type":"single","q":"Who designed the golden-domed superstructure of the Shrine of the Báb, built under Shoghi Effendi?","choices":["Fariborz Sahba","Charles Mason Remey","William Sutherland Maxwell","Hossein Amanat","Louis Bourgeois"],"answer":2,"explanation":"Shoghi Effendi commissioned Canadian Bahá'í William Sutherland Maxwell to design the superstructure, completed in 1953. The original six-room building was raised under ʻAbdu'l-Bahá.","source":"Wikipedia — Shrine of the Báb","difficulty":"medium"}
+{"type":"spell","clue":"The Báb is called the ___ of Bahá'u'lláh, the One who came before and prepared the way","word":"Forerunner","accept":["Fore-runner"],"explanation":"Shoghi Effendi described the Báb as the Forerunner of One yet more mighty than Himself.","source":"Bahaipedia — The Báb","difficulty":"medium"}
+{"type":"single","q":"In which year did the Báb's remains arrive by sea at ʻAkká?","choices":["1850","1891","1899","1909"],"answer":2,"explanation":"The remains reached ʻAkká in 1899 and were laid to rest on Mount Carmel ten years later, in 1909.","source":"Wikipedia — Báb; Bahaipedia — The Báb","difficulty":"hard"}
+```
