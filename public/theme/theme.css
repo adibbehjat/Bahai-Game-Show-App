@@ -1149,7 +1149,7 @@ body.page-play::after { content: ""; position: fixed; inset: var(--pc-margin); z
   background: var(--gilt); -webkit-mask: var(--orn-tl) left top / var(--pc-orn) no-repeat, var(--orn-br) right bottom / var(--pc-orn) no-repeat; mask: var(--orn-tl) left top / var(--pc-orn) no-repeat, var(--orn-br) right bottom / var(--pc-orn) no-repeat; }
 body.page-play .decor-layer--fixed { inset: var(--pc-margin); border-radius: 0.9rem; z-index: -2; }
 body.page-play .flourish { --fl: clamp(4.5rem, 22vw, 7.5rem); opacity: 0.85; }
-body.page-play .flourish--tr, body.page-play .flourish--bl { display: none; }
+body.page-play .flourish--tr, body.page-play .flourish--bl, body.page-play .flourish--br { display: none; }
 body.page-play .drift { display: none; }
 body.page-play #app { position: fixed; top: calc(var(--pc-margin) + 1.1rem); left: calc(var(--pc-margin) + 1.1rem); right: calc(var(--pc-margin) + 1.1rem); bottom: calc(var(--pc-margin) + 3.4rem); min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 0 0.2rem; }
 body.page-play #app .screen, body.page-play #app .play-screen { min-height: 100%; padding: var(--pc-pad) 0 var(--space-4); overflow: visible; background: none; }
@@ -1209,3 +1209,11 @@ body .badge--number { font-family: var(--font-display); font-weight: 800; font-s
 .order-reset { background: none; border: 0; box-shadow: none; padding: 0.4rem 0.2rem; min-height: 2.75rem; font: 800 0.95rem/1 var(--font-body, inherit); color: var(--color-ink-soft); text-decoration: underline; text-decoration-color: var(--gilt); text-underline-offset: 0.25em; cursor: pointer; }
 .order-reset:hover { color: var(--color-ink); }
 .order-reset:disabled { opacity: 0.45; cursor: default; }
+
+/* ---- Phone polish ---- */
+/* order puzzle: unnumbered items show an empty gilt ring; the numeral itself marks a pick (no clipped check) */
+.order-item:not([data-pos])::before { content: ""; background: transparent; border: 1px solid var(--gilt); }
+.order-item.is-selected::after { content: none; }
+/* footer: keep name, score and rank on one line when they fit; a long name wraps inside its own box */
+body.page-play .player-bar { flex-wrap: nowrap; }
+body.page-play .player-bar__name { flex: 1 1 auto; }

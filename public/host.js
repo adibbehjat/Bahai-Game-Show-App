@@ -292,7 +292,8 @@
         h('span', { class: 'muted', text: p.counts.total + ' questions' + (bt ? ' (' + bt + ')' : '') }));
       list.append(card);
     });
-    if (S.packs && !S.packs.length) list.append(h('p', { class: 'muted', text: 'No question packs found.' }));
+    var noPacks = !!(S.packs && !S.packs.length);
+    var emptyBlock = noPacks ? (h('div', { class: 'packs-empty' }, h('p', { class: 'muted', text: 'No question packs yet. Add one under questions/ on the server, or build questions in the Question Kit.' }), h('a', { class: 'btn', href: '/kit', text: 'Open the Question Kit' }))) : null;
     if (!S.packs) list.append(h('p', { class: 'muted', text: 'Loading...' }));
 
     createBtn.addEventListener('click', function () {
@@ -312,8 +313,8 @@
 
     show([h('div', { class: 'stack host-center' },
       h('div', { class: 'hero-art' }, blossomImg(160)),
-      h('h1', { text: 'Choose a question pack' }), list,
-      h('div', { class: 'pack-form' },
+      h('h1', { text: 'Choose a question pack' }), noPacks ? emptyBlock : list,
+      noPacks ? null : h('div', { class: 'pack-form' },
         h('label', { class: 'label', for: 'count', text: 'Number of questions' }), countInput, spellRow, gentleRow, createBtn),
       toast())]);
     if (S.selectedPack) {
