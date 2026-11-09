@@ -226,8 +226,12 @@ body { margin: 0; min-height: 100vh; }
 /* host question/reveal: keep the question and its choices together, centred in the message side */
 .stage__main--lb .stage__col { justify-content: center; }
 .stage .q-body { flex: 0 1 auto; justify-content: flex-start; }
-.stage .choice-grid, .stage .tf-grid { flex: none; height: 34cqh; max-height: none; }
-.stage .reveal-banner { margin-top: 0.4cqh; }
+/* the grid aims for 34cqh but may shrink, so a long question plus the reveal banner never overlap the choices */
+.stage .choice-grid, .stage .tf-grid { flex: 0 1 34cqh; height: auto; min-height: 0; max-height: none; }
+.stage .reveal-banner { margin-top: 0.4cqh; flex: none; }
+.stage.reveal-view .order-list { flex: 0 1 auto; min-height: 0; grid-auto-rows: minmax(0, 1fr); }
+.stage.reveal-view .order-item { min-height: 0; }
+.stage .reveal-source { font-size: 1.05cqw; font-weight: 700; letter-spacing: 0.04em; margin-top: 0.3cqh; }
 
 
 /* ================= Brief refinements: printed correspondence, negative space ================= */
