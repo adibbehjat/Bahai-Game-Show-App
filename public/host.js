@@ -323,15 +323,49 @@
     }
   }
 
+  var seenChips = {};
   function playerChips(room) {
     var wrap = h('div', { class: 'players-grid' });
+    var fresh = {};
     room.players.forEach(function (p) {
-      var chip = h('span', { class: 'player-chip' + (p.connected ? '' : ' player-chip--disconnected') },
+      var isNew = !seenChips[p.id];
+      fresh[p.id] = 1;
+      var kick = h('button', { class: 'chip-kick', type: 'button', 'aria-label': 'Remove ' + p.name, title: 'Remove', text: '×',
+        onclick: function () {
+          var bt = p.badge && p.badge.text ? p.badge.text + ' ' : '';
+          confirmEnd('Remove', { title: 'Remove ' + bt + p.name + ' from the game?', body: 'They can rejoin with the room code.',
+            onConfirm: function () { emitAck('host:kick', { playerId: p.id }); } });
+        } });
+      var chip = h('span', { class: 'player-chip' + (p.connected ? '' : ' player-chip--disconnected') + (isNew ? ' player-chip--new' : '') },
+        h('span', { class: 'chip-kick-slot' }, kick),
         p.badge && p.badge.text ? (function () { var b = badgeNode(p.badge.text); b.className += ' chip-badge'; return b; })() : null,
         h('span', { class: 'chip-name', text: p.name }));
-      chip.append(h('button', { class: 'btn btn--ghost chip-kick', type: 'button', 'aria-label': 'Remove ' + p.name, title: 'Remove', text: '×',
-        onclick: function () { emitAck('host:kick', { playerId: p.id }); } }));
       wrap.append(chip);
+    });
+    seenChips = fresh;
+    onMount(function () {
+      var longest = 0;
+      room.players.forEach(function (p) { longest = Math.max(longest, ((p.badge && p.badge.text) ? 2 : 0) + p.name.length); });
+      function fit() {
+        var W = wrap.clientWidth, H = wrap.clientHeight, n = room.players.length;
+        var stageW = (wrap.closest('.stage') || document.body).clientWidth || window.innerWidth;
+        if (!W || !H || !n) return;
+        var tiers = [1.5, 1.35, 1.2, 1.1, 1.0, 0.92], pick = tiers[tiers.length - 1], rows = n, cols = 1;
+        for (var i = 0; i < tiers.length; i++) {
+          var f = tiers[i] * stageW / 100;
+          var rowH = Math.max(f * 2.1, 34) + 2;
+          var r = Math.max(1, Math.floor(H / rowH));
+          var c = Math.ceil(n / r);
+          var colW = (longest * 0.52 + 3.4) * f + 34;
+          if (c * colW + (c - 1) * 0.01 * stageW <= W || i === tiers.length - 1) { pick = tiers[i]; rows = Math.min(n, r); cols = c; break; }
+        }
+        wrap.style.setProperty('--rows', String(rows));
+        wrap.style.setProperty('--cols', String(cols));
+        wrap.style.setProperty('--chip-f', pick + 'cqw');
+      }
+      fit();
+      window.addEventListener('resize', fit);
+      cleanups.push(function () { window.removeEventListener('resize', fit); });
     });
     return wrap;
   }
@@ -362,13 +396,14 @@
     LB.rows = {}; if (LB.list) LB.list.replaceChildren(); if (LB.foot) LB.foot.textContent = '';
     goPacks();
   }
-  function confirmEnd(label) {
+  function confirmEnd(label, opts) {
+    opts = opts || {};
     var opener = document.activeElement;
     var cancel = h('button', { class: 'btn', type: 'button', text: 'Cancel' });
     var ok = h('button', { class: 'btn btn--primary', type: 'button', text: label });
     var dlg = h('div', { class: 'dialog', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'dlg-title', 'aria-describedby': 'dlg-body' },
-      h('h2', { class: 'dialog__title', id: 'dlg-title', text: 'End this room?' }),
-      h('p', { class: 'dialog__body', id: 'dlg-body', text: 'Players will be returned to the join screen.' }),
+      h('h2', { class: 'dialog__title', id: 'dlg-title', text: opts.title || 'End this room?' }),
+      h('p', { class: 'dialog__body', id: 'dlg-body', text: opts.body || 'Players will be returned to the join screen.' }),
       h('div', { class: 'dialog__actions' }, cancel, ok));
     var veil = h('div', { class: 'dialog-veil' }, dlg);
     function close() {
@@ -387,6 +422,7 @@
     cancel.addEventListener('click', close);
     veil.addEventListener('click', function (e) { if (e.target === veil) close(); });
     ok.addEventListener('click', function () {
+      if (opts.onConfirm) { close(); dialogClose = null; opts.onConfirm(); return; }
       ok.disabled = true; cancel.disabled = true;
       emitAck('host:end', {}).then(function (res) {
         close();
@@ -437,7 +473,7 @@
       n ? playerChips(r) : h('p', { class: 'players-empty', text: r.reverent ? 'Welcome. We will begin when everyone has arrived.' : 'Waiting for players to join…' })
     ];
     var main = h('div', { class: 'lobby-grid' }, h('div', { class: 'stage__col' }, left), h('div', { class: 'stage__col lobby-side' }, qr, howToCard(r)));
-    show([stage(r, { cls: 'stage--lobby', pill: 'Lobby', soft: true, main: main, controls: [endRoom, start] })], { stage: true });
+    show([stage(r, { cls: 'stage--lobby' + (n > 24 ? ' stage--crowded' : ''), pill: 'Lobby', soft: true, main: main, controls: [endRoom, start] })], { stage: true });
   }
 
   function totalMsFor(q) {
