@@ -310,6 +310,7 @@ body { margin: 0; min-height: 100vh; }
 /* spell letter pattern on the stage (readable from the back of a room) */
 .stage .spell-hint-pattern { font-size: 6cqw; gap: 1.1cqw; margin: 1cqh auto; }
 .stage .spell-hint-pattern__blank { width: 4.4cqw; height: 6cqw; }
+.stage .spell-hint-pattern__gap { display: inline-block; width: 3cqw; }
 .stage .spell-hint-count { font-size: 1.7cqw; }
 
 .packs-empty { flex: 1 1 100%; width: 100%; text-align: center; max-width: 34rem; margin: 1rem auto; display: grid; gap: 1rem; justify-items: center; }
