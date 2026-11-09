@@ -12,7 +12,7 @@
   var LIMITS = {
     q: 280, clue: 280, choice: 80, item: 80, word: 40, accept: 40, acceptMax: 5,
     choicesMin: 2, choicesMax: 6, itemsMin: 3, itemsMax: 6,
-    explanation: 400, source: 160, timeMin: 10, timeMax: 60, timeDefault: 20, spellTimeDefault: 30,
+    explanation: 400, source: 160, timeMin: 10, timeMax: 60, timeDefault: 45, spellTimeDefault: 45,
     title: 80, description: 200, introText: 400, introSource: 120,
     maxQuestionsPerPack: 500
   };

@@ -33,7 +33,7 @@ The folder name is the pack id. It must be lowercase letters, digits and hyphens
 | `type` | yes | One of `single`, `multi`, `truefalse`, `order`, `spell`. |
 | `explanation` | no | Shown after the answer is revealed. Up to 400 characters. |
 | `source` | no | Where the fact comes from. Up to 160 characters. |
-| `time` | no | Seconds to answer, a whole number from 10 to 60. Default 20 (30 for spell). |
+| `time` | no | Seconds to answer, a whole number from 10 to 60. Default 45 (45 for spell). |
 | `difficulty` | no | `easy`, `medium` or `hard`. |
 
 ## Question types
@@ -159,8 +159,8 @@ These are the exact values enforced by the validator.
 | `source` | 160 | Maximum characters in `source` |
 | `timeMin` | 10 | Shortest `time`, in seconds |
 | `timeMax` | 60 | Longest `time`, in seconds |
-| `timeDefault` | 20 | Default `time` when omitted (all types except spell), in seconds |
-| `spellTimeDefault` | 30 | Default `time` for spell questions, in seconds |
+| `timeDefault` | 45 | Default `time` when omitted (all types except spell), in seconds |
+| `spellTimeDefault` | 45 | Default `time` for spell questions, in seconds |
 | `title` | 80 | Maximum characters in the pack `title` |
 | `description` | 200 | Maximum characters in the pack `description` |
 | `introText` | 400 | Maximum characters in `opening.text` or `closing.text` |

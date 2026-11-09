@@ -245,3 +245,26 @@ test('reveal goes straight to the next question; last reveal goes to over', asyn
     await a.sock.rec.wait('game:over');
   } finally { await s.shutdown(); }
 });
+
+test('default question time comes from LIMITS (45s); explicit time overrides (fake clock)', () => {
+  const { LIMITS } = require('../public/shared/schema.js');
+  assert.equal(LIMITS.timeDefault, 45);
+  assert.equal(LIMITS.spellTimeDefault, 45);
+  const packs = loadPacks(FIXTURES, { onError: () => {} });
+  const m = createRoomManager({ config: testConfig(), packs, emit: { room() {}, host() {}, players() {}, player() {} }, now: () => 5000000 });
+  try {
+    const cases = [
+      [{ type: 'single', q: 'Q?', options: ['a', 'b'], answer: 0 }, 45],
+      [{ type: 'spell', q: 'Spell it', word: 'unity' }, 45],
+      [{ type: 'single', q: 'Q?', options: ['a', 'b'], answer: 0, time: 25 }, 25],
+      [{ type: 'spell', q: 'Spell it', word: 'unity', time: 25 }, 25],
+    ];
+    for (const [q, secs] of cases) {
+      const { room } = m.createRoom('hid-t', { packId: 'fixture', count: 1, includeSpell: false });
+      m.joinPlayer(room.code, require('../public/shared/names.js').compose(selFor(11)));
+      room.questions = [q];
+      m.start(room);
+      assert.equal(room.endsAt - room.startedAt, secs * 1000, `${q.type} time ${q.time}`);
+    }
+  } finally { m.shutdown(); }
+});
