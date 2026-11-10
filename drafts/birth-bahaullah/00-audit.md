@@ -51,7 +51,11 @@ Pack Q# in file order; all single/multi/TF/order pass rules P, R, S, D, A, O unl
 | 45 Mazraʻih death | TF | A ok | |
 | 46 Successor | single | P R ok | |
 | 47-49 Shrine | TF | A ok | |
-| 50 Bahjí order | order | O ok | |
+| 50 Czar Tablet | single | P S D ok | replaced the Bahjí order question (owner); distractors are other Russian tsars |
+
+## Pack counts (after owner replacement of the Bahjí order question)
+- By type: single 18, truefalse 13, multi 9, order 6, spell 4 (total 50).
+- By difficulty: easy 35, medium 11, hard 4.
 
 ## Known cross-question leaks (unavoidable)
 - Spell words (Bahá'u'lláh, Riḍván, Carmel, Bahjí) appear in other questions' text; spell Bahjí answer appears in multi/order items.

@@ -13,7 +13,8 @@
 10. in pack, easy, TF true: Shrine is the Qiblih. SH, WP.
 11. in pack, easy, TF true: gardens around the Shrine. SH.
 12. in pack, easy, TF false: buried inside the Mansion (neighbouring house of Sayyid ʻAlí Afnán). SH.
-13. in pack, hard, order: Mansion completed 1870, move 1879, burial 1892, restoration after 1929, Haram-i-Aqdas from 1952. SH.
+13. removed (owner), hard, order: Mansion completed 1870, move 1879, burial 1892, restoration after 1929, Haram-i-Aqdas from 1952. SH.
+14. in pack, medium, single (replaces #13 at the same position): Which Russian Czar received a Tablet from Bahá'u'lláh? Alexander II. Sources: Wikipedia — Bahá'u'lláh (lists Czar Alexander II among those addressed); Bahaipedia — Writings of Bahá'u'lláh (lists Lawḥ-i-Malik-i-Rús, Tablet to Czar Alexander II). Both explicitly mention it.
 14. alt, medium, single: Mírzá Mihdí died falling through a skylight (June 1870, aged 22). BP, WP (BP: sacrifice opened the prison gates).
 15. alt, hard, single: Mansion builder ʻUdi Khammar, a Maronite Christian from ʻAkká. SH.
 16. alt, medium, TF true: Shrine added to UNESCO World Heritage 2008. WP. Only WP.
