@@ -69,3 +69,12 @@ body { margin: 0; min-height: 100vh; }
   .rv-fb .rv-btns { flex-direction: row; flex-wrap: wrap; width: 100%; }
 }
 .rv-push { margin-left: auto; }
+
+.rv-perma { appearance: none; border: 2px solid var(--color-border-strong); background: var(--color-surface); color: var(--color-ink-soft); border-radius: var(--radius-sm); min-width: 2rem; min-height: 2rem; font: 800 0.95rem/1 var(--font-body); cursor: pointer; }
+.rv-perma:hover, .rv-perma:focus-visible { color: var(--color-ink); border-color: var(--color-ink); }
+.rv-packid { color: var(--color-ink-soft); font-size: 0.6em; font-weight: 700; font-family: var(--font-body); }
+.rv-notice { margin: var(--space-3) 0; padding: var(--space-3) var(--space-4); border: 2px solid var(--color-border-strong); border-radius: var(--radius-md); background: var(--color-surface); font-weight: 700; }
+.rv-card { scroll-margin-top: 7rem; }
+.rv-card.is-target { outline: 4px solid var(--color-accent); outline-offset: 3px; animation: rv-flash 2.4s ease-out; }
+@keyframes rv-flash { from { background: var(--color-accent); } to { background: var(--color-surface); } }
+@media (prefers-reduced-motion: reduce) { .rv-card.is-target { animation: none; } }

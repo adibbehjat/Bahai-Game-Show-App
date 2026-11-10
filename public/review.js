@@ -4,6 +4,8 @@
   var TOKEN_KEY = 'hgs.hostToken'; // shared with /host so a signed-in host does not re-enter the PIN
   var NOTES_PREFIX = 'hgs.review.notes.';
   var URL_CAP = 7500;
+  var PACK_ID_RE = /^(?:[a-z0-9-]{1,40}|_[a-z0-9_-]{0,39})$/;
+  var SUFFIX = 'Holy Day Game Show';
   var LIMITS = GameSchema.LIMITS;
   var TYPE_LABEL = { single: 'Single choice', multi: 'Multi select', truefalse: 'True / false', order: 'Order', spell: 'Spelling' };
   var app = document.getElementById('app');
@@ -11,6 +13,7 @@
 
   var S = {
     view: 'pin', error: '', note: '', packs: null, issuesUrl: '',
+    note: '', hash: '', deepDone: false, authed: false,
     pack: null, // { id, meta, items:[{q, line, raw, lint}], errors:[{line,message}], local:bool }
     filter: { type: '', difficulty: '', lintOnly: false, search: '' },
   };
@@ -68,6 +71,45 @@
     } catch (e) { /* storage unavailable */ }
   }
 
+  // ---------- URL state (deep links) ----------
+  var TYPES = ['single', 'multi', 'truefalse', 'order', 'spell'];
+  var DIFFS = ['easy', 'medium', 'hard', 'none'];
+  function blankFilter() { return { type: '', difficulty: '', lintOnly: false, search: '' }; }
+  function parseLoc() {
+    var sp = new URLSearchParams(location.search);
+    var id = sp.get('pack');
+    var f = blankFilter();
+    var t = sp.get('type'), d = sp.get('difficulty');
+    if (TYPES.indexOf(t) !== -1) f.type = t;
+    if (DIFFS.indexOf(d) !== -1) f.difficulty = d;
+    f.lintOnly = sp.get('lint') === '1';
+    f.search = (sp.get('q') || '').slice(0, 100);
+    var m = /^#q-(\d{1,6})$/.exec(location.hash);
+    return { pack: id, local: sp.get('local'), filter: f, hash: m ? m[0] : '' };
+  }
+  function currentUrl() {
+    if (S.view !== 'review' || !S.pack) return '/review';
+    var sp = new URLSearchParams();
+    if (S.pack.local) sp.set('local', S.pack.fileName || S.pack.id); else sp.set('pack', S.pack.id);
+    var f = S.filter;
+    if (f.type) sp.set('type', f.type);
+    if (f.difficulty) sp.set('difficulty', f.difficulty);
+    if (f.lintOnly) sp.set('lint', '1');
+    if (f.search) sp.set('q', f.search);
+    return '/review?' + sp.toString() + (S.hash || '');
+  }
+  function syncUrl(mode) {
+    var url = currentUrl();
+    try {
+      if (mode === 'push') history.pushState(null, '', url);
+      else if (mode === 'replace') history.replaceState(null, '', url);
+    } catch (e) { /* ignore */ }
+    document.title = S.view === 'review' && S.pack
+      ? 'Review · ' + (S.pack.local ? (S.pack.fileName || S.pack.id) + ' (local)' : (S.pack.meta.title || S.pack.id)) + ' · ' + SUFFIX
+      : 'Review questions · ' + SUFFIX;
+  }
+  function permalink(it) { return location.origin + '/review?pack=' + encodeURIComponent(S.pack.id) + '#q-' + it.line; }
+
   // ---------- pack model ----------
   function timeOf(q) { return q.time || (q.type === 'spell' ? LIMITS.spellTimeDefault : LIMITS.timeDefault); }
   function stemOf(q) { return q.type === 'spell' ? q.clue : q.q; }
@@ -116,6 +158,7 @@
     S.error = '';
     Promise.all(files.map(readFile)).then(function (read) {
       var meta = null, items = [], errors = [], sawQuestions = false, base = '';
+      var fileName = read.map(function (f) { return f.name; }).sort(function (a, b) { return /\.jsonl$/i.test(b) - /\.jsonl$/i.test(a); })[0].slice(0, 80);
       read.forEach(function (f) {
         var lower = f.name.toLowerCase();
         if (lower.slice(-6) === '.jsonl') {
@@ -146,17 +189,34 @@
         meta = { id: id, title: base || 'Local file', theme: 'default', reverent: false };
       }
       items.sort(function (a, b) { return a.line - b.line; });
-      openPack({ id: meta.id, meta: meta, local: true, items: items, errors: errors });
+      openPack({ id: meta.id, meta: meta, local: true, fileName: fileName, items: items, errors: errors }, 'push');
     }).catch(function (e) { S.error = e.message || 'Could not read the file'; render(); });
   }
 
-  function openPack(pack) {
+  function openPack(pack, mode, filter, hash) {
     S.pack = pack;
-    S.filter = { type: '', difficulty: '', lintOnly: false, search: '' };
+    S.filter = filter || blankFilter();
+    S.hash = hash || '';
+    S.note = '';
     S.view = 'review';
     loadNotes(pack.id);
     render();
-    window.scrollTo(0, 0);
+    syncUrl(mode);
+    if (S.hash) scrollToHash(); else window.scrollTo(0, 0);
+  }
+  function toPicker(mode) {
+    if (S.pack) saveNotes();
+    S.pack = null; S.view = 'picker'; S.hash = '';
+    render();
+    syncUrl(mode);
+  }
+  function scrollToHash() {
+    var el = S.hash ? document.getElementById(S.hash.slice(1)) : null;
+    if (!el) return;
+    var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ block: 'start', behavior: 'auto' });
+    el.classList.add('is-target');
+    setTimeout(function () { el.classList.remove('is-target'); }, reduce ? 3000 : 2400);
   }
 
   // ---------- feedback markdown ----------
@@ -188,8 +248,8 @@
   }
   function feedbackBody(it, note, rawLimit) {
     var q = it.q;
-    var parts = ['**Pack:** `' + S.pack.id + '`  ', '**Line:** ' + it.line + '  ', '**Type:** ' + q.type + (q.difficulty ? '  \n**Difficulty:** ' + q.difficulty : ''), '',
-      '### Reviewer note', '', note && note.trim() ? note.trim() : '_(no note)_', '', '### Question', '', describe(q)];
+    var parts = ['**Pack:** `' + S.pack.id + '`  ', '**Line:** ' + it.line + '  ', S.pack.local ? null : '**Review link:** ' + permalink(it) + '  ', '**Type:** ' + q.type + (q.difficulty ? '  \n**Difficulty:** ' + q.difficulty : ''), '',
+      '### Reviewer note', '', note && note.trim() ? note.trim() : '_(no note)_', '', '### Question', '', describe(q)].filter(function (x) { return x !== null; });
     if (it.lint.length) parts.push('', '**Automatic warnings:** ' + it.lint.map(function (l) { return l.message; }).join(' '));
     var raw = it.raw;
     var truncated = false;
@@ -265,19 +325,52 @@
   }
 
   function goPicker() {
+    S.authed = true;
     S.view = 'picker';
+    var first = !S.deepDone;
+    S.deepDone = true;
+    var p = first ? parseLoc() : null;
+    if (p && p.pack != null) { // deep link: open straight away after auth
+      if (!S.packs) emitAck('host:packs', {}).then(function (res) { if (res && res.ok) S.packs = res.packs; });
+      route(p, 'replace');
+      return;
+    }
+    if (p && p.local != null) S.note = 'Local file reviews cannot be reopened from a link. Choose the file again below.';
     render();
+    if (p) syncUrl('replace');
     emitAck('host:packs', {}).then(function (res) {
-      if (res && res.ok) { S.packs = res.packs; render(); }
+      if (res && res.ok) { S.packs = res.packs; if (S.view === 'picker') render(); }
     });
   }
 
-  function loadServerPack(id) {
+  // Opens whatever the location describes. mode: 'replace' | 'push' | null (popstate: leave history alone).
+  function route(p, mode) {
+    if (p.pack != null) {
+      if (!PACK_ID_RE.test(p.pack)) { packMissing(p.pack, mode); return; }
+      loadServerPack(p.pack, mode, p.filter, p.hash);
+    } else {
+      S.note = p.local != null ? 'Local file reviews cannot be reopened from a link. Choose the file again below.' : '';
+      toPicker(mode);
+      if (!S.packs) emitAck('host:packs', {}).then(function (res) { if (res && res.ok) { S.packs = res.packs; if (S.view === 'picker') render(); } });
+    }
+  }
+  function packMissing(id, mode) {
+    S.note = 'Pack not found: ' + String(id).slice(0, 60);
+    S.pack = null; S.view = 'picker'; S.hash = '';
+    render();
+    syncUrl(mode === 'push' ? 'push' : 'replace');
+    if (!S.packs) emitAck('host:packs', {}).then(function (res) { if (res && res.ok) { S.packs = res.packs; if (S.view === 'picker') render(); } });
+  }
+
+  function loadServerPack(id, mode, filter, hash) {
     S.error = '';
     emitAck('host:review', { packId: id }).then(function (res) {
-      if (!res || !res.ok) { S.error = (res && res.error) || 'Could not load that pack'; render(); return; }
+      if (!res || !res.ok) {
+        if (res && res.error === 'Pack not found') { packMissing(id, mode); return; }
+        S.error = (res && res.error) || 'Could not load that pack'; S.view = 'picker'; render(); return;
+      }
       S.issuesUrl = res.issuesUrl || '';
-      openPack(packFromServer(res));
+      openPack(packFromServer(res), mode, filter, hash);
     });
   }
 
@@ -288,7 +381,7 @@
     if (!S.packs) list.append(h('p', { class: 'muted', text: 'Loading...' }));
     (S.packs || []).forEach(function (p) {
       var bt = Object.keys(p.counts.byType || {}).map(function (t) { return p.counts.byType[t] + ' ' + t; }).join(', ');
-      list.append(h('button', { class: 'rv-pack', type: 'button', 'data-id': p.id, onclick: function () { loadServerPack(p.id); } },
+      list.append(h('button', { class: 'rv-pack', type: 'button', 'data-id': p.id, onclick: function () { loadServerPack(p.id, 'push'); } },
         h('strong', { text: p.title }),
         h('span', { class: 'muted', text: p.counts.total + ' questions' + (bt ? ' (' + bt + ')' : '') })));
     });
@@ -297,6 +390,7 @@
       h('h1', { class: 'rv-title', text: 'Review questions' }),
       h('p', { class: 'muted', text: 'Read every question with its answer, spot possible giveaways, and report problems.' }),
       errBox(),
+      S.note ? h('p', { class: 'rv-notice', role: 'status', text: S.note }) : null,
       list,
       h('div', { class: 'rv-local' },
         h('h2', { class: 'rv-title', text: 'Open a local file' }),
@@ -329,7 +423,10 @@
     var q = it.q;
     var kids = [];
     var meta = h('div', { class: 'rv-meta' },
-      h('span', { class: 'rv-line', text: (S.pack.local ? 'Line ' : 'Line ') + it.line }),
+      h('span', { class: 'rv-line', text: 'Line ' + it.line }),
+      S.pack.local ? null : h('button', { class: 'rv-perma', type: 'button', title: 'Copy link to this question', 'aria-label': 'Copy link to line ' + it.line, text: '#', onclick: function () {
+        copyText(permalink(it)).then(function (ok) { flash(ok ? 'Link copied' : 'Could not copy'); });
+      } }),
       h('span', { class: 'rv-chip', text: TYPE_LABEL[q.type] || q.type }),
       q.difficulty ? h('span', { class: 'rv-chip', text: q.difficulty }) : null,
       h('span', { class: 'rv-chip', text: timeOf(q) + 's' + (q.time ? '' : ' (default)') }));
@@ -392,7 +489,7 @@
     } });
     kids.push(h('div', { class: 'rv-fb' }, ta, h('div', { class: 'rv-btns' }, report, clear)));
 
-    return h('article', { class: 'rv-card' + (it.lint.length ? ' has-lint' : ''), 'data-line': String(it.line), 'aria-label': 'Question on line ' + it.line }, kids);
+    return h('article', { class: 'rv-card' + (it.lint.length ? ' has-lint' : ''), id: 'q-' + it.line, 'data-line': String(it.line), 'aria-label': 'Question on line ' + it.line }, kids);
   }
 
   function copyAllNotes() {
@@ -426,15 +523,17 @@
     function select(label, key, options) {
       var sel = h('select', { class: 'input', id: 'f-' + key }, options.map(function (o) { return h('option', { value: o[0], text: o[1] }); }));
       sel.value = S.filter[key];
-      sel.addEventListener('change', function () { S.filter[key] = sel.value; renderList(); });
+      sel.addEventListener('change', function () { S.filter[key] = sel.value; renderList(); syncUrl('replace'); });
       return h('div', { class: 'rv-field' }, h('label', { class: 'label', for: 'f-' + key, text: key === 'type' ? 'Type' : 'Difficulty' }), sel);
     }
     var typeOpts = [['', 'All types']].concat(Object.keys(byType).map(function (t) { return [t, (TYPE_LABEL[t] || t) + ' (' + byType[t] + ')']; }));
     var diffOpts = [['', 'All difficulties']].concat(['easy', 'medium', 'hard', 'none'].filter(function (d) { return byDiff[d]; }).map(function (d) { return [d, (d === 'none' ? 'Unrated' : d) + ' (' + byDiff[d] + ')']; }));
     var search = h('input', { class: 'input', type: 'search', id: 'f-search', placeholder: 'Search questions, answers…' });
-    search.addEventListener('input', function () { S.filter.search = search.value.trim(); renderList(); });
+    search.value = S.filter.search;
+    search.addEventListener('input', function () { S.filter.search = search.value.trim(); renderList(); syncUrl('replace'); });
     var lintBox = h('input', { type: 'checkbox', id: 'f-lint' });
-    lintBox.addEventListener('change', function () { S.filter.lintOnly = lintBox.checked; renderList(); });
+    lintBox.checked = S.filter.lintOnly;
+    lintBox.addEventListener('change', function () { S.filter.lintOnly = lintBox.checked; renderList(); syncUrl('replace'); });
 
     var bar = h('div', { class: 'rv-bar' },
       select('Type', 'type', typeOpts), select('Difficulty', 'difficulty', diffOpts),
@@ -454,12 +553,12 @@
 
     show([
       h('div', { class: 'rv-row' },
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { saveNotes(); S.pack = null; S.view = 'picker'; render(); }, text: '← All packs' }),
-        h('span', { class: 'muted', text: P.local ? 'Local file (not uploaded)' : 'From the server' }),
+        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { S.note = ''; toPicker('push'); }, text: '← All packs' }),
+        h('span', { class: 'muted', text: P.local ? 'Local file: not uploaded, and links to it cannot be shared' : 'From the server' }),
         h('button', { class: 'btn btn--sm rv-push', type: 'button', onclick: copyAllNotes, text: 'Copy all notes' })),
       h('header', { class: 'rv-head' },
-        h('h1', { text: P.meta.title || P.id }),
-        h('p', { class: 'muted', text: [P.id, P.meta.theme ? 'theme: ' + P.meta.theme : '', P.meta.reverent ? 'reverent' : '', items.length + ' questions'].filter(Boolean).join(' · ') }),
+        h('h1', null, P.meta.title || P.id, P.local ? null : h('span', { class: 'rv-packid', text: ' · ' + P.id })),
+        h('p', { class: 'muted', text: [(P.local ? 'File: ' + (P.fileName || P.id) : 'Pack: ' + P.id), P.meta.theme ? 'theme: ' + P.meta.theme : '', P.meta.reverent ? 'reverent' : '', items.length + ' questions'].filter(Boolean).join(' · ') }),
         P.meta.description ? h('p', { text: P.meta.description }) : null,
         h('div', { class: 'rv-stats' }, chips)),
       errBlock,
@@ -486,6 +585,7 @@
       goPicker();
     });
   }
+  window.addEventListener('popstate', function () { if (S.authed) route(parseLoc(), null); });
   window.addEventListener('pagehide', function () { if (S.pack) saveNotes(); });
   function reauth() { // after a dropped connection the new socket is anonymous: resume with the stored token
     var token = null;
