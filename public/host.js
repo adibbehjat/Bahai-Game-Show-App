@@ -316,6 +316,7 @@
       h('h1', { text: 'Choose a question pack' }), noPacks ? emptyBlock : list,
       noPacks ? null : h('div', { class: 'pack-form' },
         h('label', { class: 'label', for: 'count', text: 'Number of questions' }), countInput, spellRow, gentleRow, createBtn),
+      h('p', { class: 'muted' }, h('a', { href: '/review', target: '_blank', rel: 'noopener', text: 'Review question packs' }), ' · ', h('a', { href: '/kit', target: '_blank', rel: 'noopener', text: 'Question Kit' })),
       toast())]);
     if (S.selectedPack) {
       var cur = (S.packs || []).filter(function (x) { return x.id === S.selectedPack; })[0];

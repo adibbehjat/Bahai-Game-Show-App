@@ -14,7 +14,7 @@ const { clientIp: pickClientIp } = require('./lib/proxy');
 const { loadPacks, listPacks } = require('./lib/packs');
 
 const PUBLIC_DIR = path.join(__dirname, 'public');
-const PAGES = { '/': 'index.html', '/host': 'host.html', '/play': 'play.html', '/kit': 'kit.html', '/styleguide': 'styleguide.html' };
+const PAGES = { '/': 'index.html', '/host': 'host.html', '/play': 'play.html', '/kit': 'kit.html', '/styleguide': 'styleguide.html', '/review': 'review.html' };
 
 const BASE_CSP = {
   'default-src': ["'self'"],
@@ -182,6 +182,19 @@ function createServer(config, opts = {}) {
     on('host:packs', 'empty', (_d, ack) => {
       if (!socket.data.isHost) return;
       ack({ ok: true, packs: listPacks(hostPacks) });
+    });
+
+    // Question pack review (answers included): authenticated host sockets only; same visibility as host:packs.
+    on('host:review', 'hostReview', ({ packId }, ack) => {
+      if (!socket.data.isHost) return;
+      const p = hostPacks.get(packId);
+      if (!p) return ack({ ok: false, error: 'Pack not found' });
+      const lines = p.lines || [];
+      ack({
+        ok: true,
+        issuesUrl: config.ISSUES_URL || '',
+        pack: { meta: p.meta, questions: p.questions.map((q, i) => Object.assign({}, q, { line: lines[i] || i + 1 })) },
+      });
     });
 
     on('host:create', 'hostCreate', async (d, ack) => {

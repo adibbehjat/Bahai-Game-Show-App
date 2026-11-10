@@ -51,7 +51,7 @@ test('client code never uses unsafe DOM sinks; HTML has no inline script/style/h
     const src = fs.readFileSync(path.join(pub, f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
     assert.ok(!bad.test(src), `${f} uses an unsafe sink`);
   }
-  for (const f of ['index.html', 'host.html', 'play.html']) {
+  for (const f of ['index.html', 'host.html', 'play.html', 'review.html']) {
     const html = fs.readFileSync(path.join(pub, f), 'utf8');
     assert.ok(!/<script(?![^>]*\bsrc=)/i.test(html), `${f} inline script`);
     assert.ok(!/<style/i.test(html), `${f} inline style`);

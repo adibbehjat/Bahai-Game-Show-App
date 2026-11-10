@@ -1,0 +1,499 @@
+'use strict';
+// Question pack review page. All dynamic content goes through textContent / createElement.
+(function () {
+  var TOKEN_KEY = 'hgs.hostToken'; // shared with /host so a signed-in host does not re-enter the PIN
+  var NOTES_PREFIX = 'hgs.review.notes.';
+  var URL_CAP = 7500;
+  var LIMITS = GameSchema.LIMITS;
+  var TYPE_LABEL = { single: 'Single choice', multi: 'Multi select', truefalse: 'True / false', order: 'Order', spell: 'Spelling' };
+  var app = document.getElementById('app');
+  var socket = io({ transports: ['websocket', 'polling'] });
+
+  var S = {
+    view: 'pin', error: '', note: '', packs: null, issuesUrl: '',
+    pack: null, // { id, meta, items:[{q, line, raw, lint}], errors:[{line,message}], local:bool }
+    filter: { type: '', difficulty: '', lintOnly: false, search: '' },
+  };
+  var notes = {}; // line -> text for the open pack
+  var noteTimer = null;
+
+  function h(tag, props) {
+    var e = document.createElement(tag);
+    if (props) {
+      Object.keys(props).forEach(function (k) {
+        var v = props[k];
+        if (v === false || v == null) return;
+        if (k === 'class') e.className = v;
+        else if (k === 'text') e.textContent = v;
+        else if (k.indexOf('on') === 0) e.addEventListener(k.slice(2), v);
+        else e.setAttribute(k, v === true ? '' : v);
+      });
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var kids = [].concat(arguments[i]);
+      for (var j = 0; j < kids.length; j++) {
+        var c = kids[j];
+        if (c == null || c === false) continue;
+        e.append(c.nodeType ? c : document.createTextNode(String(c)));
+      }
+    }
+    return e;
+  }
+
+  function emitAck(ev, payload) {
+    return new Promise(function (resolve) {
+      socket.timeout(8000).emit(ev, payload, function (err, res) { resolve(err ? null : res); });
+    });
+  }
+
+  function show(children) { app.replaceChildren(h('div', { class: 'rv-screen' }, children)); }
+  function showCenter(children) { app.replaceChildren(h('div', { class: 'rv-center' }, children)); }
+  function flash(text) {
+    var n = h('div', { class: 'rv-note-ok', role: 'status', text: text });
+    document.body.append(n);
+    setTimeout(function () { n.remove(); }, 2200);
+  }
+  function errBox() { return S.error ? h('div', { class: 'rv-err', role: 'alert', text: S.error }) : null; }
+
+  // ---------- notes (localStorage) ----------
+  function loadNotes(packId) {
+    try { var raw = localStorage.getItem(NOTES_PREFIX + packId); notes = raw ? JSON.parse(raw) || {} : {}; } catch (e) { notes = {}; }
+  }
+  function saveNotes() {
+    try {
+      var packId = S.pack.id;
+      var keys = Object.keys(notes).filter(function (k) { return notes[k]; });
+      if (!keys.length) localStorage.removeItem(NOTES_PREFIX + packId);
+      else { var o = {}; keys.forEach(function (k) { o[k] = notes[k]; }); localStorage.setItem(NOTES_PREFIX + packId, JSON.stringify(o)); }
+    } catch (e) { /* storage unavailable */ }
+  }
+
+  // ---------- pack model ----------
+  function timeOf(q) { return q.time || (q.type === 'spell' ? LIMITS.spellTimeDefault : LIMITS.timeDefault); }
+  function stemOf(q) { return q.type === 'spell' ? q.clue : q.q; }
+  function addLint(it) {
+    it.lint = it.q ? GameLint.lintQuestion(it.q) : [];
+    return it;
+  }
+  function packFromServer(res) {
+    var meta = res.pack.meta;
+    return {
+      id: meta.id, meta: meta, local: false, errors: [],
+      items: res.pack.questions.map(function (q) {
+        var line = q.line; var clean = Object.assign({}, q); delete clean.line;
+        return addLint({ q: clean, line: line, raw: JSON.stringify(clean) });
+      }),
+    };
+  }
+
+  // Parses questions.jsonl text the same way the server does; collects per-line errors.
+  function parseJsonl(text, items, errors) {
+    var lines = text.replace(/^﻿/, '').split(/\r?\n/);
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i].trim();
+      if (!line || line.indexOf('//') === 0) continue;
+      var obj;
+      try { obj = JSON.parse(line); } catch (e) { errors.push({ line: i + 1, message: 'Invalid JSON: ' + e.message }); continue; }
+      var v = GameSchema.validateQuestion(obj);
+      if (!v.ok) { v.errors.forEach(function (m) { errors.push({ line: i + 1, message: m }); }); continue; }
+      items.push(addLint({ q: v.value, line: i + 1, raw: line }));
+    }
+  }
+
+  function readFile(file) {
+    return new Promise(function (resolve, reject) {
+      if (file.size > 1024 * 1024) { reject(new Error(file.name + ' is larger than 1 MB')); return; }
+      var r = new FileReader();
+      r.onload = function () { resolve({ name: file.name, text: String(r.result) }); };
+      r.onerror = function () { reject(new Error('Could not read ' + file.name)); };
+      r.readAsText(file);
+    });
+  }
+
+  function openLocal(fileList) {
+    var files = Array.prototype.slice.call(fileList || []);
+    if (!files.length) return;
+    S.error = '';
+    Promise.all(files.map(readFile)).then(function (read) {
+      var meta = null, items = [], errors = [], sawQuestions = false, base = '';
+      read.forEach(function (f) {
+        var lower = f.name.toLowerCase();
+        if (lower.slice(-6) === '.jsonl') {
+          sawQuestions = true; base = base || f.name.replace(/\.jsonl$/i, '');
+          parseJsonl(f.text, items, errors);
+        } else if (lower.slice(-5) === '.json') {
+          var raw;
+          try { raw = JSON.parse(f.text.replace(/^﻿/, '')); } catch (e) { errors.push({ line: 0, message: f.name + ': invalid JSON: ' + e.message }); return; }
+          if (Array.isArray(raw)) {
+            sawQuestions = true;
+            raw.forEach(function (o, i) {
+              var v = GameSchema.validateQuestion(o);
+              if (!v.ok) v.errors.forEach(function (m) { errors.push({ line: i + 1, message: m }); });
+              else items.push(addLint({ q: v.value, line: i + 1, raw: JSON.stringify(o) }));
+            });
+          } else {
+            var pv = GameSchema.validatePack(raw);
+            if (!pv.ok) pv.errors.forEach(function (m) { errors.push({ line: 0, message: f.name + ': ' + m }); });
+            else meta = pv.value;
+          }
+        } else {
+          errors.push({ line: 0, message: f.name + ': only .json and .jsonl files are supported' });
+        }
+      });
+      if (!meta && !sawQuestions) { S.error = 'Choose a questions.jsonl (and optionally pack.json).'; if (errors.length) S.error += ' ' + errors[0].message; render(); return; }
+      if (!meta) {
+        var id = (base || 'local').toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 40) || 'local';
+        meta = { id: id, title: base || 'Local file', theme: 'default', reverent: false };
+      }
+      items.sort(function (a, b) { return a.line - b.line; });
+      openPack({ id: meta.id, meta: meta, local: true, items: items, errors: errors });
+    }).catch(function (e) { S.error = e.message || 'Could not read the file'; render(); });
+  }
+
+  function openPack(pack) {
+    S.pack = pack;
+    S.filter = { type: '', difficulty: '', lintOnly: false, search: '' };
+    S.view = 'review';
+    loadNotes(pack.id);
+    render();
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- feedback markdown ----------
+  function fence(text) {
+    var f = '```';
+    while (text.indexOf(f) !== -1) f += '`';
+    return f;
+  }
+  function describe(q) {
+    var out = [];
+    if (q.type === 'spell') {
+      out.push('**Clue:** ' + q.clue, '', '**Word:** ' + q.word + (q.accept && q.accept.length ? ' (also accepted: ' + q.accept.join(', ') + ')' : ''));
+    } else {
+      out.push('> ' + q.q, '');
+      if (q.type === 'truefalse') out.push('Answer: **' + (q.answer ? 'True' : 'False') + '**');
+      else if (q.type === 'order') q.answer.forEach(function (idx, n) { out.push((n + 1) + '. ' + q.items[idx]); });
+      else {
+        var ans = q.type === 'single' ? [q.answer] : q.answer;
+        q.choices.forEach(function (c, i) { out.push('- ' + (ans.indexOf(i) !== -1 ? '[x] **' + c + '** (correct)' : '[ ] ' + c)); });
+      }
+    }
+    if (q.explanation) out.push('', '**Explanation:** ' + q.explanation);
+    if (q.source) out.push('', '**Source:** ' + q.source);
+    return out.join('\n');
+  }
+  function feedbackTitle(it) {
+    var stem = String(stemOf(it.q) || '').replace(/\s+/g, ' ').trim();
+    return '[' + S.pack.id + '] Q' + it.line + ': ' + (stem.length > 60 ? stem.slice(0, 60).trimEnd() + '…' : stem);
+  }
+  function feedbackBody(it, note, rawLimit) {
+    var q = it.q;
+    var parts = ['**Pack:** `' + S.pack.id + '`  ', '**Line:** ' + it.line + '  ', '**Type:** ' + q.type + (q.difficulty ? '  \n**Difficulty:** ' + q.difficulty : ''), '',
+      '### Reviewer note', '', note && note.trim() ? note.trim() : '_(no note)_', '', '### Question', '', describe(q)];
+    if (it.lint.length) parts.push('', '**Automatic warnings:** ' + it.lint.map(function (l) { return l.message; }).join(' '));
+    var raw = it.raw;
+    var truncated = false;
+    if (rawLimit != null && raw.length > rawLimit) { raw = raw.slice(0, Math.max(0, rawLimit)); truncated = true; }
+    var f = fence(raw);
+    parts.push('', '### Raw JSON line', '', f + 'json', raw + (truncated ? ' …' : ''), f);
+    if (truncated) parts.push('', '_(JSON truncated to keep the link short)_');
+    return parts.join('\n');
+  }
+  function issueHref(it, note) {
+    var base = S.issuesUrl + '/new?title=';
+    var title = encodeURIComponent(feedbackTitle(it));
+    function build(n, limit) { return base + title + '&body=' + encodeURIComponent(feedbackBody(it, n, limit)); }
+    var url = build(note, null);
+    if (url.length <= URL_CAP) return url;
+    // Truncate the JSON block first (binary search on its length), then the note as a last resort.
+    var n = note;
+    for (var attempt = 0; attempt < 2; attempt++) {
+      var lo = 0, hi = it.raw.length;
+      if (build(n, 0).length <= URL_CAP) {
+        while (lo < hi) { var mid = Math.ceil((lo + hi) / 2); if (build(n, mid).length <= URL_CAP) lo = mid; else hi = mid - 1; }
+        return build(n, lo);
+      }
+      n = n.slice(0, Math.max(0, Math.floor(n.length / 2)));
+      if (!n) break;
+    }
+    return build('', 0);
+  }
+  function copyText(text) {
+    function fallback() {
+      var ta = h('textarea', { class: 'visually-hidden', 'aria-hidden': 'true', tabindex: '-1' });
+      ta.value = text;
+      document.body.append(ta);
+      ta.select();
+      var ok = false;
+      try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+      ta.remove();
+      return ok;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return fallback(); });
+    }
+    return Promise.resolve(fallback());
+  }
+
+  // ---------- views ----------
+  function viewPin() {
+    var input = h('input', { class: 'input', type: 'password', id: 'pin', autocomplete: 'off', maxlength: '128', 'aria-label': 'Host PIN' });
+    function submit() {
+      var pin = input.value;
+      if (!pin) return;
+      input.value = '';
+      emitAck('host:auth', { pin: pin }).then(function (res) {
+        if (res && res.ok) {
+          sessionStorage.setItem(TOKEN_KEY, res.hostToken);
+          S.error = ''; goPicker();
+        } else { S.error = res && res.error ? res.error : 'Could not sign in'; render(); }
+      });
+    }
+    input.addEventListener('keydown', function (e) { if (e.key === 'Enter') submit(); });
+    var art = null;
+    try { art = window.Flower && Flower.blossom ? Flower.blossom({ size: 240, seed: 2 }) : null; } catch (e) { art = null; }
+    showCenter([
+      h('div', { class: 'rv-hero' }, art),
+      h('h1', { class: 'rv-title', text: 'Review questions' }),
+      h('p', { class: 'muted', text: 'Hosts only. Sign in with the host PIN to read the answers.' }),
+      h('div', { class: 'form-open' },
+        h('label', { class: 'label', for: 'pin', text: 'Host PIN' }), input,
+        h('button', { class: 'btn btn--primary btn--lg', type: 'button', onclick: submit, text: 'Continue' })),
+      errBox(),
+    ]);
+    input.focus();
+  }
+
+  function goPicker() {
+    S.view = 'picker';
+    render();
+    emitAck('host:packs', {}).then(function (res) {
+      if (res && res.ok) { S.packs = res.packs; render(); }
+    });
+  }
+
+  function loadServerPack(id) {
+    S.error = '';
+    emitAck('host:review', { packId: id }).then(function (res) {
+      if (!res || !res.ok) { S.error = (res && res.error) || 'Could not load that pack'; render(); return; }
+      S.issuesUrl = res.issuesUrl || '';
+      openPack(packFromServer(res));
+    });
+  }
+
+  function viewPicker() {
+    var fileInput = h('input', { class: 'rv-file', type: 'file', id: 'rv-file', accept: '.json,.jsonl,application/json', multiple: true, 'aria-label': 'Open local pack file' });
+    fileInput.addEventListener('change', function () { openLocal(fileInput.files); fileInput.value = ''; });
+    var list = h('div', { class: 'rv-packs' });
+    if (!S.packs) list.append(h('p', { class: 'muted', text: 'Loading...' }));
+    (S.packs || []).forEach(function (p) {
+      var bt = Object.keys(p.counts.byType || {}).map(function (t) { return p.counts.byType[t] + ' ' + t; }).join(', ');
+      list.append(h('button', { class: 'rv-pack', type: 'button', 'data-id': p.id, onclick: function () { loadServerPack(p.id); } },
+        h('strong', { text: p.title }),
+        h('span', { class: 'muted', text: p.counts.total + ' questions' + (bt ? ' (' + bt + ')' : '') })));
+    });
+    if (S.packs && !S.packs.length) list.append(h('p', { class: 'muted', text: 'No question packs on the server yet. You can still open a local file below.' }));
+    showCenterWide([
+      h('h1', { class: 'rv-title', text: 'Review questions' }),
+      h('p', { class: 'muted', text: 'Read every question with its answer, spot possible giveaways, and report problems.' }),
+      errBox(),
+      list,
+      h('div', { class: 'rv-local' },
+        h('h2', { class: 'rv-title', text: 'Open a local file' }),
+        h('p', { class: 'muted', text: 'Choose a questions.jsonl, and optionally its pack.json, from your computer. Nothing is uploaded; the files are read in this browser only.' }),
+        fileInput,
+        h('label', { class: 'btn', for: 'rv-file', text: 'Open local file…' })),
+    ]);
+  }
+  function showCenterWide(children) { show(children); }
+
+  function countBy(items, fn) {
+    var o = {};
+    items.forEach(function (it) { var k = fn(it); o[k] = (o[k] || 0) + 1; });
+    return o;
+  }
+
+  function matches(it) {
+    var f = S.filter, q = it.q;
+    if (f.type && q.type !== f.type) return false;
+    if (f.difficulty && (q.difficulty || 'none') !== f.difficulty) return false;
+    if (f.lintOnly && !it.lint.length) return false;
+    if (f.search) {
+      var hay = JSON.stringify(q).toLowerCase() + ' q' + it.line;
+      if (hay.indexOf(f.search.toLowerCase()) === -1) return false;
+    }
+    return true;
+  }
+
+  function buildCard(it) {
+    var q = it.q;
+    var kids = [];
+    var meta = h('div', { class: 'rv-meta' },
+      h('span', { class: 'rv-line', text: (S.pack.local ? 'Line ' : 'Line ') + it.line }),
+      h('span', { class: 'rv-chip', text: TYPE_LABEL[q.type] || q.type }),
+      q.difficulty ? h('span', { class: 'rv-chip', text: q.difficulty }) : null,
+      h('span', { class: 'rv-chip', text: timeOf(q) + 's' + (q.time ? '' : ' (default)') }));
+    kids.push(meta);
+    kids.push(h('p', { class: 'rv-stem', text: stemOf(q) }));
+
+    if (q.type === 'spell') {
+      var sh = GameScoring.spellHint(q.word);
+      kids.push(PlayState.buildSpellHint(document, sh.hint, sh.letters));
+      kids.push(h('div', { class: 'rv-choice is-correct' }, h('span', { class: 'rv-mark', text: '✓', 'aria-hidden': 'true' }),
+        h('span', null, h('span', { class: 'rv-lbl', text: 'Word' }), q.word),
+        h('span', { class: 'rv-tag', text: 'Correct' })));
+      if (q.accept && q.accept.length) kids.push(h('p', { class: 'rv-src' }, h('span', { class: 'rv-lbl', text: 'Also accepted' }), q.accept.join(', ')));
+    } else if (q.type === 'truefalse') {
+      kids.push(h('p', { class: 'rv-tf' }, h('span', { class: 'rv-lbl', text: 'Answer' }), (q.answer ? '✓ True' : '✓ False')));
+    } else if (q.type === 'order') {
+      kids.push(h('p', { class: 'rv-src', text: 'Items in the correct order:' }));
+      kids.push(h('ol', { class: 'rv-items' }, q.answer.map(function (idx, n) {
+        return h('li', { class: 'rv-choice is-correct' }, h('span', { class: 'rv-mark', text: String(n + 1) + '.' }), h('span', { text: q.items[idx] }));
+      })));
+    } else {
+      var ans = q.type === 'single' ? [q.answer] : q.answer;
+      kids.push(h('ul', { class: 'rv-choices' }, q.choices.map(function (c, i) {
+        var ok = ans.indexOf(i) !== -1;
+        return h('li', { class: 'rv-choice' + (ok ? ' is-correct' : '') },
+          h('span', { class: 'rv-mark', text: ok ? '✓' : String.fromCharCode(65 + i), 'aria-hidden': ok ? 'true' : null }),
+          h('span', { text: c }),
+          ok ? h('span', { class: 'rv-tag', text: 'Correct' }) : null);
+      })));
+    }
+    if (q.explanation) kids.push(h('p', { class: 'rv-expl' }, h('span', { class: 'rv-lbl', text: 'Explanation' }), q.explanation));
+    if (q.source) kids.push(h('p', { class: 'rv-src' }, h('span', { class: 'rv-lbl', text: 'Source' }), q.source));
+    if (it.lint.length) {
+      kids.push(h('div', { class: 'rv-lint', role: 'list', 'aria-label': 'Possible giveaways' }, it.lint.map(function (l) {
+        return h('span', { class: 'rv-badge', role: 'listitem', 'data-code': l.code, text: '⚠ Possible giveaway: ' + l.message });
+      })));
+    }
+
+    var ta = h('textarea', { class: 'input', rows: '2', maxlength: '1000', placeholder: 'Note (optional): what is wrong, or what would be better?', 'aria-label': 'Note for line ' + it.line });
+    ta.value = notes[it.line] || '';
+    var report;
+    function currentNote() { return ta.value; }
+    function syncHref() { if (S.issuesUrl) report.setAttribute('href', issueHref(it, currentNote())); }
+    ta.addEventListener('input', function () {
+      notes[it.line] = ta.value;
+      clearTimeout(noteTimer); noteTimer = setTimeout(saveNotes, 250);
+      syncHref();
+    });
+    if (S.issuesUrl) {
+      report = h('a', { class: 'btn btn--sm', href: '#', target: '_blank', rel: 'noopener noreferrer', text: 'Report issue' });
+      syncHref();
+    } else {
+      report = h('button', { class: 'btn btn--sm', type: 'button', text: 'Copy feedback' });
+      report.addEventListener('click', function () {
+        copyText('# ' + feedbackTitle(it) + '\n\n' + feedbackBody(it, currentNote(), null)).then(function (ok) { flash(ok ? 'Feedback copied' : 'Could not copy'); });
+      });
+    }
+    var clear = h('button', { class: 'btn btn--ghost btn--sm', type: 'button', text: 'Clear note', onclick: function () {
+      ta.value = ''; delete notes[it.line]; saveNotes(); syncHref();
+    } });
+    kids.push(h('div', { class: 'rv-fb' }, ta, h('div', { class: 'rv-btns' }, report, clear)));
+
+    return h('article', { class: 'rv-card' + (it.lint.length ? ' has-lint' : ''), 'data-line': String(it.line), 'aria-label': 'Question on line ' + it.line }, kids);
+  }
+
+  function copyAllNotes() {
+    var lines = ['# Review notes: ' + S.pack.id, ''];
+    var n = 0;
+    S.pack.items.forEach(function (it) {
+      var t = (notes[it.line] || '').trim();
+      if (!t) return;
+      n++;
+      var stem = String(stemOf(it.q) || '').replace(/\s+/g, ' ').trim();
+      lines.push('- **Q' + it.line + '** (' + it.q.type + '): ' + (stem.length > 80 ? stem.slice(0, 80) + '…' : stem), '  ' + t.replace(/\n/g, '\n  '), '');
+    });
+    if (!n) { flash('No notes yet'); return; }
+    copyText(lines.join('\n')).then(function (ok) { flash(ok ? n + ' note' + (n === 1 ? '' : 's') + ' copied' : 'Could not copy'); });
+  }
+
+  function viewReview() {
+    var P = S.pack, items = P.items;
+    var byType = countBy(items, function (it) { return it.q.type; });
+    var byDiff = countBy(items, function (it) { return it.q.difficulty || 'none'; });
+    var lintCount = items.filter(function (it) { return it.lint.length; }).length;
+    var list = h('div', { class: 'rv-list' });
+    var tally = h('span', { class: 'muted', 'aria-live': 'polite' });
+
+    function renderList() {
+      var shown = items.filter(matches);
+      tally.textContent = 'Showing ' + shown.length + ' of ' + items.length;
+      list.replaceChildren.apply(list, shown.length ? shown.map(buildCard) : [h('div', { class: 'rv-empty', text: 'No questions match these filters.' })]);
+    }
+
+    function select(label, key, options) {
+      var sel = h('select', { class: 'input', id: 'f-' + key }, options.map(function (o) { return h('option', { value: o[0], text: o[1] }); }));
+      sel.value = S.filter[key];
+      sel.addEventListener('change', function () { S.filter[key] = sel.value; renderList(); });
+      return h('div', { class: 'rv-field' }, h('label', { class: 'label', for: 'f-' + key, text: key === 'type' ? 'Type' : 'Difficulty' }), sel);
+    }
+    var typeOpts = [['', 'All types']].concat(Object.keys(byType).map(function (t) { return [t, (TYPE_LABEL[t] || t) + ' (' + byType[t] + ')']; }));
+    var diffOpts = [['', 'All difficulties']].concat(['easy', 'medium', 'hard', 'none'].filter(function (d) { return byDiff[d]; }).map(function (d) { return [d, (d === 'none' ? 'Unrated' : d) + ' (' + byDiff[d] + ')']; }));
+    var search = h('input', { class: 'input', type: 'search', id: 'f-search', placeholder: 'Search questions, answers…' });
+    search.addEventListener('input', function () { S.filter.search = search.value.trim(); renderList(); });
+    var lintBox = h('input', { type: 'checkbox', id: 'f-lint' });
+    lintBox.addEventListener('change', function () { S.filter.lintOnly = lintBox.checked; renderList(); });
+
+    var bar = h('div', { class: 'rv-bar' },
+      select('Type', 'type', typeOpts), select('Difficulty', 'difficulty', diffOpts),
+      h('div', { class: 'rv-field rv-field--grow' }, h('label', { class: 'label', for: 'f-search', text: 'Search' }), search),
+      h('label', { class: 'rv-check', for: 'f-lint' }, lintBox, h('span', { text: 'Only lint warnings (' + lintCount + ')' })),
+      tally);
+
+    var chips = Object.keys(byType).map(function (t) { return h('span', { class: 'rv-chip', text: byType[t] + ' ' + (TYPE_LABEL[t] || t).toLowerCase() }); })
+      .concat(['easy', 'medium', 'hard', 'none'].filter(function (d) { return byDiff[d]; }).map(function (d) { return h('span', { class: 'rv-chip', text: byDiff[d] + ' ' + (d === 'none' ? 'unrated' : d) }); }));
+
+    var errBlock = null;
+    if (P.errors.length) {
+      errBlock = h('details', { class: 'rv-issues', open: true },
+        h('summary', { text: P.errors.length + ' line' + (P.errors.length === 1 ? '' : 's') + ' could not be read' }),
+        h('ul', null, P.errors.map(function (e) { return h('li', { text: (e.line ? 'Line ' + e.line + ': ' : '') + e.message }); })));
+    }
+
+    show([
+      h('div', { class: 'rv-row' },
+        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { saveNotes(); S.pack = null; S.view = 'picker'; render(); }, text: '← All packs' }),
+        h('span', { class: 'muted', text: P.local ? 'Local file (not uploaded)' : 'From the server' }),
+        h('button', { class: 'btn btn--sm rv-push', type: 'button', onclick: copyAllNotes, text: 'Copy all notes' })),
+      h('header', { class: 'rv-head' },
+        h('h1', { text: P.meta.title || P.id }),
+        h('p', { class: 'muted', text: [P.id, P.meta.theme ? 'theme: ' + P.meta.theme : '', P.meta.reverent ? 'reverent' : '', items.length + ' questions'].filter(Boolean).join(' · ') }),
+        P.meta.description ? h('p', { text: P.meta.description }) : null,
+        h('div', { class: 'rv-stats' }, chips)),
+      errBlock,
+      bar,
+      list,
+    ]);
+    renderList();
+  }
+
+  function render() {
+    document.body.setAttribute('data-theme', S.pack && S.pack.meta && S.view === 'review' ? S.pack.meta.theme || 'default' : 'default');
+    if (S.view === 'pin') viewPin();
+    else if (S.view === 'picker') viewPicker();
+    else viewReview();
+  }
+
+  // ---------- boot ----------
+  function boot() {
+    var token = null;
+    try { token = sessionStorage.getItem(TOKEN_KEY); } catch (e) { token = null; }
+    if (!token) { render(); return; }
+    emitAck('host:resume', { hostToken: token }).then(function (res) {
+      if (!res || !res.ok) { try { sessionStorage.removeItem(TOKEN_KEY); } catch (e) { /* ignore */ } S.view = 'pin'; render(); return; }
+      goPicker();
+    });
+  }
+  window.addEventListener('pagehide', function () { if (S.pack) saveNotes(); });
+  function reauth() { // after a dropped connection the new socket is anonymous: resume with the stored token
+    var token = null;
+    try { token = sessionStorage.getItem(TOKEN_KEY); } catch (e) { token = null; }
+    if (token) emitAck('host:resume', { hostToken: token });
+  }
+  var started = false;
+  function start() { if (started) return; started = true; boot(); }
+  socket.on('connect', function () { if (!started) start(); else if (S.view === 'pin') render(); else reauth(); });
+  socket.on('connect_error', function () { S.error = 'Cannot reach the server'; if (S.view === 'pin') render(); });
+})();
