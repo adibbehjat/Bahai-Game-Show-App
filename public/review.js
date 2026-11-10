@@ -215,6 +215,9 @@
     if (!el) return;
     var reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
     el.scrollIntoView({ block: 'start', behavior: 'auto' });
+    // Fonts and images can shift the layout after first paint: settle the position again.
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { el.scrollIntoView({ block: 'start', behavior: 'auto' }); });
+    setTimeout(function () { el.scrollIntoView({ block: 'start', behavior: 'auto' }); }, 250);
     el.classList.add('is-target');
     setTimeout(function () { el.classList.remove('is-target'); }, reduce ? 3000 : 2400);
   }
@@ -386,7 +389,7 @@
         h('span', { class: 'muted', text: p.counts.total + ' questions' + (bt ? ' (' + bt + ')' : '') })));
     });
     if (S.packs && !S.packs.length) list.append(h('p', { class: 'muted', text: 'No question packs on the server yet. You can still open a local file below.' }));
-    showCenterWide([
+    show([
       h('h1', { class: 'rv-title', text: 'Review questions' }),
       h('p', { class: 'muted', text: 'Read every question with its answer, spot possible giveaways, and report problems.' }),
       errBox(),
@@ -399,7 +402,6 @@
         h('label', { class: 'btn', for: 'rv-file', text: 'Open local file…' })),
     ]);
   }
-  function showCenterWide(children) { show(children); }
 
   function countBy(items, fn) {
     var o = {};
@@ -512,37 +514,55 @@
     var byDiff = countBy(items, function (it) { return it.q.difficulty || 'none'; });
     var lintCount = items.filter(function (it) { return it.lint.length; }).length;
     var list = h('div', { class: 'rv-list' });
-    var tally = h('span', { class: 'muted', 'aria-live': 'polite' });
+    var tally = h('span', { class: 'rv-tally muted', 'aria-live': 'polite' });
+    var clearBtn = h('button', { class: 'rv-link', type: 'button', text: 'Clear filters' });
+    var radios = []; // {input, key, value}
+    var search = h('input', { class: 'input', type: 'search', id: 'f-search', placeholder: 'Search questions…', autocomplete: 'off' });
+    var lintBox = h('input', { type: 'checkbox', id: 'f-lint' });
 
+    function active() { var f = S.filter; return !!(f.type || f.difficulty || f.lintOnly || f.search); }
+    function syncControls() {
+      radios.forEach(function (r) { r.input.checked = S.filter[r.key] === r.value; });
+      lintBox.checked = S.filter.lintOnly;
+      search.value = S.filter.search;
+    }
     function renderList() {
       var shown = items.filter(matches);
       tally.textContent = 'Showing ' + shown.length + ' of ' + items.length;
+      clearBtn.hidden = !active();
       list.replaceChildren.apply(list, shown.length ? shown.map(buildCard) : [h('div', { class: 'rv-empty', text: 'No questions match these filters.' })]);
     }
+    function changed() { renderList(); syncUrl('replace'); }
 
-    function select(label, key, options) {
-      var sel = h('select', { class: 'input', id: 'f-' + key }, options.map(function (o) { return h('option', { value: o[0], text: o[1] }); }));
-      sel.value = S.filter[key];
-      sel.addEventListener('change', function () { S.filter[key] = sel.value; renderList(); syncUrl('replace'); });
-      return h('div', { class: 'rv-field' }, h('label', { class: 'label', for: 'f-' + key, text: key === 'type' ? 'Type' : 'Difficulty' }), sel);
+    function group(title, key, options) {
+      var rows = options.map(function (o) {
+        var id = 'f-' + key + '-' + (o[0] || 'all');
+        var input = h('input', { type: 'radio', name: 'f-' + key, id: id, value: o[0] });
+        input.addEventListener('change', function () { if (input.checked) { S.filter[key] = o[0]; changed(); } });
+        radios.push({ input: input, key: key, value: o[0] });
+        return h('label', { class: 'rv-opt', for: id }, input, h('span', { class: 'rv-opt__name', text: o[1] }), h('span', { class: 'rv-opt__n', text: String(o[2]) }));
+      });
+      return h('fieldset', { class: 'rv-group' }, h('legend', { class: 'label', text: title }), rows);
     }
-    var typeOpts = [['', 'All types']].concat(Object.keys(byType).map(function (t) { return [t, (TYPE_LABEL[t] || t) + ' (' + byType[t] + ')']; }));
-    var diffOpts = [['', 'All difficulties']].concat(['easy', 'medium', 'hard', 'none'].filter(function (d) { return byDiff[d]; }).map(function (d) { return [d, (d === 'none' ? 'Unrated' : d) + ' (' + byDiff[d] + ')']; }));
-    var search = h('input', { class: 'input', type: 'search', id: 'f-search', placeholder: 'Search questions, answers…' });
-    search.value = S.filter.search;
-    search.addEventListener('input', function () { S.filter.search = search.value.trim(); renderList(); syncUrl('replace'); });
-    var lintBox = h('input', { type: 'checkbox', id: 'f-lint' });
-    lintBox.checked = S.filter.lintOnly;
-    lintBox.addEventListener('change', function () { S.filter.lintOnly = lintBox.checked; renderList(); syncUrl('replace'); });
+    var typeOpts = [['', 'All types', items.length]].concat(TYPES.filter(function (t) { return byType[t]; }).map(function (t) { return [t, TYPE_LABEL[t], byType[t]]; }));
+    var diffOpts = [['', 'All difficulties', items.length]].concat(DIFFS.filter(function (d) { return byDiff[d]; }).map(function (d) { return [d, d === 'none' ? 'Unrated' : d.charAt(0).toUpperCase() + d.slice(1), byDiff[d]]; }));
 
-    var bar = h('div', { class: 'rv-bar' },
-      select('Type', 'type', typeOpts), select('Difficulty', 'difficulty', diffOpts),
-      h('div', { class: 'rv-field rv-field--grow' }, h('label', { class: 'label', for: 'f-search', text: 'Search' }), search),
-      h('label', { class: 'rv-check', for: 'f-lint' }, lintBox, h('span', { text: 'Only lint warnings (' + lintCount + ')' })),
-      tally);
+    search.addEventListener('input', function () { S.filter.search = search.value.trim(); changed(); });
+    lintBox.addEventListener('change', function () { S.filter.lintOnly = lintBox.checked; changed(); });
+    clearBtn.addEventListener('click', function () { S.filter = blankFilter(); syncControls(); changed(); });
 
-    var chips = Object.keys(byType).map(function (t) { return h('span', { class: 'rv-chip', text: byType[t] + ' ' + (TYPE_LABEL[t] || t).toLowerCase() }); })
-      .concat(['easy', 'medium', 'hard', 'none'].filter(function (d) { return byDiff[d]; }).map(function (d) { return h('span', { class: 'rv-chip', text: byDiff[d] + ' ' + (d === 'none' ? 'unrated' : d) }); }));
+    var filters = h('div', { class: 'rv-filters', id: 'rv-filters' },
+      h('div', { class: 'rv-group' }, h('label', { class: 'label', for: 'f-search', text: 'Search' }), search),
+      group('Type', 'type', typeOpts),
+      group('Difficulty', 'difficulty', diffOpts),
+      h('div', { class: 'rv-group' },
+        h('label', { class: 'rv-opt', for: 'f-lint' }, lintBox, h('span', { class: 'rv-opt__name', text: 'Only lint warnings' }), h('span', { class: 'rv-opt__n', text: String(lintCount) }))));
+    var toggle = h('button', { class: 'btn btn--ghost btn--sm rv-toggle', type: 'button', 'aria-expanded': 'false', 'aria-controls': 'rv-filters', text: 'Filters' });
+    toggle.addEventListener('click', function () {
+      var open = !filters.classList.contains('is-open');
+      filters.classList.toggle('is-open', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
 
     var errBlock = null;
     if (P.errors.length) {
@@ -551,20 +571,23 @@
         h('ul', null, P.errors.map(function (e) { return h('li', { text: (e.line ? 'Line ' + e.line + ': ' : '') + e.message }); })));
     }
 
-    show([
-      h('div', { class: 'rv-row' },
-        h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { S.note = ''; toPicker('push'); }, text: '← All packs' }),
-        h('span', { class: 'muted', text: P.local ? 'Local file: not uploaded, and links to it cannot be shared' : 'From the server' }),
-        h('button', { class: 'btn btn--sm rv-push', type: 'button', onclick: copyAllNotes, text: 'Copy all notes' })),
+    var rail = h('aside', { class: 'rv-rail', 'aria-label': 'Pack information and filters' },
+      h('button', { class: 'btn btn--ghost btn--sm', type: 'button', onclick: function () { S.note = ''; toPicker('push'); }, text: '← All packs' }),
       h('header', { class: 'rv-head' },
-        h('h1', null, P.meta.title || P.id, P.local ? null : h('span', { class: 'rv-packid', text: ' · ' + P.id })),
-        h('p', { class: 'muted', text: [(P.local ? 'File: ' + (P.fileName || P.id) : 'Pack: ' + P.id), P.meta.theme ? 'theme: ' + P.meta.theme : '', P.meta.reverent ? 'reverent' : '', items.length + ' questions'].filter(Boolean).join(' · ') }),
-        P.meta.description ? h('p', { text: P.meta.description }) : null,
-        h('div', { class: 'rv-stats' }, chips)),
+        h('h1', { text: P.meta.title || P.id }),
+        h('p', { class: 'muted rv-sub rv-packid', text: [P.local ? P.fileName || P.id : P.id, P.meta.theme ? 'theme: ' + P.meta.theme : '', P.meta.reverent ? 'reverent' : ''].filter(Boolean).join(' · ') }),
+        P.meta.description ? h('p', { class: 'rv-desc', text: P.meta.description }) : null,
+        h('p', { class: 'muted rv-sub', text: P.local ? 'Local file: not uploaded, and links to it cannot be shared.' : 'From the server.' })),
+      toggle, filters);
+
+    var main = h('main', { class: 'rv-main' },
+      h('div', { class: 'rv-row rv-row--end' }, h('button', { class: 'btn btn--sm', type: 'button', onclick: copyAllNotes, text: 'Copy all notes' })),
       errBlock,
-      bar,
-      list,
-    ]);
+      h('div', { class: 'rv-countrow' }, clearBtn, tally),
+      list);
+
+    app.replaceChildren(h('div', { class: 'rv-screen rv-screen--wide' }, h('div', { class: 'rv-layout' }, rail, main)));
+    syncControls();
     renderList();
   }
 
